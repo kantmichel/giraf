@@ -136,9 +136,15 @@ function recalculateMyIssues(
   return result;
 }
 
+interface TriageCache {
+  issues: NormalizedIssue[];
+  count: number;
+}
+
 interface MutationContext {
   previousIssues: Map<string, IssuesResponse | undefined>;
   previousMyIssues: MyIssuesResponse | undefined;
+  previousTriage: TriageCache | undefined;
 }
 
 export function useUpdateIssue() {
@@ -161,6 +167,7 @@ export function useUpdateIssue() {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["issues"] });
       await queryClient.cancelQueries({ queryKey: ["my-issues"] });
+      await queryClient.cancelQueries({ queryKey: ["triage"] });
 
       // Snapshot all issues queries
       const previousIssues = new Map<string, IssuesResponse | undefined>();
@@ -184,7 +191,16 @@ export function useUpdateIssue() {
         );
       }
 
-      return { previousIssues, previousMyIssues };
+      // Optimistically update triage cache
+      const previousTriage = queryClient.getQueryData<TriageCache>(["triage"]);
+      if (previousTriage) {
+        queryClient.setQueryData<TriageCache>(["triage"], {
+          ...previousTriage,
+          issues: updateIssueInList(previousTriage.issues, params.owner, params.repo, params.number, params.updates),
+        });
+      }
+
+      return { previousIssues, previousMyIssues, previousTriage };
     },
     onError: (_error, _params, context) => {
       // Rollback all caches
@@ -196,11 +212,15 @@ export function useUpdateIssue() {
       if (context?.previousMyIssues) {
         queryClient.setQueryData(["my-issues"], context.previousMyIssues);
       }
+      if (context?.previousTriage) {
+        queryClient.setQueryData(["triage"], context.previousTriage);
+      }
       toast.error("Failed to update issue");
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["issues"] });
       queryClient.invalidateQueries({ queryKey: ["my-issues"] });
+      queryClient.invalidateQueries({ queryKey: ["triage"] });
     },
     onSuccess: (data: any, { owner, repo, number }) => {
       queryClient.invalidateQueries({ queryKey: ["issue", owner, repo, number] });
