@@ -17,7 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
+import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
+import { IssuePriorityEditor } from "@/components/issues/issue-priority-editor";
 import { usePriorityReview, useUndoPromotion } from "@/hooks/use-priority-review";
+import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import type { NormalizedIssue } from "@/types/github";
 import { useIssues } from "@/hooks/use-issues";
 import type { NormalizedUser } from "@/types/github";
@@ -27,13 +30,25 @@ function OverBudgetSection({
   issues,
   max,
   over,
+  onIssueClick,
 }: {
   priority: string;
   issues: NormalizedIssue[];
   max: number;
   over: number;
+  onIssueClick: (issue: NormalizedIssue) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const updateIssue = useUpdateIssue();
+
+  function handlePriorityChange(issue: NormalizedIssue, labels: string[]) {
+    updateIssue.mutate({
+      owner: issue.repo.owner,
+      repo: issue.repo.name,
+      number: issue.number,
+      updates: { labels },
+    });
+  }
 
   return (
     <div className="rounded-lg border">
@@ -51,13 +66,30 @@ function OverBudgetSection({
         <span className="text-destructive">— {over} over</span>
       </button>
       {open && (
-        <div className="divide-y border-t">
+        <div className="border-t">
           <table className="w-full text-sm">
             <tbody className="divide-y">
               {issues.map((issue) => (
-                <tr key={issue.id}>
-                  <td className="max-w-0 truncate py-2 pl-3 pr-2">{issue.title}</td>
+                <tr key={issue.id} className="hover:bg-accent/30">
+                  <td className="max-w-0 truncate py-2 pl-3 pr-2">
+                    <button
+                      className="text-left hover:underline truncate block w-full"
+                      onClick={() => onIssueClick(issue)}
+                    >
+                      {issue.title}
+                    </button>
+                  </td>
                   <td className="whitespace-nowrap py-2 px-2 text-xs text-muted-foreground w-12">#{issue.number}</td>
+                  <td className="whitespace-nowrap py-2 px-2 w-20">
+                    <IssueStatusBadge status={issue.status} />
+                  </td>
+                  <td className="whitespace-nowrap py-2 px-2 w-24" onClick={(e) => e.stopPropagation()}>
+                    <IssuePriorityEditor
+                      currentPriority={issue.priority}
+                      allLabels={issue.labels.map((l) => l.name)}
+                      onUpdate={(labels) => handlePriorityChange(issue, labels)}
+                    />
+                  </td>
                   <td className="whitespace-nowrap py-2 px-2 w-28"><IssueRepoBadge repo={issue.repo.fullName} /></td>
                   <td className="whitespace-nowrap py-2 pl-2 pr-3 text-right w-32"><RelativeTime date={issue.createdAt} /></td>
                 </tr>
@@ -70,7 +102,7 @@ function OverBudgetSection({
   );
 }
 
-export function PriorityReview() {
+export function PriorityReview({ onIssueClick }: { onIssueClick?: (issue: NormalizedIssue) => void }) {
   const { data: session } = useSession();
   const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
   const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
@@ -159,6 +191,7 @@ export function PriorityReview() {
                 issues={bucket.issues}
                 max={max}
                 over={bucket.over}
+                onIssueClick={onIssueClick || (() => {})}
               />
             );
           })}

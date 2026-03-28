@@ -80,7 +80,7 @@ export default function TriagePage() {
       </button>
       {reviewOpen && (
         <div className="border-t px-4 py-4">
-          <PriorityReview />
+          <PriorityReview onIssueClick={setSelectedIssue} />
         </div>
       )}
     </div>
