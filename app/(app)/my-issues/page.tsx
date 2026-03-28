@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { AlertTriangle } from "lucide-react";
@@ -24,6 +24,14 @@ export default function MyIssuesPage() {
   const updateIssue = useUpdateIssue();
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [activeIssue, setActiveIssue] = useState<NormalizedIssue | null>(null);
+
+  // Sync selectedIssue with cache updates
+  useEffect(() => {
+    if (!selectedIssue || !data) return;
+    const allIssues = [...data.active, ...data.upNext, ...data.recentlyCompleted, ...data.snoozed];
+    const updated = allIssues.find((i) => i.id === selectedIssue.id);
+    if (updated) setSelectedIssue(updated);
+  }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const searchParams = useSearchParams();
   const router = useRouter();

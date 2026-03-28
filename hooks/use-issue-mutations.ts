@@ -16,6 +16,13 @@ interface UpdateIssueParams {
   };
 }
 
+interface IssuesResponse {
+  issues: NormalizedIssue[];
+  errors: { repo: string; error: string }[];
+  totalRepos: number;
+  fetchedRepos: number;
+}
+
 interface MyIssuesResponse {
   active: NormalizedIssue[];
   upNext: NormalizedIssue[];
@@ -23,26 +30,90 @@ interface MyIssuesResponse {
   snoozed: NormalizedIssue[];
 }
 
-function moveIssueBetweenSections(
-  data: MyIssuesResponse,
+// Apply updates to a NormalizedIssue, recalculating status/priority from labels
+function applyUpdateToIssue(
   issue: NormalizedIssue,
-  newLabels: string[]
-): MyIssuesResponse {
-  const newStatus = newLabels
-    .find((l) => l.startsWith("status: "))
-    ?.replace("status: ", "") as NormalizedIssue["status"];
+  updates: UpdateIssueParams["updates"]
+): NormalizedIssue {
+  let updated = { ...issue };
 
-  const updatedIssue: NormalizedIssue = {
-    ...issue,
-    status: newStatus ?? null,
-    labels: newLabels.map((name, i) => ({
+  if (updates.labels) {
+    const newLabels = updates.labels.map((name, i) => ({
       id: issue.labels.find((l) => l.name === name)?.id ?? -(i + 1),
       name,
       color: issue.labels.find((l) => l.name === name)?.color ?? "666666",
       description: null,
-    })),
-  };
+    }));
 
+    const statusLabel = updates.labels.find((l) => l.startsWith("status: "));
+    const priorityLabel = updates.labels.find((l) => l.startsWith("priority: "));
+
+    updated = {
+      ...updated,
+      labels: newLabels,
+      status: statusLabel
+        ? (statusLabel.replace("status: ", "") as NormalizedIssue["status"])
+        : null,
+      priority: priorityLabel
+        ? (priorityLabel.replace("priority: ", "") as NormalizedIssue["priority"])
+        : null,
+    };
+  }
+
+  if (updates.assignees) {
+    updated.assignees = updates.assignees.map((login) => {
+      const existing = issue.assignees.find((a) => a.login === login);
+      return existing ?? { id: 0, login, avatarUrl: `https://github.com/${login}.png` };
+    });
+  }
+
+  if (updates.state) {
+    updated.state = updates.state;
+  }
+
+  if (updates.title) {
+    updated.title = updates.title;
+  }
+
+  return updated;
+}
+
+// Update an issue within an array, return new array
+function updateIssueInList(
+  issues: NormalizedIssue[],
+  owner: string,
+  repo: string,
+  number: number,
+  updates: UpdateIssueParams["updates"]
+): NormalizedIssue[] {
+  return issues.map((issue) =>
+    issue.repo.owner === owner && issue.repo.name === repo && issue.number === number
+      ? applyUpdateToIssue(issue, updates)
+      : issue
+  );
+}
+
+// Recalculate my-issues sections after an update
+function recalculateMyIssues(
+  data: MyIssuesResponse,
+  owner: string,
+  repo: string,
+  number: number,
+  updates: UpdateIssueParams["updates"]
+): MyIssuesResponse {
+  const allIssues = [
+    ...data.active,
+    ...data.upNext,
+    ...data.recentlyCompleted,
+    ...data.snoozed,
+  ];
+
+  const issue = allIssues.find(
+    (i) => i.repo.owner === owner && i.repo.name === repo && i.number === number
+  );
+  if (!issue) return data;
+
+  const updated = applyUpdateToIssue(issue, updates);
   const issueKey = `${issue.repo.fullName}:${issue.number}`;
   const remove = (arr: NormalizedIssue[]) =>
     arr.filter((i) => `${i.repo.fullName}:${i.number}` !== issueKey);
@@ -50,23 +121,30 @@ function moveIssueBetweenSections(
   const result = {
     active: remove(data.active),
     upNext: remove(data.upNext),
-    recentlyCompleted: data.recentlyCompleted,
-    snoozed: data.snoozed,
+    recentlyCompleted: remove(data.recentlyCompleted),
+    snoozed: remove(data.snoozed),
   };
 
-  if (newStatus === "doing" || newStatus === "in review") {
-    result.active = [updatedIssue, ...result.active];
-  } else if (newStatus === "to do" || newStatus === null) {
-    result.upNext = [updatedIssue, ...result.upNext];
+  if (updated.state === "closed") {
+    result.recentlyCompleted = [updated, ...result.recentlyCompleted];
+  } else if (updated.status === "doing" || updated.status === "in review") {
+    result.active = [updated, ...result.active];
+  } else {
+    result.upNext = [updated, ...result.upNext];
   }
 
   return result;
 }
 
+interface MutationContext {
+  previousIssues: Map<string, IssuesResponse | undefined>;
+  previousMyIssues: MyIssuesResponse | undefined;
+}
+
 export function useUpdateIssue() {
   const queryClient = useQueryClient();
 
-  return useMutation<NormalizedIssue, Error, UpdateIssueParams, { previous: MyIssuesResponse | undefined }>({
+  return useMutation<NormalizedIssue, Error, UpdateIssueParams, MutationContext>({
     mutationFn: async ({ owner, repo, number, updates }) => {
       const res = await fetch(`/api/issues/${owner}/${repo}/${number}`, {
         method: "PATCH",
@@ -81,41 +159,46 @@ export function useUpdateIssue() {
     },
     onMutate: async (params) => {
       // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["issues"] });
       await queryClient.cancelQueries({ queryKey: ["my-issues"] });
 
-      // Snapshot previous value
-      const previous = queryClient.getQueryData<MyIssuesResponse>(["my-issues"]);
-
-      // Optimistically update my-issues cache
-      if (previous && params.updates.labels) {
-        const allIssues = [
-          ...previous.active,
-          ...previous.upNext,
-          ...previous.recentlyCompleted,
-          ...previous.snoozed,
-        ];
-        const issue = allIssues.find(
-          (i) => i.repo.owner === params.owner && i.repo.name === params.repo && i.number === params.number
-        );
-        if (issue) {
-          queryClient.setQueryData<MyIssuesResponse>(
-            ["my-issues"],
-            moveIssueBetweenSections(previous, issue, params.updates.labels)
-          );
+      // Snapshot all issues queries
+      const previousIssues = new Map<string, IssuesResponse | undefined>();
+      const issuesQueries = queryClient.getQueriesData<IssuesResponse>({ queryKey: ["issues"] });
+      for (const [key, data] of issuesQueries) {
+        previousIssues.set(JSON.stringify(key), data);
+        if (data) {
+          queryClient.setQueryData<IssuesResponse>(key, {
+            ...data,
+            issues: updateIssueInList(data.issues, params.owner, params.repo, params.number, params.updates),
+          });
         }
       }
 
-      return { previous };
+      // Snapshot and update my-issues
+      const previousMyIssues = queryClient.getQueryData<MyIssuesResponse>(["my-issues"]);
+      if (previousMyIssues) {
+        queryClient.setQueryData<MyIssuesResponse>(
+          ["my-issues"],
+          recalculateMyIssues(previousMyIssues, params.owner, params.repo, params.number, params.updates)
+        );
+      }
+
+      return { previousIssues, previousMyIssues };
     },
     onError: (_error, _params, context) => {
-      // Rollback on error
-      if (context?.previous) {
-        queryClient.setQueryData(["my-issues"], context.previous);
+      // Rollback all caches
+      if (context?.previousIssues) {
+        for (const [keyStr, data] of context.previousIssues) {
+          queryClient.setQueryData(JSON.parse(keyStr), data);
+        }
+      }
+      if (context?.previousMyIssues) {
+        queryClient.setQueryData(["my-issues"], context.previousMyIssues);
       }
       toast.error("Failed to update issue");
     },
     onSettled: () => {
-      // Always refetch to sync with server truth
       queryClient.invalidateQueries({ queryKey: ["issues"] });
       queryClient.invalidateQueries({ queryKey: ["my-issues"] });
     },

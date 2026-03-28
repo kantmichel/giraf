@@ -70,10 +70,34 @@ export function useTriageAction() {
       }
       return res.json();
     },
+    onMutate: async (params) => {
+      await queryClient.cancelQueries({ queryKey: ["triage"] });
+      await queryClient.cancelQueries({ queryKey: ["triage-count"] });
+
+      const previousTriage = queryClient.getQueryData<TriageResponse>(["triage"]);
+      const previousCount = queryClient.getQueryData<{ count: number }>(["triage-count"]);
+
+      // Optimistically remove the issue from triage
+      if (previousTriage) {
+        const issueKey = `${params.owner}/${params.repo}:${params.number}`;
+        queryClient.setQueryData<TriageResponse>(["triage"], {
+          issues: previousTriage.issues.filter(
+            (i) => `${i.repo.fullName}:${i.number}` !== issueKey
+          ),
+          count: previousTriage.count - 1,
+        });
+      }
+      if (previousCount) {
+        queryClient.setQueryData(["triage-count"], { count: Math.max(0, previousCount.count - 1) });
+      }
+
+      return { previousTriage, previousCount };
+    },
     onSuccess: (_data, params) => {
       queryClient.invalidateQueries({ queryKey: ["triage"] });
       queryClient.invalidateQueries({ queryKey: ["triage-count"] });
       queryClient.invalidateQueries({ queryKey: ["issues"] });
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] });
 
       const messages = {
         accept: "Issue accepted",
@@ -82,7 +106,13 @@ export function useTriageAction() {
       };
       toast.success(messages[params.action]);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _params, context: any) => {
+      if (context?.previousTriage) {
+        queryClient.setQueryData(["triage"], context.previousTriage);
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(["triage-count"], context.previousCount);
+      }
       toast.error(error.message);
     },
   });

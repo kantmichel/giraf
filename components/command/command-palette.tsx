@@ -34,10 +34,12 @@ import {
 import { useIssues } from "@/hooks/use-issues";
 import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
+import type { NormalizedIssue } from "@/types/github";
 
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onIssueSelect?: (issue: NormalizedIssue) => void;
 }
 
 const navItems = [
@@ -49,7 +51,7 @@ const navItems = [
   { label: "Help", href: "/help", icon: HelpCircle, shortcut: "G H" },
 ];
 
-export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, onIssueSelect }: CommandPaletteProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const { issues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
@@ -115,12 +117,17 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <>
                 <CommandSeparator />
                 <CommandGroup heading="Issues">
-                  {issues.slice(0, 20).map((issue) => (
+                  {issues.slice(0, 50).map((issue) => (
                     <CommandItem
                       key={issue.id}
+                      value={`${issue.number} ${issue.title} ${issue.repo.name}`}
                       onSelect={() => {
-                        window.open(issue.htmlUrl, "_blank");
                         onOpenChange(false);
+                        if (onIssueSelect) {
+                          onIssueSelect(issue);
+                        } else {
+                          window.open(issue.htmlUrl, "_blank");
+                        }
                       }}
                     >
                       <div className="flex min-w-0 flex-1 items-center gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { GitFork, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,13 @@ function IssuesContent() {
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
+
+  // Sync selectedIssue with cache updates (optimistic updates)
+  useEffect(() => {
+    if (!selectedIssue) return;
+    const updated = allIssues.find((i) => i.id === selectedIssue.id);
+    if (updated) setSelectedIssue(updated);
+  }, [allIssues]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isError) {
     return (
