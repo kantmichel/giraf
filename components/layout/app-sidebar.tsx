@@ -114,14 +114,18 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href={triageNav.url}>
                     <triageNav.icon />
                     <span>{triageNav.title}</span>
-                    {hasReviewIssues && (
-                      <span className="size-2 rounded-full bg-yellow-500" title="Priority review needed" />
-                    )}
                   </Link>
                 </SidebarMenuButton>
-                {triageData && triageData.count > 0 && (
-                  <SidebarMenuBadge>{triageData.count}</SidebarMenuBadge>
-                )}
+                <SidebarMenuBadge>
+                  <span className="flex items-center gap-1.5">
+                    {hasReviewIssues && (
+                      <span className="size-2 shrink-0 rounded-full bg-yellow-500" title="Priority review needed" />
+                    )}
+                    {triageData && triageData.count > 0 && (
+                      <span>{triageData.count}</span>
+                    )}
+                  </span>
+                </SidebarMenuBadge>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
