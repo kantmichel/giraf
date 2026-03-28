@@ -33,7 +33,10 @@ export default function TriagePage() {
   const repoOptions = useMemo(() => {
     if (!data?.issues) return [];
     const repos = new Set(data.issues.map((i) => i.repo.fullName));
-    return [...repos].sort().map((r) => ({ value: r, label: r }));
+    return [...repos].sort().map((r) => ({
+      value: r,
+      label: r.includes("/") ? r.split("/")[1] : r,
+    }));
   }, [data?.issues]);
 
   const selectedIssues = useMemo(() => {

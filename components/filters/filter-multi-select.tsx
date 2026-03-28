@@ -55,7 +55,7 @@ export function FilterMultiSelect({
           <ChevronsUpDown className="ml-1 size-3 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-52 p-0" align="start">
+      <PopoverContent className="w-64 p-0" align="start">
         <Command>
           <CommandInput placeholder={`Filter ${title.toLowerCase()}...`} />
           <CommandList>

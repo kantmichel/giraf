@@ -9,7 +9,11 @@ interface PriorityReviewData {
   promotions: PriorityPromotion[];
   budget: { critical_max: number; high_max: number; medium_max: number };
   counts: { critical: number; high: number; medium: number; low: number };
-  overBudget: { critical: number; high: number; medium: number };
+  overBudget: {
+    critical: { over: number; issues: NormalizedIssue[] };
+    high: { over: number; issues: NormalizedIssue[] };
+    medium: { over: number; issues: NormalizedIssue[] };
+  };
   staleIssues: NormalizedIssue[];
   forUser: string;
 }

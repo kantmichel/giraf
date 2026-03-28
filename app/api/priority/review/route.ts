@@ -42,19 +42,28 @@ export async function GET(request: Request) {
       i.assignees.some((a) => a.login === forUser)
     );
 
-    // Count by priority
-    const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+    // Group by priority (to-do issues only for budget tracking)
+    const todoByPriority: Record<string, NormalizedIssue[]> = {
+      critical: [], high: [], medium: [], low: [],
+    };
     for (const issue of userIssues) {
-      if (issue.priority && issue.status === "to do") {
-        counts[issue.priority as keyof typeof counts]++;
+      if (issue.priority && (issue.status === "to do" || issue.status === null)) {
+        todoByPriority[issue.priority]?.push(issue);
       }
     }
 
-    // Over budget?
+    const counts = {
+      critical: todoByPriority.critical.length,
+      high: todoByPriority.high.length,
+      medium: todoByPriority.medium.length,
+      low: todoByPriority.low.length,
+    };
+
+    // Over budget with the actual issues
     const overBudget = {
-      critical: counts.critical > budget.critical_max ? counts.critical - budget.critical_max : 0,
-      high: counts.high > budget.high_max ? counts.high - budget.high_max : 0,
-      medium: counts.medium > budget.medium_max ? counts.medium - budget.medium_max : 0,
+      critical: { over: Math.max(0, counts.critical - budget.critical_max), issues: todoByPriority.critical },
+      high: { over: Math.max(0, counts.high - budget.high_max), issues: todoByPriority.high },
+      medium: { over: Math.max(0, counts.medium - budget.medium_max), issues: todoByPriority.medium },
     };
 
     // Stale issues: high/critical in to-do for 14+ days

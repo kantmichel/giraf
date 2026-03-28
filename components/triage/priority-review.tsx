@@ -16,6 +16,7 @@ import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { usePriorityReview, useUndoPromotion } from "@/hooks/use-priority-review";
+import type { NormalizedIssue } from "@/types/github";
 import { useIssues } from "@/hooks/use-issues";
 import type { NormalizedUser } from "@/types/github";
 
@@ -46,7 +47,7 @@ export function PriorityReview() {
 
   if (!data) return null;
 
-  const hasOverBudget = data.overBudget.critical > 0 || data.overBudget.high > 0 || data.overBudget.medium > 0;
+  const hasOverBudget = data.overBudget.critical.over > 0 || data.overBudget.high.over > 0 || data.overBudget.medium.over > 0;
   const hasPromotions = data.promotions.length > 0;
   const hasStale = data.staleIssues.length > 0;
   const allClear = !hasOverBudget && !hasPromotions && !hasStale;
@@ -90,31 +91,37 @@ export function PriorityReview() {
 
       {/* Over budget */}
       {hasOverBudget && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h4 className="flex items-center gap-2 text-sm font-medium">
             <AlertTriangle className="size-4 text-yellow-500" />
             Over Budget
           </h4>
-          <div className="rounded-lg border p-3 space-y-1 text-sm">
-            {data.overBudget.critical > 0 && (
-              <p>
-                <IssuePriorityBadge priority="critical" /> {data.counts.critical} issues (budget: {data.budget.critical_max})
-                — <span className="text-destructive">{data.overBudget.critical} over</span>
-              </p>
-            )}
-            {data.overBudget.high > 0 && (
-              <p>
-                <IssuePriorityBadge priority="high" /> {data.counts.high} issues (budget: {data.budget.high_max})
-                — <span className="text-destructive">{data.overBudget.high} over</span>
-              </p>
-            )}
-            {data.overBudget.medium > 0 && (
-              <p>
-                <IssuePriorityBadge priority="medium" /> {data.counts.medium} issues (budget: {data.budget.medium_max})
-                — <span className="text-destructive">{data.overBudget.medium} over</span>
-              </p>
-            )}
-          </div>
+          {(["critical", "high", "medium"] as const).map((priority) => {
+            const bucket = data.overBudget[priority];
+            if (bucket.over <= 0) return null;
+            const max = priority === "critical" ? data.budget.critical_max
+              : priority === "high" ? data.budget.high_max
+              : data.budget.medium_max;
+            return (
+              <div key={priority} className="rounded-lg border">
+                <div className="flex items-center gap-2 border-b px-3 py-2 text-sm">
+                  <IssuePriorityBadge priority={priority} />
+                  <span>{bucket.issues.length} issues (budget: {max})</span>
+                  <span className="text-destructive">— {bucket.over} over</span>
+                </div>
+                <div className="divide-y">
+                  {bucket.issues.map((issue: NormalizedIssue) => (
+                    <div key={issue.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <span className="min-w-0 flex-1 truncate">{issue.title}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">#{issue.number}</span>
+                      <IssueRepoBadge repo={issue.repo.fullName} />
+                      <RelativeTime date={issue.createdAt} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
