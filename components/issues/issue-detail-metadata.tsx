@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useState, useEffect } from "react";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
@@ -16,17 +16,19 @@ interface IssueDetailMetadataProps {
 export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
   const updateMutation = useUpdateIssue();
 
-  // Track the latest labels locally to avoid race conditions
-  // when status and priority are changed in quick succession
-  const latestLabelsRef = useRef<string[]>(issue.labels.map((l) => l.name));
+  // Local labels state to avoid race conditions between rapid edits
+  // AND to trigger re-renders when labels change
+  const [localLabels, setLocalLabels] = useState<string[]>(
+    issue.labels.map((l) => l.name)
+  );
 
-  // Sync ref when the issue prop updates (e.g., from cache)
-  if (issue.labels.map((l) => l.name).join(",") !== latestLabelsRef.current.join(",")) {
-    latestLabelsRef.current = issue.labels.map((l) => l.name);
-  }
+  // Sync from prop when issue changes (e.g., different issue selected, or cache update)
+  useEffect(() => {
+    setLocalLabels(issue.labels.map((l) => l.name));
+  }, [issue.id, issue.labels]);
 
   function handleLabelsUpdate(labels: string[]) {
-    latestLabelsRef.current = labels;
+    setLocalLabels(labels); // Update local state immediately
     updateMutation.mutate({
       owner: issue.repo.owner,
       repo: issue.repo.name,
@@ -44,12 +46,11 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
     });
   }
 
-  // Derive status/priority from the latest local labels (not stale prop)
-  const currentLabels = latestLabelsRef.current;
-  const currentStatus = currentLabels
+  // Derive status/priority from local labels (always fresh)
+  const currentStatus = localLabels
     .find((l) => l.startsWith("status: "))
     ?.replace("status: ", "") ?? null;
-  const currentPriority = currentLabels
+  const currentPriority = localLabels
     .find((l) => l.startsWith("priority: "))
     ?.replace("priority: ", "") ?? null;
 
@@ -58,14 +59,14 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
       <span className="text-muted-foreground">Status</span>
       <IssueStatusEditor
         currentStatus={currentStatus}
-        allLabels={currentLabels}
+        allLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
 
       <span className="text-muted-foreground">Priority</span>
       <IssuePriorityEditor
         currentPriority={currentPriority}
-        allLabels={currentLabels}
+        allLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
 
@@ -81,7 +82,7 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
       <IssueLabelsEditor
         owner={issue.repo.owner}
         repo={issue.repo.name}
-        currentLabels={currentLabels}
+        currentLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
 
