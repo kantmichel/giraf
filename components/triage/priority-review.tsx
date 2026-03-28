@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import {
   AlertTriangle,
   ArrowUp,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Undo2,
 } from "lucide-react";
@@ -19,6 +21,50 @@ import { usePriorityReview, useUndoPromotion } from "@/hooks/use-priority-review
 import type { NormalizedIssue } from "@/types/github";
 import { useIssues } from "@/hooks/use-issues";
 import type { NormalizedUser } from "@/types/github";
+
+function OverBudgetSection({
+  priority,
+  issues,
+  max,
+  over,
+}: {
+  priority: string;
+  issues: NormalizedIssue[];
+  max: number;
+  over: number;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-lg border">
+      <button
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/50"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? (
+          <ChevronDown className="size-3.5 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-3.5 text-muted-foreground" />
+        )}
+        <IssuePriorityBadge priority={priority} />
+        <span>{issues.length} issues (budget: {max})</span>
+        <span className="text-destructive">— {over} over</span>
+      </button>
+      {open && (
+        <div className="divide-y border-t">
+          {issues.map((issue) => (
+            <div key={issue.id} className="flex items-center gap-3 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 truncate">{issue.title}</span>
+              <span className="shrink-0 text-xs text-muted-foreground">#{issue.number}</span>
+              <IssueRepoBadge repo={issue.repo.fullName} />
+              <RelativeTime date={issue.createdAt} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PriorityReview() {
   const { data: session } = useSession();
@@ -103,23 +149,13 @@ export function PriorityReview() {
               : priority === "high" ? data.budget.high_max
               : data.budget.medium_max;
             return (
-              <div key={priority} className="rounded-lg border">
-                <div className="flex items-center gap-2 border-b px-3 py-2 text-sm">
-                  <IssuePriorityBadge priority={priority} />
-                  <span>{bucket.issues.length} issues (budget: {max})</span>
-                  <span className="text-destructive">— {bucket.over} over</span>
-                </div>
-                <div className="divide-y">
-                  {bucket.issues.map((issue: NormalizedIssue) => (
-                    <div key={issue.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-                      <span className="min-w-0 flex-1 truncate">{issue.title}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">#{issue.number}</span>
-                      <IssueRepoBadge repo={issue.repo.fullName} />
-                      <RelativeTime date={issue.createdAt} />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <OverBudgetSection
+                key={priority}
+                priority={priority}
+                issues={bucket.issues}
+                max={max}
+                over={bucket.over}
+              />
             );
           })}
         </div>
