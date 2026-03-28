@@ -13,6 +13,7 @@ export interface NormalizedIssue {
   milestone: { title: string; number: number } | null;
   linkedPrs: NormalizedLinkedPr[];
   version: string | null;
+  createdBy: NormalizedUser;
   createdAt: string;
   updatedAt: string;
 }

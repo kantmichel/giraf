@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getRequiredSession } from "@/lib/auth";
 import { getOctokit } from "@/lib/github/client";
 import { getIssue, updateIssue } from "@/lib/github/issues";
+import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
+import { checkAndPromote } from "@/lib/priority-escalation";
 import { GitHubApiError } from "@/lib/github/errors";
 
 export async function GET(
@@ -33,9 +35,36 @@ export async function PATCH(
     const { owner, repo, number } = await params;
     const session = await getRequiredSession();
     const octokit = getOctokit(session.accessToken);
-    const updates = await request.json();
+    const workspace = getWorkspaceForUser(session.user.githubUsername);
+    let updates = await request.json();
+
+    // Auto-add "status: done" when closing an issue
+    if (updates.state === "closed" && updates.labels) {
+      const hasStatusDone = updates.labels.some((l: string) => l === "status: done");
+      if (!hasStatusDone) {
+        updates = {
+          ...updates,
+          labels: [
+            ...updates.labels.filter((l: string) => !l.startsWith("status: ")),
+            "status: done",
+          ],
+        };
+      }
+    }
+
     const issue = await updateIssue(octokit, owner, repo, parseInt(number, 10), updates);
-    return NextResponse.json(issue);
+
+    // Check for auto-promotion when status changes to "done"
+    let promotion = null;
+    if (issue.status === "done" && issue.priority) {
+      try {
+        promotion = await checkAndPromote(octokit, workspace.id, issue);
+      } catch {
+        // Don't fail the main update if promotion fails
+      }
+    }
+
+    return NextResponse.json({ ...issue, promotion });
   } catch (error) {
     if (error instanceof GitHubApiError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

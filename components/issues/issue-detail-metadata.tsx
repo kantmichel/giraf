@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
@@ -86,8 +87,14 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
         onUpdate={handleLabelsUpdate}
       />
 
-      <span className="text-muted-foreground">Milestone</span>
-      <span>{issue.milestone?.title ?? "—"}</span>
+      <span className="text-muted-foreground">Created by</span>
+      <div className="flex items-center gap-2">
+        <Avatar className="size-5">
+          <AvatarImage src={issue.createdBy.avatarUrl} alt={issue.createdBy.login} />
+          <AvatarFallback className="text-[8px]">{issue.createdBy.login[0]?.toUpperCase()}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm">{issue.createdBy.login}</span>
+      </div>
 
       <span className="text-muted-foreground">Created</span>
       <RelativeTime date={issue.createdAt} />

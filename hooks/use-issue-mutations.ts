@@ -202,9 +202,25 @@ export function useUpdateIssue() {
       queryClient.invalidateQueries({ queryKey: ["issues"] });
       queryClient.invalidateQueries({ queryKey: ["my-issues"] });
     },
-    onSuccess: (_data, { owner, repo, number }) => {
+    onSuccess: (data: any, { owner, repo, number }) => {
       queryClient.invalidateQueries({ queryKey: ["issue", owner, repo, number] });
-      toast.success("Issue updated");
+
+      if (data?.promotion) {
+        const p = data.promotion;
+        toast.success(
+          `Promoted #${p.promotedIssue.number} from ${p.fromPriority} to ${p.toPriority}`,
+          {
+            action: {
+              label: "View",
+              onClick: () => {
+                window.open(p.promotedIssue.htmlUrl, "_blank");
+              },
+            },
+          }
+        );
+      } else {
+        toast.success("Issue updated");
+      }
     },
   });
 }

@@ -70,6 +70,11 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
       : null,
     linkedPrs: [],
     version: null,
+    createdBy: {
+      id: issue.user?.id || 0,
+      login: issue.user?.login || "unknown",
+      avatarUrl: issue.user?.avatar_url || "",
+    },
     createdAt: issue.created_at,
     updatedAt: issue.updated_at,
   };

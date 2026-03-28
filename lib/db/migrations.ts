@@ -103,6 +103,34 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 2,
+    description: "Priority budgets and promotion log",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE priority_budgets (
+          workspace_id TEXT NOT NULL,
+          github_user_id TEXT NOT NULL,
+          critical_max INTEGER NOT NULL DEFAULT 2,
+          high_max INTEGER NOT NULL DEFAULT 3,
+          medium_max INTEGER NOT NULL DEFAULT 5,
+          PRIMARY KEY(workspace_id, github_user_id)
+        );
+
+        CREATE TABLE priority_promotions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workspace_id TEXT NOT NULL,
+          repo_full_name TEXT NOT NULL,
+          issue_number INTEGER NOT NULL,
+          from_priority TEXT NOT NULL,
+          to_priority TEXT NOT NULL,
+          triggered_by_repo TEXT NOT NULL,
+          triggered_by_issue INTEGER NOT NULL,
+          promoted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

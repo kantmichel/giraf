@@ -4,7 +4,9 @@ import { useState } from "react";
 import { CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { TriageIssueCard } from "@/components/triage/triage-issue-card";
+import { PriorityReview } from "@/components/triage/priority-review";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useTriageIssues, useTriageAction } from "@/hooks/use-triage";
 import type { NormalizedIssue } from "@/types/github";
@@ -94,6 +96,8 @@ export default function TriagePage() {
           />
         ))}
       </div>
+      <Separator className="my-8" />
+      <PriorityReview />
       <IssueDetailSidebar
         issue={selectedIssue}
         open={selectedIssue !== null}
