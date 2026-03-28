@@ -8,6 +8,7 @@ import {
   ListTodo,
   GitFork,
   Settings,
+  HelpCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -23,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { useTriageCount } from "@/hooks/use-triage";
 import { UserMenu } from "./user-menu";
 
 const mainNav = [
@@ -55,10 +57,16 @@ const managementNav = [
     url: "/settings",
     icon: Settings,
   },
+  {
+    title: "Help",
+    url: "/help",
+    icon: HelpCircle,
+  },
 ];
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { data: triageData } = useTriageCount();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -98,8 +106,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.badge && (
-                    <SidebarMenuBadge>—</SidebarMenuBadge>
+                  {item.badge && triageData && triageData.count > 0 && (
+                    <SidebarMenuBadge>{triageData.count}</SidebarMenuBadge>
                   )}
                 </SidebarMenuItem>
               ))}

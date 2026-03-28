@@ -12,6 +12,7 @@ const pageNames: Record<string, string> = {
   "/triage": "Triage",
   "/repos": "Repos",
   "/settings": "Settings",
+  "/help": "Help",
 };
 
 export function TopBar() {
