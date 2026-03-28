@@ -75,8 +75,12 @@ export function IssuePriorityEditor({
           <>
             <div className="mt-1 border-t" />
             <button
+              type="button"
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent pl-[30px]"
-              onClick={() => handleClear()}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleClear();
+              }}
             >
               Remove priority
             </button>
