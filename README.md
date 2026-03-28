@@ -46,7 +46,16 @@ bun install
 
 # Set up environment
 cp .env.example .env.local
-# Fill in GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, NEXTAUTH_SECRET
+
+# Generate a NextAuth secret
+openssl rand -base64 32
+# Copy the output into .env.local as NEXTAUTH_SECRET="<output>"
+
+# Fill in the rest of .env.local:
+# GITHUB_CLIENT_ID=<from GitHub OAuth App>
+# GITHUB_CLIENT_SECRET=<from GitHub OAuth App>
+# NEXTAUTH_SECRET=<generated above>
+# NEXTAUTH_URL=http://localhost:3000
 
 # Run dev server
 bun dev
