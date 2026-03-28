@@ -126,4 +126,15 @@
   html {
     @apply font-sans;
     }
+  button,
+  a,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  select,
+  label[for],
+  summary {
+    cursor: pointer;
+    }
 }
