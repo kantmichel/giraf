@@ -1,0 +1,53 @@
+{
+  "css.lint.unknownAtRules": "ignore",
+  // "css.customData": [".vscode/css-custom-data.json"],
+  "workbench.colorTheme": "Catppuccin Latte", // light reloamode
+  // "workbench.colorTheme": "Catppuccin Frappé", // Grey mode
+  // "workbench.colorTheme": "Catppuccin Macchiato", // dark mode
+  // "workbench.colorTheme": "Catppuccin Mocha", // Darker mode
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#3b3b3b",
+    "titleBar.activeForeground": "#FFFFFF",
+    "titleBar.inactiveBackground": "#3b3b3b",
+    "titleBar.inactiveForeground": "#FFFFFF",
+    "statusBar.background": "#3b3b3b",
+    "statusBar.foreground": "#FFFFFF"
+  },
+
+  // TypeScript configuration
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+
+  // Editor configuration
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // File-specific formatters
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "material-icon-theme.folders.associations": {
+    // https://gist.github.com/rupeshtiwari/6860fbc1b3e2f6711c780070d6f59748
+    "deprecated-but-in-use": "Private",
+    "features": "Prisma",
+    "untitled": "Shared",
+    "components": "React-components",
+    "widgets": "Layout",
+    "boards": "Layout",
+    "analytics": "Mjml"
+  }
+}
