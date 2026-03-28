@@ -25,6 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useTriageCount } from "@/hooks/use-triage";
+import { usePriorityReview } from "@/hooks/use-priority-review";
 import { UserMenu } from "./user-menu";
 
 const triageNav = {
@@ -68,6 +69,14 @@ const managementNav = [
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { data: triageData } = useTriageCount();
+  const { data: reviewData } = usePriorityReview();
+
+  const hasReviewIssues = reviewData && (
+    reviewData.overBudget.critical.over > 0 ||
+    reviewData.overBudget.high.over > 0 ||
+    reviewData.overBudget.medium.over > 0 ||
+    reviewData.staleIssues.length > 0
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -105,6 +114,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href={triageNav.url}>
                     <triageNav.icon />
                     <span>{triageNav.title}</span>
+                    {hasReviewIssues && (
+                      <span className="size-2 rounded-full bg-yellow-500" title="Priority review needed" />
+                    )}
                   </Link>
                 </SidebarMenuButton>
                 {triageData && triageData.count > 0 && (
