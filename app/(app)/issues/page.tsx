@@ -1,20 +1,23 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { GitFork } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { IssueTable } from "@/components/issues/issue-table";
+import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
+import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
   const { filters, setFilters, clearFilters, hasActiveFilters } = useFilterState();
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading } = useIssues(filters);
+  const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
 
   if (!reposLoading && trackedRepos?.length === 0) {
     return (
@@ -32,17 +35,28 @@ function IssuesContent() {
   }
 
   return (
-    <div className="space-y-4">
-      <FilterBar
-        filters={filters}
-        onFilterChange={setFilters}
-        onClear={clearFilters}
-        hasActiveFilters={hasActiveFilters}
-        trackedRepos={trackedRepos ?? []}
-        allIssues={allIssues}
+    <>
+      <div className="space-y-4">
+        <FilterBar
+          filters={filters}
+          onFilterChange={setFilters}
+          onClear={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+          trackedRepos={trackedRepos ?? []}
+          allIssues={allIssues}
+        />
+        <IssueTable
+          issues={issues}
+          isLoading={issuesLoading || reposLoading}
+          onIssueClick={setSelectedIssue}
+        />
+      </div>
+      <IssueDetailSidebar
+        issue={selectedIssue}
+        open={selectedIssue !== null}
+        onClose={() => setSelectedIssue(null)}
       />
-      <IssueTable issues={issues} isLoading={issuesLoading || reposLoading} />
-    </div>
+    </>
   );
 }
 

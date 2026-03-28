@@ -1,5 +1,5 @@
 import type { Octokit } from "@octokit/rest";
-import type { NormalizedIssue, NormalizedUser, NormalizedLabel } from "@/types/github";
+import type { NormalizedIssue, NormalizedUser, NormalizedLabel, IssueComment } from "@/types/github";
 import { handleGitHubError } from "./errors";
 
 const STATUS_PREFIX = "status: ";
@@ -51,7 +51,7 @@ function normalizeAssignees(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeIssue(issue: any, owner: string, repo: string): NormalizedIssue {
+export function normalizeIssue(issue: any, owner: string, repo: string): NormalizedIssue {
   const labels = normalizeLabels(issue.labels || []);
   return {
     id: issue.id,
@@ -126,6 +126,54 @@ export async function updateIssue(
     });
 
     return normalizeIssue(data, owner, repo);
+  } catch (error) {
+    handleGitHubError(error);
+  }
+}
+
+export async function getIssue(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number
+): Promise<NormalizedIssue> {
+  try {
+    const { data } = await octokit.rest.issues.get({
+      owner,
+      repo,
+      issue_number: issueNumber,
+    });
+
+    return normalizeIssue(data, owner, repo);
+  } catch (error) {
+    handleGitHubError(error);
+  }
+}
+
+export async function listIssueComments(
+  octokit: Octokit,
+  owner: string,
+  repo: string,
+  issueNumber: number
+): Promise<IssueComment[]> {
+  try {
+    const comments = await octokit.paginate(
+      octokit.rest.issues.listComments,
+      { owner, repo, issue_number: issueNumber, per_page: 100 }
+    );
+
+    return comments.map((c) => ({
+      id: c.id,
+      body: c.body || "",
+      user: {
+        id: c.user?.id || 0,
+        login: c.user?.login || "unknown",
+        avatarUrl: c.user?.avatar_url || "",
+      },
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      htmlUrl: c.html_url,
+    }));
   } catch (error) {
     handleGitHubError(error);
   }

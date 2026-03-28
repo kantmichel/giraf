@@ -5,7 +5,7 @@
 <h1 align="center">Gira</h1>
 
 <p align="center">
-  <strong>GitHub + Jira</strong> — A unified issue management layer on top of GitHub.
+  <strong> A unified issue management layer on top of GitHub.</strong>
 </p>
 
 <p align="center">
@@ -28,15 +28,15 @@
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| Frontend | React 19, shadcn/ui (b0 preset), Tailwind CSS v4 |
-| State | TanStack Query v5 |
-| Data | GitHub REST API via @octokit/rest |
-| Database | SQLite via better-sqlite3 |
-| Auth | NextAuth.js v4 (GitHub OAuth) |
-| Runtime | Bun |
+| Layer     | Technology                                       |
+| --------- | ------------------------------------------------ |
+| Framework | Next.js 16 (App Router, Turbopack)               |
+| Frontend  | React 19, shadcn/ui (b0 preset), Tailwind CSS v4 |
+| State     | TanStack Query v5                                |
+| Data      | GitHub REST API via @octokit/rest                |
+| Database  | SQLite via better-sqlite3                        |
+| Auth      | NextAuth.js v4 (GitHub OAuth)                    |
+| Runtime   | Bun                                              |
 
 ## Getting Started
 

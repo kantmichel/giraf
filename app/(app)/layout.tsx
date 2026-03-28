@@ -18,7 +18,7 @@ export default async function AppLayout({
       <AppSidebar />
       <SidebarInset>
         <TopBar />
-        <div className="flex-1 overflow-auto p-4">
+        <div className="min-w-0 flex-1 overflow-auto p-4">
           {children}
         </div>
         <FooterBar />

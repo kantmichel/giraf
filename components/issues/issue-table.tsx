@@ -90,9 +90,10 @@ function compareValues(
 interface IssueTableProps {
   issues: NormalizedIssue[];
   isLoading: boolean;
+  onIssueClick?: (issue: NormalizedIssue) => void;
 }
 
-export function IssueTable({ issues, isLoading }: IssueTableProps) {
+export function IssueTable({ issues, isLoading, onIssueClick }: IssueTableProps) {
   const [sortColumn, setSortColumn] = useState<SortColumn>("updatedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -143,12 +144,12 @@ export function IssueTable({ issues, isLoading }: IssueTableProps) {
   }
 
   return (
-    <div className="rounded-lg border">
-      <Table>
+    <div className="overflow-x-auto rounded-lg border">
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
             <SortableHead column="status" className="w-24">Status</SortableHead>
-            <SortableHead column="title">Title</SortableHead>
+            <SortableHead column="title" className="min-w-[200px]">Title</SortableHead>
             <SortableHead column="repo" className="w-40">Repo</SortableHead>
             <SortableHead column="priority" className="w-24">Priority</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
@@ -172,15 +173,23 @@ export function IssueTable({ issues, isLoading }: IssueTableProps) {
                   <IssueStatusBadge status={issue.status} />
                 </TableCell>
                 <TableCell>
-                  <a
-                    href={issue.htmlUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex items-center gap-1 font-medium hover:underline"
-                  >
-                    <span className="line-clamp-1">{issue.title}</span>
-                    <ExternalLink className="hidden size-3 shrink-0 text-muted-foreground group-hover:inline" />
-                  </a>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="text-left font-medium hover:underline line-clamp-1"
+                      onClick={() => onIssueClick?.(issue)}
+                    >
+                      {issue.title}
+                    </button>
+                    <a
+                      href={issue.htmlUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-muted-foreground opacity-0 hover:opacity-100 group-hover:opacity-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="size-3" />
+                    </a>
+                  </div>
                   <span className="text-xs text-muted-foreground">#{issue.number}</span>
                 </TableCell>
                 <TableCell>

@@ -66,6 +66,15 @@ export interface RateLimitInfo {
   used: number;
 }
 
+export interface IssueComment {
+  id: number;
+  body: string;
+  user: NormalizedUser;
+  createdAt: string;
+  updatedAt: string;
+  htmlUrl: string;
+}
+
 export interface FilterConfig {
   repos: string[];
   assignees: string[];
