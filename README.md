@@ -67,6 +67,38 @@ bun dev
 
 Create a GitHub OAuth App at [github.com/settings/developers](https://github.com/settings/developers) with callback URL: `http://localhost:3000/api/auth/callback/github`
 
+## How It Works
+
+### Labels
+
+When you add a repository to Giraf, it automatically creates the following labels on that GitHub repo (if they don't already exist):
+
+**Status labels:**
+- `status: to do` — Backlog / not started
+- `status: doing` — In progress
+- `status: in review` — PR open, awaiting review
+- `status: done` — Completed
+
+**Priority labels:**
+- `priority: critical` — Drop everything
+- `priority: high` — Next up
+- `priority: medium` — Normal queue
+- `priority: low` — Nice to have
+
+These labels are how Giraf tracks status and priority — they live on GitHub, not in a separate database.
+
+### First-Time Setup: Triage
+
+When you first add repos, all existing open issues will appear in the **Triage inbox**. This is by design — each issue needs a conscious decision:
+
+- **Accept** — Assign a priority, optionally assign to yourself or a teammate. The issue moves to the backlog.
+- **Decline** — Close the issue on GitHub.
+- **Snooze** — Hide until a specific date or until new activity.
+
+Issues that already have both a status/priority label **and** an assignee are automatically skipped in triage — so if your team already uses these labels, most issues won't need re-triaging.
+
+After the initial triage, only truly new issues will appear in the inbox going forward.
+
 ## License
 
 AGPL-3.0
