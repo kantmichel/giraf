@@ -60,9 +60,14 @@ export function TrackedReposList() {
                     alt={repo.owner}
                     className="size-6 rounded-full"
                   />
-                  <span className="font-medium">
+                  <a
+                    href={`https://github.com/${repo.owner}/${repo.repo}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:underline"
+                  >
                     {repo.owner}/{repo.repo}
-                  </span>
+                  </a>
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground">

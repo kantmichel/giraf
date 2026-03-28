@@ -15,7 +15,11 @@ const pageNames: Record<string, string> = {
   "/help": "Help",
 };
 
-export function TopBar() {
+interface TopBarProps {
+  onOpenCommandPalette?: () => void;
+}
+
+export function TopBar({ onOpenCommandPalette }: TopBarProps) {
   const pathname = usePathname();
   const pageName = pageNames[pathname] || "Gira";
 
@@ -25,7 +29,12 @@ export function TopBar() {
       <Separator orientation="vertical" className="mr-2 h-4" />
       <h1 className="text-sm font-medium">{pageName}</h1>
       <div className="ml-auto">
-        <Button variant="outline" size="sm" className="h-8 gap-2 text-muted-foreground">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-2 text-muted-foreground"
+          onClick={onOpenCommandPalette}
+        >
           <Search className="size-4" />
           <span className="hidden sm:inline">Search...</span>
           <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:flex">

@@ -6,6 +6,7 @@ import {
   Clock,
   Tag,
   Users,
+  Keyboard,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -90,6 +91,20 @@ const concepts = [
       "Creating new issues happens on GitHub.",
       "Changes made in Gira (status, priority, assignees) are reflected on GitHub instantly.",
     ],
+  },
+  {
+    icon: Keyboard,
+    title: "Keyboard Shortcuts",
+    description:
+      "Gira is keyboard-first. You can navigate the entire app, open issues, and trigger actions without touching the mouse.",
+    details: [
+      "⌘K — Open the command palette to search issues, navigate, or toggle dark mode.",
+      "G then M — Go to My Issues. G then T — Triage. G then A — All Issues. G then S — Settings.",
+      "⌘B — Toggle the sidebar. D — Toggle dark mode.",
+      "? — Show the full shortcut cheatsheet.",
+      "Esc — Close the current sidebar, dialog, or palette.",
+    ],
+    tip: "Chord shortcuts (like G then M) have a 1-second window. Press G, then the second key within a second.",
   },
 ];
 
