@@ -29,6 +29,20 @@ export function KanbanBoard({ issues, isLoading, onIssueClick }: KanbanBoardProp
   const [unsetCollapsed, setUnsetCollapsed] = useState(false);
 
   const grouped = useMemo(() => {
+    const priorityRank: Record<string, number> = {
+      critical: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
+
+    const sortByPriority = (a: NormalizedIssue, b: NormalizedIssue) => {
+      const pa = a.priority ? (priorityRank[a.priority] ?? 99) : 99;
+      const pb = b.priority ? (priorityRank[b.priority] ?? 99) : 99;
+      if (pa !== pb) return pa - pb;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    };
+
     const groups: Record<string, NormalizedIssue[]> = {};
     for (const col of COLUMNS) {
       groups[col.id] = [];
@@ -43,6 +57,11 @@ export function KanbanBoard({ issues, isLoading, onIssueClick }: KanbanBoardProp
         groups["unset"].push(issue);
       }
     }
+
+    for (const key of Object.keys(groups)) {
+      groups[key].sort(sortByPriority);
+    }
+
     return groups;
   }, [issues]);
 
