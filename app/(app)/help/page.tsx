@@ -7,6 +7,8 @@ import {
   Tag,
   Users,
   Keyboard,
+  ArrowUp,
+  Settings,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -105,6 +107,34 @@ const concepts = [
       "Esc — Close the current sidebar, dialog, or palette.",
     ],
     tip: "Chord shortcuts (like G then M) have a 1-second window. Press G, then the second key within a second.",
+  },
+  {
+    icon: ArrowUp,
+    title: "Priority Escalation",
+    description:
+      "Giraf automatically promotes lower-priority issues when you complete higher-priority ones. This keeps your board balanced without manual re-prioritization.",
+    details: [
+      "Finish a HIGH task → the oldest MEDIUM in your to-do gets promoted to HIGH.",
+      "Finish a MEDIUM task → the oldest LOW gets promoted to MEDIUM.",
+      "Finish a LOW task → the oldest unset task gets promoted to LOW.",
+      "Critical tasks are never auto-promoted — critical is always intentional.",
+      "Promotions only happen for issues assigned to the same person.",
+    ],
+    tip: "You'll see a toast notification with a \"View\" button when an auto-promotion happens. All promotions can be undone from the Priority Review section.",
+  },
+  {
+    icon: Settings,
+    title: "Priority Budgets & Settings",
+    description:
+      "Set per-person limits for how many issues at each priority level someone should have. This helps keep workloads balanced and priorities meaningful.",
+    details: [
+      "Go to Settings → Priority Budgets. Select a user and set their max for critical, high, and medium. Everything else is automatically low.",
+      "When someone is over budget, a yellow dot appears next to Triage in the sidebar.",
+      "The Weekly Priority Review (top of the Triage page) shows: over-budget issues, auto-promoted issues this week, and stale high/critical tasks sitting in to-do for 14+ days.",
+      "You can click any issue in the review to open it, and click the priority badge to change it inline.",
+      "Undo any auto-promotion with one click from the review section.",
+    ],
+    tip: "Default budgets are 2 critical, 3 high, 5 medium. Adjust per person based on their role and capacity.",
   },
 ];
 
