@@ -78,7 +78,7 @@ export function IssuePriorityEditor({
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent"
               onClick={() => handleClear()}
             >
-              <Check className="size-3.5 opacity-0" />
+              <span className="size-3.5" />
               <span>Remove priority</span>
             </button>
           </>
