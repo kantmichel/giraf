@@ -26,6 +26,7 @@ interface KanbanBoardProps {
 export function KanbanBoard({ issues, isLoading, onIssueClick }: KanbanBoardProps) {
   const updateIssue = useUpdateIssue();
   const [activeIssue, setActiveIssue] = useState<NormalizedIssue | null>(null);
+  const [unsetCollapsed, setUnsetCollapsed] = useState(false);
 
   const grouped = useMemo(() => {
     const groups: Record<string, NormalizedIssue[]> = {};
@@ -102,13 +103,25 @@ export function KanbanBoard({ issues, isLoading, onIssueClick }: KanbanBoardProp
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
         {hasUnset && (
-          <KanbanColumn
-            id="unset"
-            title="Unset"
-            color="666666"
-            issues={grouped["unset"]}
-            onIssueClick={onIssueClick}
-          />
+          unsetCollapsed ? (
+            <button
+              className="flex h-fit shrink-0 items-center gap-1.5 rounded-lg border bg-muted/30 px-2 py-3 text-xs text-muted-foreground hover:bg-muted/50"
+              style={{ writingMode: "vertical-lr" }}
+              onClick={() => setUnsetCollapsed(false)}
+            >
+              <div className="size-2 rounded-full" style={{ backgroundColor: "#666666" }} />
+              Unset ({grouped["unset"].length})
+            </button>
+          ) : (
+            <KanbanColumn
+              id="unset"
+              title="Unset"
+              color="666666"
+              issues={grouped["unset"]}
+              onIssueClick={onIssueClick}
+              onCollapse={() => setUnsetCollapsed(true)}
+            />
+          )
         )}
         {COLUMNS.map((col) => (
           <KanbanColumn

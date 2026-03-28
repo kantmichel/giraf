@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
@@ -11,7 +12,6 @@ interface KanbanCardProps {
   issue: NormalizedIssue;
   onClick: () => void;
 }
-
 
 export function KanbanCard({ issue, onClick }: KanbanCardProps) {
   const {
@@ -47,29 +47,38 @@ export function KanbanCard({ issue, onClick }: KanbanCardProps) {
     <div
       ref={setNodeRef}
       style={{ ...style, ...borderStyle }}
-      {...attributes}
-      {...listeners}
-      className="cursor-grab rounded-md border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
-      onClick={onClick}
+      className="flex rounded-md border bg-card shadow-sm transition-shadow hover:shadow-md"
     >
-      <p className="line-clamp-2 text-sm font-medium leading-snug">
-        {issue.title}
-      </p>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
-          <IssueRepoBadge repo={issue.repo.fullName} />
+      <span
+        {...attributes}
+        {...listeners}
+        className="flex shrink-0 cursor-grab items-center px-1.5 text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+      >
+        <GripVertical className="size-3.5" />
+      </span>
+      <button
+        className="min-w-0 flex-1 p-3 pl-0 text-left"
+        onClick={onClick}
+      >
+        <p className="line-clamp-2 text-sm font-medium leading-snug">
+          {issue.title}
+        </p>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
+            <IssueRepoBadge repo={issue.repo.fullName} />
+          </div>
+          <div className="flex items-center gap-1">
+            <IssuePriorityBadge priority={issue.priority} />
+            {issue.assignees.slice(0, 2).map((a) => (
+              <Avatar key={a.id} className="size-5 border border-background">
+                <AvatarImage src={a.avatarUrl} alt={a.login} />
+                <AvatarFallback className="text-[8px]">{a.login[0]}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <IssuePriorityBadge priority={issue.priority} />
-          {issue.assignees.slice(0, 2).map((a) => (
-            <Avatar key={a.id} className="size-5 border border-background">
-              <AvatarImage src={a.avatarUrl} alt={a.login} />
-              <AvatarFallback className="text-[8px]">{a.login[0]}</AvatarFallback>
-            </Avatar>
-          ))}
-        </div>
-      </div>
+      </button>
     </div>
   );
 }

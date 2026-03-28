@@ -2,6 +2,7 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { PanelLeftClose } from "lucide-react";
 import { KanbanCard } from "./kanban-card";
 import { cn } from "@/lib/utils";
 import type { NormalizedIssue } from "@/types/github";
@@ -12,6 +13,7 @@ interface KanbanColumnProps {
   color: string;
   issues: NormalizedIssue[];
   onIssueClick: (issue: NormalizedIssue) => void;
+  onCollapse?: () => void;
 }
 
 export function KanbanColumn({
@@ -20,6 +22,7 @@ export function KanbanColumn({
   color,
   issues,
   onIssueClick,
+  onCollapse,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id });
   const issueIds = issues.map((i) => `${i.repo.fullName}:${i.number}`);
@@ -33,6 +36,14 @@ export function KanbanColumn({
         />
         <span className="text-sm font-semibold">{title}</span>
         <span className="text-xs text-muted-foreground">({issues.length})</span>
+        {onCollapse && (
+          <button
+            className="ml-auto text-muted-foreground/50 hover:text-muted-foreground"
+            onClick={onCollapse}
+          >
+            <PanelLeftClose className="size-3.5" />
+          </button>
+        )}
       </div>
       <div
         ref={setNodeRef}
