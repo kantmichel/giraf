@@ -75,11 +75,10 @@ export function IssuePriorityEditor({
           <>
             <div className="my-1 border-t" />
             <button
-              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent pl-[30px]"
               onClick={() => handleClear()}
             >
-              <span className="size-3.5" />
-              <span>Remove priority</span>
+              Remove priority
             </button>
           </>
         )}
