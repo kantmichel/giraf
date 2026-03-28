@@ -1,9 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
-import { X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
 import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
@@ -27,6 +36,9 @@ export function FilterBar({
   trackedRepos,
   allIssues,
 }: FilterBarProps) {
+  const isMobile = useIsMobile();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const repoOptions = useMemo(
     () =>
       trackedRepos.map((r) => ({
@@ -60,8 +72,16 @@ export function FilterBar({
     return options.sort((a, b) => a.label.localeCompare(b.label));
   }, [allIssues]);
 
-  return (
-    <div className="flex flex-wrap items-center gap-2">
+  const activeCount =
+    filters.repos.length +
+    filters.status.length +
+    filters.priority.length +
+    filters.assignees.length +
+    (filters.search ? 1 : 0) +
+    (filters.state !== "open" ? 1 : 0);
+
+  const filterControls = (
+    <>
       <FilterMultiSelect
         title="Repo"
         options={repoOptions}
@@ -109,6 +129,50 @@ export function FilterBar({
           Clear
         </Button>
       )}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5"
+            onClick={() => setMobileOpen(true)}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            Filters
+            {activeCount > 0 && (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                {activeCount}
+              </Badge>
+            )}
+          </Button>
+          <FilterSearch
+            value={filters.search}
+            onChange={(search) => onFilterChange({ search })}
+          />
+        </div>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent side="bottom" className="max-h-[70vh]">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+              <SheetDescription>Filter issues by repo, status, priority, and more.</SheetDescription>
+            </SheetHeader>
+            <div className="flex flex-wrap gap-2 py-4">
+              {filterControls}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {filterControls}
     </div>
   );
 }

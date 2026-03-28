@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TriageIssueCard } from "@/components/triage/triage-issue-card";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
@@ -9,9 +10,19 @@ import { useTriageIssues, useTriageAction } from "@/hooks/use-triage";
 import type { NormalizedIssue } from "@/types/github";
 
 export default function TriagePage() {
-  const { data, isLoading } = useTriageIssues();
+  const { data, isLoading, isError, refetch } = useTriageIssues();
   const triageAction = useTriageAction();
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <AlertTriangle className="size-8 text-destructive" />
+        <p className="mt-3 text-sm font-medium">Failed to load triage</p>
+        <Button size="sm" className="mt-4" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

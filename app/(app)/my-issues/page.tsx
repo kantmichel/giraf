@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MyIssuesSection } from "@/components/my-issues/my-issues-section";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
@@ -8,8 +10,18 @@ import { useMyIssues } from "@/hooks/use-my-issues";
 import type { NormalizedIssue } from "@/types/github";
 
 export default function MyIssuesPage() {
-  const { data, isLoading } = useMyIssues();
+  const { data, isLoading, isError, refetch } = useMyIssues();
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <AlertTriangle className="size-8 text-destructive" />
+        <p className="mt-3 text-sm font-medium">Failed to load your issues</p>
+        <Button size="sm" className="mt-4" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

@@ -28,9 +28,11 @@ export async function GET() {
     let totalIssues = 0;
     results.forEach((result) => {
       if (result.status === "fulfilled") {
-        totalIssues += result.value.filter(
-          (issue) => !triagedKeys.has(`${issue.repo.fullName}:${issue.number}`)
-        ).length;
+        totalIssues += result.value.filter((issue) => {
+          if (triagedKeys.has(`${issue.repo.fullName}:${issue.number}`)) return false;
+          if ((issue.status || issue.priority) && issue.assignees.length > 0) return false;
+          return true;
+        }).length;
       }
     });
 

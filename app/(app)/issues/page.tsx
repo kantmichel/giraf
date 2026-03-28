@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
-import { GitFork } from "lucide-react";
+import { GitFork, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
@@ -16,8 +16,23 @@ import type { NormalizedIssue } from "@/types/github";
 function IssuesContent() {
   const { filters, setFilters, clearFilters, hasActiveFilters } = useFilterState();
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
-  const { issues, allIssues, isLoading: issuesLoading } = useIssues(filters);
+  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+        <AlertTriangle className="size-8 text-destructive" />
+        <p className="mt-3 text-sm font-medium">Failed to load issues</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Check your connection and try again.
+        </p>
+        <Button size="sm" className="mt-4" onClick={() => refetch()}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   if (!reposLoading && trackedRepos?.length === 0) {
     return (
