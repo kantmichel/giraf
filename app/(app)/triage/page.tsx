@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CheckCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -20,6 +20,7 @@ export default function TriagePage() {
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [view, setView] = useState<"table" | "kanban">("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [reviewOpen, setReviewOpen] = useState(true);
 
   const selectedIssues = useMemo(() => {
     if (!data?.issues) return [];
@@ -48,9 +49,31 @@ export default function TriagePage() {
     );
   }
 
+  const reviewSection = (
+    <div className="rounded-lg border">
+      <button
+        className="flex w-full items-center gap-2 px-4 py-3 text-left"
+        onClick={() => setReviewOpen(!reviewOpen)}
+      >
+        {reviewOpen ? (
+          <ChevronDown className="size-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="size-4 text-muted-foreground" />
+        )}
+        <span className="text-sm font-semibold">Weekly Priority Review</span>
+      </button>
+      {reviewOpen && (
+        <div className="border-t px-4 py-4">
+          <PriorityReview />
+        </div>
+      )}
+    </div>
+  );
+
   if (!data?.issues.length) {
     return (
-      <>
+      <div className="space-y-6">
+        {reviewSection}
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <CheckCircle className="size-10 text-green-500" />
           <p className="mt-3 text-lg font-medium">All caught up!</p>
@@ -58,15 +81,15 @@ export default function TriagePage() {
             No issues to triage right now.
           </p>
         </div>
-        <Separator className="my-8" />
-        <PriorityReview />
-      </>
+      </div>
     );
   }
 
   return (
     <>
       <div className="space-y-4">
+        {reviewSection}
+
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">Triage Inbox</h2>
@@ -83,7 +106,6 @@ export default function TriagePage() {
           />
         </div>
 
-        {/* Bulk actions toolbar */}
         {view === "table" && selectedIssues.length > 0 && (
           <TriageBulkActions
             selectedIssues={selectedIssues}
@@ -139,9 +161,6 @@ export default function TriagePage() {
           </div>
         )}
       </div>
-
-      <Separator className="my-8" />
-      <PriorityReview />
 
       <IssueDetailSidebar
         issue={selectedIssue}
