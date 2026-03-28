@@ -4,7 +4,7 @@ import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { setTriageState } from "@/lib/db/triage";
 import { snoozeIssue } from "@/lib/db/snooze";
-import { updateIssue } from "@/lib/github/issues";
+import { getIssue, updateIssue } from "@/lib/github/issues";
 import { GitHubApiError } from "@/lib/github/errors";
 
 export async function POST(
@@ -26,15 +26,26 @@ export async function POST(
       case "accept": {
         setTriageState(workspace.id, repoFullName, issueNumber, "accepted", session.user.githubId);
 
-        const labels = ["status: to do"];
-        if (priority) labels.push(`priority: ${priority}`);
+        // Only update labels/assignees if explicitly provided
+        const updates: { labels?: string[]; assignees?: string[] } = {};
 
-        const updates: { labels: string[]; assignees?: string[] } = { labels };
+        if (priority) {
+          // Get current issue to preserve existing labels
+          const currentIssue = await getIssue(octokit, owner, repo, issueNumber);
+          const otherLabels = currentIssue.labels
+            .map((l) => l.name)
+            .filter((l) => !l.startsWith("priority: "));
+          updates.labels = [...otherLabels, `priority: ${priority}`];
+        }
+
         if (assignees && assignees.length > 0) {
           updates.assignees = assignees;
         }
 
-        await updateIssue(octokit, owner, repo, issueNumber, updates);
+        if (Object.keys(updates).length > 0) {
+          await updateIssue(octokit, owner, repo, issueNumber, updates);
+        }
+
         return NextResponse.json({ success: true, action: "accepted" });
       }
 
