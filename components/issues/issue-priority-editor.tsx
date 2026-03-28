@@ -38,6 +38,14 @@ export function IssuePriorityEditor({
     setOpen(false);
   }
 
+  function handleClear() {
+    const nonPriorityLabels = allLabels.filter(
+      (l) => !l.startsWith("priority: ")
+    );
+    onUpdate(nonPriorityLabels);
+    setOpen(false);
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -63,6 +71,18 @@ export function IssuePriorityEditor({
             <IssuePriorityBadge priority={p} />
           </button>
         ))}
+        {currentPriority && (
+          <>
+            <div className="my-1 border-t" />
+            <button
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent"
+              onClick={() => handleClear()}
+            >
+              <Check className="size-3.5 opacity-0" />
+              <span>Remove priority</span>
+            </button>
+          </>
+        )}
       </PopoverContent>
     </Popover>
   );
