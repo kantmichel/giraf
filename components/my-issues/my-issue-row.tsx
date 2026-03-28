@@ -1,5 +1,8 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
 import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
@@ -9,21 +12,56 @@ import type { NormalizedIssue } from "@/types/github";
 interface MyIssueRowProps {
   issue: NormalizedIssue;
   onClick: () => void;
+  draggable?: boolean;
 }
 
-export function MyIssueRow({ issue, onClick }: MyIssueRowProps) {
+export function MyIssueRow({ issue, onClick, draggable = false }: MyIssueRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `${issue.repo.fullName}:${issue.number}`,
+    disabled: !draggable,
+    data: { issue },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <button
-      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left hover:bg-accent"
-      onClick={onClick}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-1 rounded-md hover:bg-accent"
     >
-      <IssueStatusBadge status={issue.status} />
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-        {issue.title}
-      </span>
-      <IssueRepoBadge repo={issue.repo.fullName} />
-      <IssuePriorityBadge priority={issue.priority} />
-      <RelativeTime date={issue.updatedAt} />
-    </button>
+      {draggable && (
+        <span
+          {...attributes}
+          {...listeners}
+          className="flex shrink-0 items-center px-1 text-muted-foreground/50 hover:text-muted-foreground"
+        >
+          <GripVertical className="size-3.5" />
+        </span>
+      )}
+      <button
+        className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2 text-left"
+        onClick={onClick}
+      >
+        <IssueStatusBadge status={issue.status} />
+        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+          {issue.title}
+        </span>
+        <IssueRepoBadge repo={issue.repo.fullName} />
+        <IssuePriorityBadge priority={issue.priority} />
+        <RelativeTime date={issue.updatedAt} />
+      </button>
+    </div>
   );
 }

@@ -35,6 +35,7 @@ export function useUpdateIssue() {
     onSuccess: (_data, { owner, repo, number }) => {
       queryClient.invalidateQueries({ queryKey: ["issues"] });
       queryClient.invalidateQueries({ queryKey: ["issue", owner, repo, number] });
+      queryClient.invalidateQueries({ queryKey: ["my-issues"] });
       toast.success("Issue updated");
     },
     onError: (error) => {

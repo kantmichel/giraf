@@ -60,11 +60,11 @@ Create a GitHub OAuth App at [github.com/settings/developers](https://github.com
 - [x] **Stage 2** — App shell, sidebar, layout
 - [x] **Stage 3** — GitHub client, repo management
 - [x] **Stage 4** — Issues table view, filters, sorting
-- [ ] **Stage 5** — Issue detail sidebar, inline editing
-- [ ] **Stage 6** — Triage inbox, My Issues dashboard
-- [ ] **Stage 7** — Command palette, keyboard navigation
-- [ ] **Stage 8** — Responsive polish, error handling
+- [x] **Stage 5** — Issue detail sidebar, inline editing
+- [x] **Stage 6** — Triage inbox, My Issues dashboard
+- [x] **Stage 7** — Command palette, keyboard navigation
+- [x] **Stage 8** — Responsive polish, error handling
 
 ## License
 
-Private
+AGPL-3.0
