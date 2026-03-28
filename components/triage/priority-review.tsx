@@ -53,9 +53,9 @@ function OverBudgetSection({
       {open && (
         <div className="divide-y border-t">
           {issues.map((issue) => (
-            <div key={issue.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-              <span className="min-w-0 flex-1 truncate">{issue.title}</span>
-              <span className="shrink-0 text-xs text-muted-foreground">#{issue.number}</span>
+            <div key={issue.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-3 py-2 text-sm">
+              <span className="truncate">{issue.title}</span>
+              <span className="text-xs text-muted-foreground">#{issue.number}</span>
               <IssueRepoBadge repo={issue.repo.fullName} />
               <RelativeTime date={issue.createdAt} />
             </div>
