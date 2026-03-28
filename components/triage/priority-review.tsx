@@ -52,14 +52,18 @@ function OverBudgetSection({
       </button>
       {open && (
         <div className="divide-y border-t">
-          {issues.map((issue) => (
-            <div key={issue.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-3 px-3 py-2 text-sm">
-              <span className="truncate">{issue.title}</span>
-              <span className="text-xs text-muted-foreground">#{issue.number}</span>
-              <IssueRepoBadge repo={issue.repo.fullName} />
-              <RelativeTime date={issue.createdAt} />
-            </div>
-          ))}
+          <table className="w-full text-sm">
+            <tbody className="divide-y">
+              {issues.map((issue) => (
+                <tr key={issue.id}>
+                  <td className="max-w-0 truncate py-2 pl-3 pr-2">{issue.title}</td>
+                  <td className="whitespace-nowrap py-2 px-2 text-xs text-muted-foreground w-12">#{issue.number}</td>
+                  <td className="whitespace-nowrap py-2 px-2 w-28"><IssueRepoBadge repo={issue.repo.fullName} /></td>
+                  <td className="whitespace-nowrap py-2 pl-2 pr-3 text-right w-32"><RelativeTime date={issue.createdAt} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
