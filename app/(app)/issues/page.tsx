@@ -6,7 +6,9 @@ import { GitFork, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
+import { ViewSwitcher } from "@/components/filters/view-switcher";
 import { IssueTable } from "@/components/issues/issue-table";
+import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
@@ -14,7 +16,7 @@ import { useFilterState } from "@/hooks/use-filter-state";
 import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
-  const { filters, setFilters, clearFilters, hasActiveFilters } = useFilterState();
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView } = useFilterState();
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
@@ -49,22 +51,37 @@ function IssuesContent() {
     );
   }
 
+  const loading = issuesLoading || reposLoading;
+
   return (
     <>
       <div className="space-y-4">
-        <FilterBar
-          filters={filters}
-          onFilterChange={setFilters}
-          onClear={clearFilters}
-          hasActiveFilters={hasActiveFilters}
-          trackedRepos={trackedRepos ?? []}
-          allIssues={allIssues}
-        />
-        <IssueTable
-          issues={issues}
-          isLoading={issuesLoading || reposLoading}
-          onIssueClick={setSelectedIssue}
-        />
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <FilterBar
+              filters={filters}
+              onFilterChange={setFilters}
+              onClear={clearFilters}
+              hasActiveFilters={hasActiveFilters}
+              trackedRepos={trackedRepos ?? []}
+              allIssues={allIssues}
+            />
+          </div>
+          <ViewSwitcher view={view} onViewChange={setView} />
+        </div>
+        {view === "table" ? (
+          <IssueTable
+            issues={issues}
+            isLoading={loading}
+            onIssueClick={setSelectedIssue}
+          />
+        ) : (
+          <KanbanBoard
+            issues={issues}
+            isLoading={loading}
+            onIssueClick={setSelectedIssue}
+          />
+        )}
       </div>
       <IssueDetailSidebar
         issue={selectedIssue}

@@ -76,5 +76,21 @@ export function useFilterState() {
     [filters]
   );
 
-  return { filters, setFilters, clearFilters, hasActiveFilters, DEFAULT_FILTERS };
+  const view = (searchParams.get("view") as "table" | "kanban") || "table";
+
+  const setView = useCallback(
+    (v: "table" | "kanban") => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (v === "table") {
+        params.delete("view");
+      } else {
+        params.set("view", v);
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
+  );
+
+  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, DEFAULT_FILTERS };
 }

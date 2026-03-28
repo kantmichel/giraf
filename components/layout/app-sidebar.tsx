@@ -27,17 +27,18 @@ import {
 import { useTriageCount } from "@/hooks/use-triage";
 import { UserMenu } from "./user-menu";
 
+const triageNav = {
+  title: "Triage",
+  url: "/triage",
+  icon: Inbox,
+  badge: true,
+};
+
 const mainNav = [
   {
     title: "My Issues",
     url: "/my-issues",
     icon: ListTodo,
-  },
-  {
-    title: "Triage",
-    url: "/triage",
-    icon: Inbox,
-    badge: true,
   },
   {
     title: "All Issues",
@@ -91,6 +92,27 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === triageNav.url}
+                  tooltip={triageNav.title}
+                >
+                  <Link href={triageNav.url}>
+                    <triageNav.icon />
+                    <span>{triageNav.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+                {triageData && triageData.count > 0 && (
+                  <SidebarMenuBadge>{triageData.count}</SidebarMenuBadge>
+                )}
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
           <SidebarGroupLabel>Issues</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -106,9 +128,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
-                  {item.badge && triageData && triageData.count > 0 && (
-                    <SidebarMenuBadge>{triageData.count}</SidebarMenuBadge>
-                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>

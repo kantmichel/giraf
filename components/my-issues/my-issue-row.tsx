@@ -45,7 +45,7 @@ export function MyIssueRow({ issue, onClick, draggable = false }: MyIssueRowProp
         <span
           {...attributes}
           {...listeners}
-          className="flex shrink-0 items-center px-1 text-muted-foreground/50 hover:text-muted-foreground"
+          className="flex shrink-0 cursor-grab items-center px-1 text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
         >
           <GripVertical className="size-3.5" />
         </span>
