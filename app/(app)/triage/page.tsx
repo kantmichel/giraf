@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { ViewSwitcher } from "@/components/filters/view-switcher";
+import { FilterMultiSelect } from "@/components/filters/filter-multi-select";
 import { TriageIssueCard } from "@/components/triage/triage-issue-card";
 import { TriageTable } from "@/components/triage/triage-table";
 import { TriageBulkActions } from "@/components/triage/triage-bulk-actions";
@@ -21,13 +22,25 @@ export default function TriagePage() {
   const [view, setView] = useState<"table" | "kanban">("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reviewOpen, setReviewOpen] = useState(true);
+  const [repoFilter, setRepoFilter] = useState<string[]>([]);
+
+  const filteredIssues = useMemo(() => {
+    if (!data?.issues) return [];
+    if (repoFilter.length === 0) return data.issues;
+    return data.issues.filter((i) => repoFilter.includes(i.repo.fullName));
+  }, [data?.issues, repoFilter]);
+
+  const repoOptions = useMemo(() => {
+    if (!data?.issues) return [];
+    const repos = new Set(data.issues.map((i) => i.repo.fullName));
+    return [...repos].sort().map((r) => ({ value: r, label: r }));
+  }, [data?.issues]);
 
   const selectedIssues = useMemo(() => {
-    if (!data?.issues) return [];
-    return data.issues.filter(
+    return filteredIssues.filter(
       (i) => selectedIds.has(`${i.repo.fullName}:${i.number}`)
     );
-  }, [data?.issues, selectedIds]);
+  }, [filteredIssues, selectedIds]);
 
   if (isError) {
     return (
@@ -94,16 +107,24 @@ export default function TriagePage() {
           <div>
             <h2 className="text-lg font-semibold">Triage Inbox</h2>
             <p className="text-sm text-muted-foreground">
-              {data.count} issue{data.count !== 1 ? "s" : ""} to review
+              {filteredIssues.length} of {data.count} issue{data.count !== 1 ? "s" : ""} to review
             </p>
           </div>
-          <ViewSwitcher
-            view={view}
-            onViewChange={(v) => {
-              setView(v);
-              setSelectedIds(new Set());
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <FilterMultiSelect
+              title="Repo"
+              options={repoOptions}
+              selected={repoFilter}
+              onSelectionChange={setRepoFilter}
+            />
+            <ViewSwitcher
+              view={view}
+              onViewChange={(v) => {
+                setView(v);
+                setSelectedIds(new Set());
+              }}
+            />
+          </div>
         </div>
 
         {view === "table" && selectedIssues.length > 0 && (
@@ -115,14 +136,14 @@ export default function TriagePage() {
 
         {view === "table" ? (
           <TriageTable
-            issues={data.issues}
+            issues={filteredIssues}
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             onIssueClick={setSelectedIssue}
           />
         ) : (
           <div className="mx-auto max-w-2xl space-y-4">
-            {data.issues.map((issue) => (
+            {filteredIssues.map((issue) => (
               <TriageIssueCard
                 key={issue.id}
                 issue={issue}
