@@ -9,7 +9,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Gira</CardTitle>
+          <CardTitle className="text-2xl font-bold">Giraf</CardTitle>
           <CardDescription>
             Sign in with GitHub to manage your issues
           </CardDescription>

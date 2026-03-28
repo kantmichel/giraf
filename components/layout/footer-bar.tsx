@@ -71,7 +71,7 @@ export function FooterBar() {
           </TooltipTrigger>
           <TooltipContent side="top">Refresh all data</TooltipContent>
         </Tooltip>
-        <span>Gira v0.1.0</span>
+        <span>Giraf v0.1.0</span>
       </div>
     </footer>
   );

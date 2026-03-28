@@ -43,7 +43,7 @@ export function ShortcutHelp({ open, onOpenChange }: ShortcutHelpProps) {
         <DialogHeader>
           <DialogTitle>Keyboard Shortcuts</DialogTitle>
           <DialogDescription>
-            Navigate Gira without touching the mouse.
+            Navigate Giraf without touching the mouse.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">

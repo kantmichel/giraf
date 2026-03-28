@@ -126,7 +126,7 @@ export function RepoAddDialog() {
         <DialogHeader>
           <DialogTitle>Add Repositories</DialogTitle>
           <DialogDescription>
-            Select repositories to track in Gira. Status and priority labels
+            Select repositories to track in Giraf. Status and priority labels
             will be created automatically.
           </DialogDescription>
         </DialogHeader>

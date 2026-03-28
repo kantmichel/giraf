@@ -22,7 +22,7 @@ const concepts = [
       "Decline — \"Not worth doing.\" Closes the issue on GitHub.",
       "Snooze — \"Not now.\" Hides the issue until a specific date or until someone comments on it.",
     ],
-    tip: "When you first start using Gira, all existing issues will appear in Triage since none have been reviewed yet. After you process them, only truly new issues will show up.",
+    tip: "When you first start using Giraf, all existing issues will appear in Triage since none have been reviewed yet. After you process them, only truly new issues will show up.",
   },
   {
     icon: ListTodo,
@@ -52,22 +52,22 @@ const concepts = [
     icon: GitFork,
     title: "Tracked Repos",
     description:
-      "Gira only shows issues from repos you explicitly add. When you add a repo, Gira automatically creates status and priority labels on that GitHub repo if they don't exist.",
+      "Giraf only shows issues from repos you explicitly add. When you add a repo, Giraf automatically creates status and priority labels on that GitHub repo if they don't exist.",
     details: [
       "Status labels: to do, doing, in review, done.",
       "Priority labels: critical, high, medium, low.",
-      "Removing a repo from Gira doesn't delete the labels or affect the issues on GitHub.",
+      "Removing a repo from Giraf doesn't delete the labels or affect the issues on GitHub.",
     ],
   },
   {
     icon: Tag,
     title: "Status & Priority",
     description:
-      "Gira uses GitHub labels as its status and priority system. There's no separate database — the labels on the issue are the source of truth.",
+      "Giraf uses GitHub labels as its status and priority system. There's no separate database — the labels on the issue are the source of truth.",
     details: [
       "Status labels start with \"status: \" (e.g., status: doing).",
       "Priority labels start with \"priority: \" (e.g., priority: high).",
-      "Changing status or priority in Gira updates the labels on GitHub immediately.",
+      "Changing status or priority in Giraf updates the labels on GitHub immediately.",
     ],
   },
   {
@@ -85,18 +85,18 @@ const concepts = [
     icon: Users,
     title: "GitHub as Source of Truth",
     description:
-      "Gira is a viewing and management layer — GitHub remains the single source of truth. All issue data, comments, labels, and assignments live on GitHub.",
+      "Giraf is a viewing and management layer — GitHub remains the single source of truth. All issue data, comments, labels, and assignments live on GitHub.",
     details: [
-      "Commenting on issues happens on GitHub (Gira provides a \"Reply on GitHub\" link).",
+      "Commenting on issues happens on GitHub (Giraf provides a \"Reply on GitHub\" link).",
       "Creating new issues happens on GitHub.",
-      "Changes made in Gira (status, priority, assignees) are reflected on GitHub instantly.",
+      "Changes made in Giraf (status, priority, assignees) are reflected on GitHub instantly.",
     ],
   },
   {
     icon: Keyboard,
     title: "Keyboard Shortcuts",
     description:
-      "Gira is keyboard-first. You can navigate the entire app, open issues, and trigger actions without touching the mouse.",
+      "Giraf is keyboard-first. You can navigate the entire app, open issues, and trigger actions without touching the mouse.",
     details: [
       "⌘K — Open the command palette to search issues, navigate, or toggle dark mode.",
       "G then M — Go to My Issues. G then T — Triage. G then A — All Issues. G then S — Settings.",
@@ -112,9 +112,9 @@ export default function HelpPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <div>
-        <h2 className="text-2xl font-bold">How Gira Works</h2>
+        <h2 className="text-2xl font-bold">How Giraf Works</h2>
         <p className="mt-1 text-muted-foreground">
-          Gira aggregates GitHub issues across multiple repos into one interface.
+          Giraf aggregates GitHub issues across multiple repos into one interface.
           Here's how each part works.
         </p>
       </div>

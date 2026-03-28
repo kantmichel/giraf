@@ -17,7 +17,7 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Gira",
+  title: "Giraf",
   description: "GitHub issue aggregator",
 }
 

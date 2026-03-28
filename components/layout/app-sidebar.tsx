@@ -80,7 +80,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <span className="text-sm font-bold">G</span>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Gira</span>
+                  <span className="truncate font-semibold">Giraf</span>
                   <span className="truncate text-xs text-muted-foreground">
                     Issue Manager
                   </span>

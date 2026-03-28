@@ -21,7 +21,7 @@ interface TopBarProps {
 
 export function TopBar({ onOpenCommandPalette }: TopBarProps) {
   const pathname = usePathname();
-  const pageName = pageNames[pathname] || "Gira";
+  const pageName = pageNames[pathname] || "Giraf";
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">

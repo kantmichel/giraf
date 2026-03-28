@@ -10,7 +10,7 @@ export default function ReposPage() {
         <div>
           <h2 className="text-lg font-semibold">Tracked Repositories</h2>
           <p className="text-sm text-muted-foreground">
-            Manage which repositories are tracked in Gira.
+            Manage which repositories are tracked in Giraf.
           </p>
         </div>
         <RepoAddDialog />

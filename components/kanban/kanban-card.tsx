@@ -12,12 +12,6 @@ interface KanbanCardProps {
   onClick: () => void;
 }
 
-const priorityBorderColors: Record<string, string> = {
-  critical: "border-l-red-500",
-  high: "border-l-orange-500",
-  medium: "border-l-yellow-500",
-  low: "border-l-green-500",
-};
 
 export function KanbanCard({ issue, onClick }: KanbanCardProps) {
   const {
@@ -38,17 +32,24 @@ export function KanbanCard({ issue, onClick }: KanbanCardProps) {
     opacity: isDragging ? 0.4 : 1,
   };
 
-  const borderColor = issue.priority
-    ? priorityBorderColors[issue.priority] ?? "border-l-border"
-    : "border-l-border";
+  const priorityBorderColors: Record<string, string> = {
+    critical: "#b6020540",
+    high: "#d93f0b40",
+    medium: "#fbca0450",
+    low: "#0e8a1640",
+  };
+
+  const borderStyle = issue.priority
+    ? { borderColor: priorityBorderColors[issue.priority] }
+    : undefined;
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{ ...style, ...borderStyle }}
       {...attributes}
       {...listeners}
-      className={`cursor-grab rounded-md border border-l-[3px] ${borderColor} bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing`}
+      className="cursor-grab rounded-md border bg-card p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
       onClick={onClick}
     >
       <p className="line-clamp-2 text-sm font-medium leading-snug">

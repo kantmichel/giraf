@@ -51,7 +51,7 @@ export async function createLabel(
   }
 }
 
-export async function ensureGiraLabels(
+export async function ensureGirafLabels(
   octokit: Octokit,
   owner: string,
   repo: string

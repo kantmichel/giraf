@@ -44,6 +44,10 @@ export function useFilterState() {
       const next = { ...filters, ...updates };
       const params = new URLSearchParams();
 
+      // Preserve view param
+      const currentView = searchParams.get("view");
+      if (currentView) params.set("view", currentView);
+
       if (next.state !== "open") params.set("state", next.state);
       if (next.repos.length) params.set("repos", next.repos.join(","));
       if (next.status.length) params.set("status", next.status.join(","));
@@ -56,12 +60,14 @@ export function useFilterState() {
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [filters, router, pathname]
+    [filters, searchParams, router, pathname]
   );
 
   const clearFilters = useCallback(() => {
-    router.replace(pathname, { scroll: false });
-  }, [router, pathname]);
+    const currentView = searchParams.get("view");
+    const url = currentView ? `${pathname}?view=${currentView}` : pathname;
+    router.replace(url, { scroll: false });
+  }, [searchParams, router, pathname]);
 
   const hasActiveFilters = useMemo(
     () =>

@@ -34,7 +34,7 @@ export async function GET() {
     });
 
     const untriaged = allIssues.filter((issue) => {
-      // Already triaged in Gira
+      // Already triaged in Giraf
       if (triagedKeys.has(`${issue.repo.fullName}:${issue.number}`)) return false;
       // Auto-skip: has both a priority/status label AND an assignee
       if ((issue.status || issue.priority) && issue.assignees.length > 0) return false;

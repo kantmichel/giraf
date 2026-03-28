@@ -3,7 +3,7 @@ import { getRequiredSession } from "@/lib/auth";
 import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos, addTrackedRepo } from "@/lib/db/tracked-repos";
-import { ensureGiraLabels } from "@/lib/github/labels";
+import { ensureGirafLabels } from "@/lib/github/labels";
 import { GitHubApiError } from "@/lib/github/errors";
 
 export async function GET() {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     );
 
     // Auto-create status + priority labels
-    const labelResult = await ensureGiraLabels(octokit, owner, repo);
+    const labelResult = await ensureGirafLabels(octokit, owner, repo);
 
     return NextResponse.json({ repo: trackedRepo, labels: labelResult });
   } catch (error) {
