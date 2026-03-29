@@ -1,6 +1,7 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
+import pkg from "../../package.json";
 import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { useRateLimit } from "@/hooks/use-rate-limit";
@@ -71,7 +72,12 @@ export function FooterBar() {
           </TooltipTrigger>
           <TooltipContent side="top">Refresh all data</TooltipContent>
         </Tooltip>
-        <span>Giraf v0.1.0</span>
+        <span>
+          <a href="https://www.linkedin.com/in/michelkant/" target="_blank" className="hover:underline">Michel Kant</a>
+          {" | "}
+          <a href="https://flipstream.io?utm_source=giraf&utm_medium=open-source&utm_campaign=footer" target="_blank" className="hover:underline">Flipstream</a>
+        </span>
+        <span>Giraf v{pkg.version}</span>
       </div>
     </footer>
   );
