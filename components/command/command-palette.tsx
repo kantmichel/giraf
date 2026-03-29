@@ -40,6 +40,7 @@ interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onIssueSelect?: (issue: NormalizedIssue) => void;
+  issues?: NormalizedIssue[];
 }
 
 const navItems = [
@@ -51,10 +52,11 @@ const navItems = [
   { label: "Help", href: "/help", icon: HelpCircle, shortcut: "G H" },
 ];
 
-export function CommandPalette({ open, onOpenChange, onIssueSelect }: CommandPaletteProps) {
+export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issuesProp }: CommandPaletteProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const { issues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
+  const issues = issuesProp ?? allIssues;
 
   const navigate = useCallback(
     (href: string) => {
@@ -120,7 +122,7 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect }: CommandPal
                   {issues.slice(0, 50).map((issue) => (
                     <CommandItem
                       key={issue.id}
-                      value={`${issue.number} ${issue.title} ${issue.repo.name}`}
+                      value={`#${issue.number} ${issue.number} ${issue.title} ${issue.repo.name}`}
                       onSelect={() => {
                         onOpenChange(false);
                         if (onIssueSelect) {

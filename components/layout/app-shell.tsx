@@ -46,6 +46,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         open={commandOpen}
         onOpenChange={setCommandOpen}
         onIssueSelect={setPaletteIssue}
+        issues={allIssues}
       />
       <ShortcutHelp open={helpOpen} onOpenChange={setHelpOpen} />
       <IssueDetailSidebar
