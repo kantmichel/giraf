@@ -76,7 +76,13 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
         className="top-1/3 translate-y-0 overflow-hidden rounded-xl p-0"
         showCloseButton={false}
       >
-        <Command className="rounded-xl">
+        <Command
+          className="rounded-xl"
+          filter={(value, search) => {
+            if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+            return 0;
+          }}
+        >
           <CommandInput placeholder="Search issues, navigate, or run actions..." />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
@@ -119,7 +125,7 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
               <>
                 <CommandSeparator />
                 <CommandGroup heading="Issues">
-                  {issues.slice(0, 50).map((issue) => (
+                  {issues.map((issue) => (
                     <CommandItem
                       key={issue.id}
                       value={`#${issue.number} ${issue.number} ${issue.title} ${issue.repo.name}`}
