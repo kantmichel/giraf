@@ -18,6 +18,7 @@ export interface NormalizedIssue {
   createdBy: NormalizedUser;
   createdAt: string;
   updatedAt: string;
+  closedAt: string | null;
 }
 
 export interface NormalizedUser {

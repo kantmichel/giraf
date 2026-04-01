@@ -38,14 +38,19 @@ export async function PATCH(
     const workspace = getWorkspaceForUser(session.user.githubUsername);
     let updates = await request.json();
 
-    // Auto-add "status: done" when closing an issue
-    if (updates.state === "closed" && updates.labels) {
-      const hasStatusDone = updates.labels.some((l: string) => l === "status: done");
+    // Auto-set "status: done" when closing an issue
+    if (updates.state === "closed") {
+      let labels: string[] = updates.labels;
+      if (!labels) {
+        const current = await getIssue(octokit, owner, repo, parseInt(number, 10));
+        labels = current.labels.map((l: { name: string }) => l.name);
+      }
+      const hasStatusDone = labels.some((l: string) => l === "status: done");
       if (!hasStatusDone) {
         updates = {
           ...updates,
           labels: [
-            ...updates.labels.filter((l: string) => !l.startsWith("status: ")),
+            ...labels.filter((l: string) => !l.startsWith("status: ")),
             "status: done",
           ],
         };

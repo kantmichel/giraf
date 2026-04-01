@@ -4,7 +4,7 @@ import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { getSnoozedKeys, autoUnsnoozeExpired } from "@/lib/db/snooze";
-import { listRepoIssues } from "@/lib/github/issues";
+import { listRepoIssues, syncClosedStatusLabels } from "@/lib/github/issues";
 import type { NormalizedIssue } from "@/types/github";
 import { subDays } from "date-fns";
 
@@ -63,6 +63,9 @@ export async function GET() {
     closedResults.forEach((r) => {
       if (r.status === "fulfilled") closedIssues.push(...r.value);
     });
+
+    // Auto-fix closed issues missing "status: done" label (fire-and-forget)
+    syncClosedStatusLabels(octokit, closedIssues);
 
     // Filter to my issues
     const myOpen = openIssues.filter((i) =>

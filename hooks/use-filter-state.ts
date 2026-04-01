@@ -41,6 +41,13 @@ export function useFilterState() {
     [searchParams]
   );
 
+  const weekOffset = useMemo(() => {
+    const raw = searchParams.get("weekOffset");
+    if (!raw) return 0;
+    const parsed = parseInt(raw, 10);
+    return isNaN(parsed) ? 0 : Math.min(parsed, 0);
+  }, [searchParams]);
+
   const setFilters = useCallback(
     (updates: Partial<FilterConfig>) => {
       const next = { ...filters, ...updates };
@@ -60,10 +67,30 @@ export function useFilterState() {
       if (next.milestone.length) params.set("milestone", next.milestone.join(","));
       if (next.search) params.set("q", next.search);
 
+      // Preserve weekOffset when staying on closed, reset when switching away
+      if (next.state === "closed" && weekOffset !== 0) {
+        params.set("weekOffset", String(weekOffset));
+      }
+
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [filters, searchParams, router, pathname]
+    [filters, searchParams, router, pathname, weekOffset]
+  );
+
+  const setWeekOffset = useCallback(
+    (offset: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const clamped = Math.min(offset, 0);
+      if (clamped === 0) {
+        params.delete("weekOffset");
+      } else {
+        params.set("weekOffset", String(clamped));
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
   );
 
   const clearFilters = useCallback(() => {
@@ -102,5 +129,5 @@ export function useFilterState() {
     [searchParams, router, pathname]
   );
 
-  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, DEFAULT_FILTERS };
+  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, DEFAULT_FILTERS };
 }

@@ -15,6 +15,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
+import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from "@/lib/constants";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
@@ -26,6 +27,8 @@ interface FilterBarProps {
   hasActiveFilters: boolean;
   trackedRepos: TrackedRepoRow[];
   allIssues: NormalizedIssue[];
+  weekOffset?: number;
+  onWeekOffsetChange?: (offset: number) => void;
 }
 
 export function FilterBar({
@@ -35,6 +38,8 @@ export function FilterBar({
   hasActiveFilters,
   trackedRepos,
   allIssues,
+  weekOffset,
+  onWeekOffsetChange,
 }: FilterBarProps) {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -130,6 +135,9 @@ export function FilterBar({
           </Toggle>
         ))}
       </div>
+      {filters.state === "closed" && weekOffset !== undefined && onWeekOffsetChange && (
+        <WeekNavigator weekOffset={weekOffset} onWeekOffsetChange={onWeekOffsetChange} />
+      )}
       <FilterSearch
         value={filters.search}
         onChange={(search) => onFilterChange({ search })}

@@ -3,7 +3,7 @@ import { getRequiredSession } from "@/lib/auth";
 import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
-import { listRepoIssues } from "@/lib/github/issues";
+import { listRepoIssues, syncClosedStatusLabels } from "@/lib/github/issues";
 import type { NormalizedIssue } from "@/types/github";
 
 export async function GET(request: Request) {
@@ -23,11 +23,12 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const state = (searchParams.get("state") as "open" | "closed" | "all") || "open";
+    const since = searchParams.get("since") || undefined;
     const octokit = getOctokit(session.accessToken);
 
     const results = await Promise.allSettled(
       trackedRepos.map((repo) =>
-        listRepoIssues(octokit, repo.owner, repo.repo, { state })
+        listRepoIssues(octokit, repo.owner, repo.repo, { state, since })
       )
     );
 
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
         });
       }
     });
+
+    // Auto-fix closed issues missing "status: done" label (fire-and-forget)
+    syncClosedStatusLabels(octokit, issues);
 
     return NextResponse.json({
       issues,

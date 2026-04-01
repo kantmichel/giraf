@@ -4,6 +4,20 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.16.0",
+    title: "Closed Issues Browser",
+    description:
+      "Browse closed issues with a week-by-week navigator. Defaults to the current week with backward pagination. Includes a sortable Closed column and closed date in the issue detail sidebar.",
+  },
+  {
+    date: "2026-04-01",
+    version: "1.15.0",
+    title: "Auto Status Sync on Close",
+    description:
+      "Closing an issue now automatically sets its status label to 'done', whether closed from Giraf or directly on GitHub. Giraf detects externally closed issues on the next fetch and fixes the label.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.14.0",
     title: "Changelog Page",
     description:

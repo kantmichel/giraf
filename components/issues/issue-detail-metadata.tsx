@@ -112,6 +112,13 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
 
       <span className="text-muted-foreground">Updated</span>
       <RelativeTime date={issue.updatedAt} />
+
+      {issue.closedAt && (
+        <>
+          <span className="text-muted-foreground">Closed</span>
+          <RelativeTime date={issue.closedAt} />
+        </>
+      )}
     </div>
   );
 }

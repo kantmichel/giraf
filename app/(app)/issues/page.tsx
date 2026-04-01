@@ -17,9 +17,9 @@ import { useFilterState } from "@/hooks/use-filter-state";
 import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
-  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView } = useFilterState();
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState();
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
-  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters);
+  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -78,6 +78,8 @@ function IssuesContent() {
               hasActiveFilters={hasActiveFilters}
               trackedRepos={trackedRepos ?? []}
               allIssues={allIssues}
+              weekOffset={weekOffset}
+              onWeekOffsetChange={setWeekOffset}
             />
           </div>
           <ViewSwitcher view={view} onViewChange={setView} />
@@ -96,6 +98,7 @@ function IssuesContent() {
             selectable
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
+            showClosedColumn={filters.state === "closed"}
           />
         ) : (
           <KanbanBoard

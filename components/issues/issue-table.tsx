@@ -32,7 +32,8 @@ type SortColumn =
   | "effort"
   | "assignee"
   | "createdAt"
-  | "updatedAt";
+  | "updatedAt"
+  | "closedAt";
 
 type SortDirection = "asc" | "desc";
 
@@ -51,6 +52,7 @@ function compareValues(a: NormalizedIssue, b: NormalizedIssue, column: SortColum
     case "assignee": return (a.assignees[0]?.login ?? "\uffff").localeCompare(b.assignees[0]?.login ?? "\uffff") * dir;
     case "createdAt": return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir;
     case "updatedAt": return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * dir;
+    case "closedAt": return (new Date(a.closedAt ?? 0).getTime() - new Date(b.closedAt ?? 0).getTime()) * dir;
     default: return 0;
   }
 }
@@ -66,6 +68,7 @@ interface IssueTableProps {
   selectable?: boolean;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
+  showClosedColumn?: boolean;
 }
 
 export function IssueTable({
@@ -75,8 +78,9 @@ export function IssueTable({
   selectable = false,
   selectedIds,
   onSelectionChange,
+  showClosedColumn = false,
 }: IssueTableProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>("updatedAt");
+  const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "updatedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const updateIssue = useUpdateIssue();
   const { enabledSet: claudeEnabledRepos } = useClaudeEnabledRepos();
@@ -154,7 +158,7 @@ export function IssueTable({
     );
   }
 
-  const colCount = selectable ? 11 : 10;
+  const colCount = (selectable ? 11 : 10) + (showClosedColumn ? 1 : 0);
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -177,6 +181,9 @@ export function IssueTable({
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-28">Labels</TableHead>
             <TableHead className="w-36">AI</TableHead>
+            {showClosedColumn && (
+              <SortableHead column="closedAt" className="w-28">Closed</SortableHead>
+            )}
             <SortableHead column="createdAt" className="w-28">Created</SortableHead>
             <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
           </TableRow>
@@ -266,6 +273,11 @@ export function IssueTable({
                       claudeEnabled={claudeEnabledRepos.has(issue.repo.fullName)}
                     />
                   </TableCell>
+                  {showClosedColumn && (
+                    <TableCell>
+                      {issue.closedAt && <RelativeTime date={issue.closedAt} />}
+                    </TableCell>
+                  )}
                   <TableCell>
                     <RelativeTime date={issue.createdAt} />
                   </TableCell>

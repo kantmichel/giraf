@@ -90,6 +90,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
     },
     createdAt: issue.created_at,
     updatedAt: issue.updated_at,
+    closedAt: issue.closed_at || null,
   };
 }
 
@@ -101,6 +102,7 @@ export async function listRepoIssues(
     state?: "open" | "closed" | "all";
     labels?: string;
     per_page?: number;
+    since?: string;
   }
 ): Promise<NormalizedIssue[]> {
   try {
@@ -112,6 +114,7 @@ export async function listRepoIssues(
       per_page: options?.per_page ?? 100,
       sort: "updated",
       direction: "desc",
+      since: options?.since,
     });
 
     return data
@@ -165,6 +168,36 @@ export async function getIssue(
     return normalizeIssue(data, owner, repo);
   } catch (error) {
     handleGitHubError(error);
+  }
+}
+
+/**
+ * Fire-and-forget: for any closed issue that doesn't have "status: done",
+ * swap its status label to "status: done" on GitHub.
+ * Also patches the in-memory issues array so the response reflects the fix.
+ */
+export function syncClosedStatusLabels(
+  octokit: Octokit,
+  issues: NormalizedIssue[]
+): void {
+  for (const issue of issues) {
+    if (issue.state !== "closed" || issue.status === "done") continue;
+
+    const newLabels = [
+      ...issue.labels.filter((l) => !l.name.toLowerCase().startsWith(STATUS_PREFIX)),
+      { id: 0, name: "status: done", color: "0e8a16", description: null },
+    ];
+
+    // Patch in-memory so the response is already correct
+    issue.status = "done";
+    issue.labels = newLabels;
+
+    // Fire-and-forget GitHub update
+    updateIssue(octokit, issue.repo.owner, issue.repo.name, issue.number, {
+      labels: newLabels.map((l) => l.name),
+    }).catch(() => {
+      // Silently ignore — label sync is best-effort
+    });
   }
 }
 

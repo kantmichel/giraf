@@ -75,6 +75,15 @@ function applyUpdateToIssue(
 
   if (updates.state) {
     updated.state = updates.state;
+    // Mirror server-side: auto-set status to "done" when closing
+    if (updates.state === "closed" && updated.status !== "done") {
+      updated.status = "done";
+      updated.labels = [
+        ...updated.labels.filter((l) => !l.name.startsWith("status: ")),
+        { id: -999, name: "status: done", color: "0e8a16", description: null },
+      ];
+      updated.closedAt = updated.closedAt ?? new Date().toISOString();
+    }
   }
 
   if (updates.title) {
