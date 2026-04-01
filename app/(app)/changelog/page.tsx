@@ -1,7 +1,28 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 const entries = [
+  {
+    date: "2026-04-01",
+    version: "1.22.0",
+    title: "AI-workflow Status Alignment Automation",
+    description:
+      "Issue status now syncs automatically with Claude AI workflow state. Starting a review or work sets status to 'doing'. When review completes, status moves to 'in review'. Works for both actions triggered in Gira and labels set by GitHub Actions.",
+  },
+  {
+    date: "2026-04-01",
+    version: "1.21.0",
+    title: "AI Status in Issue Detail",
+    description:
+      "The issue detail sheet now shows the Claude AI workflow state with actionable controls — start a review or kick off work directly from the sidebar. Reviewed and Done states display as colored pills for quick scanning.",
+  },
+  {
+    date: "2026-04-01",
+    version: "1.20.0",
+    title: "Kanban Column Sorting",
+    description:
+      "Each kanban column now has sort controls — order by Priority, Repo, Effort, or Time. Time sorting is context-aware: Done sorts by closed date, To Do by created date, and Doing/In Review by last updated. Direction toggles between ascending and descending. Preferred column ordering can be saved in Settings.",
+  },
   {
     date: "2026-04-01",
     version: "1.19.0",
@@ -156,7 +177,7 @@ const entries = [
     description:
       "First official release — issue management, triage inbox, command palette, keyboard shortcuts, and the full issue detail sidebar.",
   },
-];
+]
 
 export default function ChangelogPage() {
   return (
@@ -194,5 +215,5 @@ export default function ChangelogPage() {
         ))}
       </div>
     </div>
-  );
+  )
 }
