@@ -131,6 +131,20 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 3,
+    description: "Claude-enabled repos",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE claude_enabled_repos (
+          workspace_id TEXT NOT NULL,
+          owner TEXT NOT NULL,
+          repo TEXT NOT NULL,
+          PRIMARY KEY(workspace_id, owner, repo)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

@@ -18,8 +18,10 @@ import { IssueEffortEditor } from "./issue-effort-editor";
 import { IssueAssigneesEditor } from "./issue-assignees-editor";
 import { IssueLabelsEditor } from "./issue-labels-editor";
 import { IssueRepoBadge } from "./issue-repo-badge";
+import { IssueAiStatus } from "./issue-ai-status";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
+import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
 import type { NormalizedIssue } from "@/types/github";
 
 type SortColumn =
@@ -77,6 +79,7 @@ export function IssueTable({
   const [sortColumn, setSortColumn] = useState<SortColumn>("updatedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const updateIssue = useUpdateIssue();
+  const { enabledSet: claudeEnabledRepos } = useClaudeEnabledRepos();
 
   const sortedIssues = useMemo(() => {
     return [...issues].sort((a, b) => compareValues(a, b, sortColumn, sortDirection));
@@ -151,7 +154,7 @@ export function IssueTable({
     );
   }
 
-  const colCount = selectable ? 10 : 9;
+  const colCount = selectable ? 11 : 10;
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -173,6 +176,7 @@ export function IssueTable({
             <SortableHead column="effort" className="w-24">Effort</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-28">Labels</TableHead>
+            <TableHead className="w-28">AI</TableHead>
             <SortableHead column="createdAt" className="w-28">Created</SortableHead>
             <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
           </TableRow>
@@ -254,6 +258,12 @@ export function IssueTable({
                       repo={issue.repo.name}
                       currentLabels={labels}
                       onUpdate={(l) => handleLabelsUpdate(issue, l)}
+                    />
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <IssueAiStatus
+                      issue={issue}
+                      claudeEnabled={claudeEnabledRepos.has(issue.repo.fullName)}
                     />
                   </TableCell>
                   <TableCell>

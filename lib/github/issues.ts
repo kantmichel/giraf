@@ -1,6 +1,7 @@
 import type { Octokit } from "@octokit/rest";
 import type { NormalizedIssue, NormalizedUser, NormalizedLabel, IssueComment } from "@/types/github";
 import { handleGitHubError } from "./errors";
+import { extractClaudeState } from "@/lib/claude-workflow";
 
 const STATUS_PREFIX = "status: ";
 const PRIORITY_PREFIX = "priority: ";
@@ -74,6 +75,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
     status: extractStatus(labels),
     priority: extractPriority(labels),
     effort: extractEffort(labels),
+    claudeState: extractClaudeState(labels),
     assignees: normalizeAssignees(issue.assignees),
     labels,
     milestone: issue.milestone

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { useLabels } from "@/hooks/use-labels";
+import { isClaudeLabel } from "@/lib/claude-workflow";
 import { cn } from "@/lib/utils";
 
 interface IssueLabelsEditorProps {
@@ -70,7 +71,7 @@ export function IssueLabelsEditor({
           <CommandList>
             <CommandEmpty>No labels found.</CommandEmpty>
             <CommandGroup>
-              {availableLabels?.map((l) => (
+              {availableLabels?.filter((l) => !isClaudeLabel(l.name)).map((l) => (
                 <CommandItem
                   key={l.id}
                   onSelect={() => handleToggle(l.name)}

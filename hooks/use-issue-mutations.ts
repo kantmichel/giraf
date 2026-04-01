@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { NormalizedIssue } from "@/types/github";
+import { extractClaudeState } from "@/lib/claude-workflow";
 
 interface UpdateIssueParams {
   owner: string;
@@ -61,6 +62,7 @@ function applyUpdateToIssue(
       effort: effortLabel
         ? (effortLabel.replace("effort: ", "") as NormalizedIssue["effort"])
         : null,
+      claudeState: extractClaudeState(newLabels),
     };
   }
 

@@ -11,7 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useIssues } from "@/hooks/use-issues";
+import { useTrackedRepos } from "@/hooks/use-tracked-repos";
+import { useClaudeEnabledRepos, useToggleClaudeRepo } from "@/hooks/use-claude-repos";
 import type { NormalizedUser } from "@/types/github";
 
 interface Budget {
@@ -205,6 +208,61 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ClaudeReposSettings />
     </div>
+  );
+}
+
+function ClaudeReposSettings() {
+  const { data: trackedRepos } = useTrackedRepos();
+  const { enabledSet, isLoading } = useClaudeEnabledRepos();
+  const toggleMutation = useToggleClaudeRepo();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <img src="/claudecode-color.svg" alt="Claude" className="size-5" />
+          Claude AI Workflows
+        </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Enable Claude AI review and work automation for repos that have the GitHub Actions workflows set up.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {trackedRepos?.map((repo) => {
+              const key = `${repo.owner}/${repo.repo}`;
+              const enabled = enabledSet.has(key);
+              return (
+                <label key={key} className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-accent">
+                  <Checkbox
+                    checked={enabled}
+                    onCheckedChange={(checked) =>
+                      toggleMutation.mutate({
+                        owner: repo.owner,
+                        repo: repo.repo,
+                        enabled: checked === true,
+                      })
+                    }
+                  />
+                  <span className="text-sm">{repo.owner}/{repo.repo}</span>
+                </label>
+              );
+            })}
+            {(!trackedRepos || trackedRepos.length === 0) && (
+              <p className="text-sm text-muted-foreground">No tracked repos. Add repos first.</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
