@@ -230,7 +230,8 @@ export function IssueTable({ issues, isLoading, onIssueClick }: IssueTableProps)
                       .filter(
                         (l) =>
                           !l.name.startsWith("status: ") &&
-                          !l.name.startsWith("priority: ")
+                          !l.name.startsWith("priority: ") &&
+                          !l.name.startsWith("effort: ")
                       )
                       .slice(0, 3)
                       .map((l) => (
