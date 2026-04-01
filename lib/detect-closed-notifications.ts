@@ -7,28 +7,30 @@ export function detectClosedNotifications(
   username: string,
   issues: NormalizedIssue[]
 ): void {
-  const watchedKeys = getWatchedKeys(workspaceId, username);
+  try {
+    const watchedKeys = getWatchedKeys(workspaceId, username);
 
-  const relevant = issues.filter((i) => {
-    if (i.state !== "closed") return false;
-    // Notify for issues user created, is assigned to, or is watching
-    return (
-      i.createdBy.login === username ||
-      i.assignees.some((a) => a.login === username) ||
-      watchedKeys.has(`${i.repo.fullName}:${i.number}`)
-    );
-  });
-
-  for (const issue of relevant) {
-    insertClosedNotification(workspaceId, {
-      repoFullName: issue.repo.fullName,
-      issueNumber: issue.number,
-      issueTitle: issue.title,
-      issueHtmlUrl: issue.htmlUrl,
-      closedAt: issue.closedAt || issue.updatedAt,
+    const relevant = issues.filter((i) => {
+      if (i.state !== "closed") return false;
+      return (
+        i.createdBy.login === username ||
+        i.assignees.some((a) => a.login === username) ||
+        watchedKeys.has(`${i.repo.fullName}:${i.number}`)
+      );
     });
-  }
 
-  // Prune old read notifications periodically
-  cleanupOldNotifications(workspaceId);
+    for (const issue of relevant) {
+      insertClosedNotification(workspaceId, {
+        repoFullName: issue.repo.fullName,
+        issueNumber: issue.number,
+        issueTitle: issue.title,
+        issueHtmlUrl: issue.htmlUrl,
+        closedAt: issue.closedAt || issue.updatedAt,
+      });
+    }
+
+    cleanupOldNotifications(workspaceId);
+  } catch {
+    // Notification detection is best-effort — don't break the main request
+  }
 }
