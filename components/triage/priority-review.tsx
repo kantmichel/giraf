@@ -206,36 +206,50 @@ export function PriorityReview({ onIssueClick }: { onIssueClick?: (issue: Normal
             Auto-promoted this week ({data.promotions.length})
           </h4>
           <div className="space-y-2">
-            {data.promotions.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center gap-3 rounded-lg border p-3 text-sm"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <IssueRepoBadge repo={p.repo_full_name} />
-                    <span className="font-medium">#{p.issue_number}</span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px] mr-1">{p.from_priority}</Badge>
-                    →
-                    <Badge variant="outline" className="text-[10px] ml-1">{p.to_priority}</Badge>
-                    {" "}triggered by #{p.triggered_by_issue}
-                    {" "}<RelativeTime date={p.promoted_at} />
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0 text-xs"
-                  onClick={() => undoMutation.mutate(p.id)}
-                  disabled={undoMutation.isPending}
+            {data.promotions.map((p) => {
+              const matchedIssue = allIssues.find(
+                (i) => i.repo.fullName === p.repo_full_name && i.number === p.issue_number
+              );
+              return (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-lg border p-3 text-sm"
                 >
-                  <Undo2 className="mr-1 size-3" />
-                  Undo
-                </Button>
-              </div>
-            ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <IssueRepoBadge repo={p.repo_full_name} />
+                      {matchedIssue ? (
+                        <button
+                          className="truncate font-medium text-left hover:underline"
+                          onClick={() => onIssueClick?.(matchedIssue)}
+                        >
+                          #{p.issue_number} {matchedIssue.title}
+                        </button>
+                      ) : (
+                        <span className="font-medium">#{p.issue_number}</span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-[10px] mr-1">{p.from_priority}</Badge>
+                      →
+                      <Badge variant="outline" className="text-[10px] ml-1">{p.to_priority}</Badge>
+                      {" "}triggered by #{p.triggered_by_issue}
+                      {" "}<RelativeTime date={p.promoted_at} />
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 text-xs"
+                    onClick={() => undoMutation.mutate(p.id)}
+                    disabled={undoMutation.isPending}
+                  >
+                    <Undo2 className="mr-1 size-3" />
+                    Undo
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -249,9 +263,10 @@ export function PriorityReview({ onIssueClick }: { onIssueClick?: (issue: Normal
           </h4>
           <div className="space-y-2">
             {data.staleIssues.map((issue) => (
-              <div
+              <button
                 key={issue.id}
-                className="flex items-center gap-3 rounded-lg border p-3 text-sm"
+                className="flex w-full items-center gap-3 rounded-lg border p-3 text-sm text-left hover:bg-accent/50"
+                onClick={() => onIssueClick?.(issue)}
               >
                 <IssuePriorityBadge priority={issue.priority} />
                 <div className="min-w-0 flex-1">
@@ -264,7 +279,7 @@ export function PriorityReview({ onIssueClick }: { onIssueClick?: (issue: Normal
                     </span>
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
