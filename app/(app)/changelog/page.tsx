@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.17.1",
+    title: "Auto Database Migrations",
+    description:
+      "Database schema updates now run automatically on server start. Pull the latest code, restart your dev server, and new tables are created — no manual SQL or seed scripts needed.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.17.0",
     title: "Closed Issue Notifications & Watch",
     description:
