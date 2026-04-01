@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { GitFork, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { ViewSwitcher } from "@/components/filters/view-switcher";
 import { IssueTable } from "@/components/issues/issue-table";
+import { IssueBulkActions } from "@/components/issues/issue-bulk-actions";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useIssues } from "@/hooks/use-issues";
@@ -20,6 +21,11 @@ function IssuesContent() {
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const selectedIssuesForBulk = useMemo(() => {
+    return issues.filter((i) => selectedIds.has(`${i.repo.fullName}:${i.number}`));
+  }, [issues, selectedIds]);
 
   // Sync selectedIssue with cache updates (optimistic updates)
   useEffect(() => {
@@ -76,11 +82,20 @@ function IssuesContent() {
           </div>
           <ViewSwitcher view={view} onViewChange={setView} />
         </div>
+        {view === "table" && selectedIssuesForBulk.length > 0 && (
+          <IssueBulkActions
+            selectedIssues={selectedIssuesForBulk}
+            onClearSelection={() => setSelectedIds(new Set())}
+          />
+        )}
         {view === "table" ? (
           <IssueTable
             issues={issues}
             isLoading={loading}
             onIssueClick={setSelectedIssue}
+            selectable
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
           />
         ) : (
           <KanbanBoard
