@@ -43,7 +43,7 @@ export function FilterBar({
     () =>
       trackedRepos.map((r) => ({
         value: `${r.owner}/${r.repo}`,
-        label: `${r.owner}/${r.repo}`,
+        label: r.repo,
       })),
     [trackedRepos]
   );
