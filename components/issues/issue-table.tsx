@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
 import {
   Table,
@@ -81,9 +81,15 @@ export function IssueTable({
   onSelectionChange,
   showClosedColumn = false,
 }: IssueTableProps) {
-  const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "updatedAt");
+  const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const updateIssue = useUpdateIssue();
+
+  // Reset sort when switching between open/closed views
+  useEffect(() => {
+    setSortColumn(showClosedColumn ? "closedAt" : "createdAt");
+    setSortDirection("desc");
+  }, [showClosedColumn]);
   const { enabledSet: claudeEnabledRepos } = useClaudeEnabledRepos();
 
   const sortedIssues = useMemo(() => {

@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.17.2",
+    title: "Improved Issue Sorting",
+    description:
+      "Closed issues now sort by closed date (most recent first). Open issues sort by creation date (newest first). Switching between open/closed views automatically resets the sort order.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.17.1",
     title: "Auto Database Migrations",
     description:

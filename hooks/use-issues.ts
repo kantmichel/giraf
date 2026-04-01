@@ -78,10 +78,14 @@ export function useIssues(filters: FilterConfig, weekOffset = 0) {
       issues = issues.filter((i) => i.title.toLowerCase().includes(q));
     }
 
-    // Sort by closedAt desc when viewing closed issues
+    // Sort closed issues by closedAt desc, open issues by createdAt desc
     if (filters.state === "closed") {
       issues = [...issues].sort((a, b) =>
         new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime()
+      );
+    } else {
+      issues = [...issues].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     }
 
