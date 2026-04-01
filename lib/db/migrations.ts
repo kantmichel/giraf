@@ -145,6 +145,35 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 4,
+    description: "Closed issue notifications and watched issues",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE closed_notifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workspace_id TEXT NOT NULL,
+          repo_full_name TEXT NOT NULL,
+          issue_number INTEGER NOT NULL,
+          issue_title TEXT NOT NULL,
+          issue_html_url TEXT NOT NULL,
+          closed_at TEXT NOT NULL,
+          read INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          UNIQUE(workspace_id, repo_full_name, issue_number)
+        );
+
+        CREATE TABLE watched_issues (
+          workspace_id TEXT NOT NULL,
+          github_username TEXT NOT NULL,
+          repo_full_name TEXT NOT NULL,
+          issue_number INTEGER NOT NULL,
+          watched_at TEXT DEFAULT (datetime('now')),
+          PRIMARY KEY(workspace_id, github_username, repo_full_name, issue_number)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

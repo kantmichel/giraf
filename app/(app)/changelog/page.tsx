@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.17.0",
+    title: "Closed Issue Notifications & Watch",
+    description:
+      "Get notified when issues you created, are assigned to, or are watching get closed. Bell icon in the top bar shows unread count with a popover listing details. Watch any issue via the eye icon in the issue detail sidebar.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.16.1",
     title: "Click-to-Copy Issue Link",
     description:

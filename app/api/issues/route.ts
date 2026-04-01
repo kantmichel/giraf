@@ -4,6 +4,7 @@ import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { listRepoIssues, syncClosedStatusLabels } from "@/lib/github/issues";
+import { detectClosedNotifications } from "@/lib/detect-closed-notifications";
 import type { NormalizedIssue } from "@/types/github";
 
 export async function GET(request: Request) {
@@ -49,6 +50,9 @@ export async function GET(request: Request) {
 
     // Auto-fix closed issues missing "status: done" label (fire-and-forget)
     syncClosedStatusLabels(octokit, issues);
+
+    // Detect newly closed issues for notifications
+    detectClosedNotifications(workspace.id, session.user.githubUsername, issues);
 
     return NextResponse.json({
       issues,

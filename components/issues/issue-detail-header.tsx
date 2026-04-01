@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, X, Copy, Check } from "lucide-react";
+import { ExternalLink, X, Copy, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useWatchStatus, useToggleWatch } from "@/hooks/use-watch-issue";
 import { IssueStatusBadge } from "./issue-status-badge";
 import { IssueRepoBadge } from "./issue-repo-badge";
 import type { NormalizedIssue } from "@/types/github";
@@ -15,6 +16,9 @@ interface IssueDetailHeaderProps {
 
 export function IssueDetailHeader({ issue, onClose }: IssueDetailHeaderProps) {
   const [copied, setCopied] = useState(false);
+  const { data: watchData } = useWatchStatus(issue.repo.owner, issue.repo.name, issue.number);
+  const toggleWatch = useToggleWatch(issue.repo.owner, issue.repo.name, issue.number);
+  const watching = watchData?.watching ?? false;
 
   function handleCopy() {
     const repoName = issue.repo.name;
@@ -36,6 +40,24 @@ export function IssueDetailHeader({ issue, onClose }: IssueDetailHeaderProps) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => toggleWatch.mutate()}
+              >
+                {watching ? (
+                  <Eye className="size-3.5 text-primary" />
+                ) : (
+                  <EyeOff className="size-3.5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {watching ? "Unwatch issue" : "Watch issue"}
+            </TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon-sm" onClick={handleCopy}>

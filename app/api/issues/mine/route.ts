@@ -5,6 +5,7 @@ import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { getSnoozedKeys, autoUnsnoozeExpired } from "@/lib/db/snooze";
 import { listRepoIssues, syncClosedStatusLabels } from "@/lib/github/issues";
+import { detectClosedNotifications } from "@/lib/detect-closed-notifications";
 import type { NormalizedIssue } from "@/types/github";
 import { subDays } from "date-fns";
 
@@ -66,6 +67,9 @@ export async function GET() {
 
     // Auto-fix closed issues missing "status: done" label (fire-and-forget)
     syncClosedStatusLabels(octokit, closedIssues);
+
+    // Detect newly closed issues for notifications
+    detectClosedNotifications(workspace.id, username, closedIssues);
 
     // Filter to my issues
     const myOpen = openIssues.filter((i) =>
