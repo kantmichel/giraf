@@ -8,6 +8,8 @@ import type { KanbanSortPrefs } from "@/lib/db/user-preferences";
 export interface UserPreferences {
   preferred_view: ViewType;
   kanban_sort: KanbanSortPrefs | null;
+  dashboard_metrics: string[] | null;
+  metrics_collapsed: boolean;
 }
 
 export function usePreferences() {

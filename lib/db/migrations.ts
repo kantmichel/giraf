@@ -197,6 +197,16 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 7,
+    description: "Dashboard metrics preferences",
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE user_preferences ADD COLUMN dashboard_metrics TEXT DEFAULT NULL;
+        ALTER TABLE user_preferences ADD COLUMN metrics_collapsed INTEGER DEFAULT 0;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

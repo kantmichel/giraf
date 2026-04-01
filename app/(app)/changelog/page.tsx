@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.23.0",
+    title: "Metrics Dashboard & Mini Metrics Row",
+    description:
+      "New dedicated Dashboard page with 17 metric cards — status distribution, priority breakdown, assignee workload, untriaged count, effort split, issues per repo, average issue age, oldest open issue, on-fire indicator, filter summary, closed over time, created vs closed trend, average resolution time, weekly comparison, closed by person, resolution time distribution, and daily streak. Toggle which metrics appear as a collapsible mini row above the issues page filters. Historical metrics (last 30 days) only fetch data when visible. Preferences for metric selection and collapse state persist across sessions.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.22.0",
     title: "AI-workflow Status Alignment Automation",
     description:

@@ -12,6 +12,7 @@ import { IssueBulkActions } from "@/components/issues/issue-bulk-actions";
 import { IssueListView } from "@/components/issues/issue-list-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
+import { MetricsMiniRow } from "@/components/metrics/metrics-mini-row";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
@@ -73,6 +74,7 @@ function IssuesContent() {
   return (
     <>
       <div className="space-y-4">
+        <MetricsMiniRow issues={issues} allIssues={allIssues} />
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <FilterBar
