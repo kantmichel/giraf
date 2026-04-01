@@ -97,7 +97,7 @@ export function IssueAiStatus({ issue, claudeEnabled }: IssueAiStatusProps) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
-            className="flex items-center gap-1.5 rounded-sm px-1 py-0.5 text-xs hover:bg-accent"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-1 py-0.5 text-xs hover:bg-accent"
             onClick={handleClick}
           >
             {display ? (

@@ -176,7 +176,7 @@ export function IssueTable({
             <SortableHead column="effort" className="w-24">Effort</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-28">Labels</TableHead>
-            <TableHead className="w-28">AI</TableHead>
+            <TableHead className="w-36">AI</TableHead>
             <SortableHead column="createdAt" className="w-28">Created</SortableHead>
             <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
           </TableRow>
