@@ -47,6 +47,7 @@ function applyUpdateToIssue(
 
     const statusLabel = updates.labels.find((l) => l.startsWith("status: "));
     const priorityLabel = updates.labels.find((l) => l.startsWith("priority: "));
+    const effortLabel = updates.labels.find((l) => l.startsWith("effort: "));
 
     updated = {
       ...updated,
@@ -56,6 +57,9 @@ function applyUpdateToIssue(
         : null,
       priority: priorityLabel
         ? (priorityLabel.replace("priority: ", "") as NormalizedIssue["priority"])
+        : null,
+      effort: effortLabel
+        ? (effortLabel.replace("effort: ", "") as NormalizedIssue["effort"])
         : null,
     };
   }

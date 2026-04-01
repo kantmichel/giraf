@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
+import { IssueEffortEditor } from "./issue-effort-editor";
 import { IssueAssigneesEditor } from "./issue-assignees-editor";
 import { IssueLabelsEditor } from "./issue-labels-editor";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
@@ -54,6 +55,9 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
   const currentPriority = localLabels
     .find((l) => l.startsWith("priority: "))
     ?.replace("priority: ", "") ?? null;
+  const currentEffort = localLabels
+    .find((l) => l.startsWith("effort: "))
+    ?.replace("effort: ", "") ?? null;
 
   return (
     <div className="grid grid-cols-[100px_1fr] gap-y-3 text-sm">
@@ -67,6 +71,13 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
       <span className="text-muted-foreground">Priority</span>
       <IssuePriorityEditor
         currentPriority={currentPriority}
+        allLabels={localLabels}
+        onUpdate={handleLabelsUpdate}
+      />
+
+      <span className="text-muted-foreground">Effort</span>
+      <IssueEffortEditor
+        currentEffort={currentEffort}
         allLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />

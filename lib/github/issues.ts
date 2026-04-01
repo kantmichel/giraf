@@ -4,9 +4,11 @@ import { handleGitHubError } from "./errors";
 
 const STATUS_PREFIX = "status: ";
 const PRIORITY_PREFIX = "priority: ";
+const EFFORT_PREFIX = "effort: ";
 
 type StatusValue = "to do" | "doing" | "in review" | "done";
 type PriorityValue = "critical" | "high" | "medium" | "low";
+type EffortValue = "low" | "medium" | "high";
 
 function extractStatus(labels: NormalizedLabel[]): StatusValue | null {
   const statusLabel = labels.find((l) =>
@@ -22,6 +24,14 @@ function extractPriority(labels: NormalizedLabel[]): PriorityValue | null {
   );
   if (!priorityLabel) return null;
   return priorityLabel.name.toLowerCase().replace(PRIORITY_PREFIX, "") as PriorityValue;
+}
+
+function extractEffort(labels: NormalizedLabel[]): EffortValue | null {
+  const effortLabel = labels.find((l) =>
+    l.name.toLowerCase().startsWith(EFFORT_PREFIX)
+  );
+  if (!effortLabel) return null;
+  return effortLabel.name.toLowerCase().replace(EFFORT_PREFIX, "") as EffortValue;
 }
 
 function normalizeLabels(
@@ -63,6 +73,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
     repo: { owner, name: repo, fullName: `${owner}/${repo}` },
     status: extractStatus(labels),
     priority: extractPriority(labels),
+    effort: extractEffort(labels),
     assignees: normalizeAssignees(issue.assignees),
     labels,
     milestone: issue.milestone

@@ -12,7 +12,14 @@ export const PRIORITY_LABELS = [
   { name: "priority: low", color: "0e8a16", description: "Nice to have" },
 ] as const;
 
-export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS];
+export const EFFORT_LABELS = [
+  { name: "effort: low", color: "0e8a16", description: "Quick task" },
+  { name: "effort: medium", color: "fbca04", description: "A few hours to a day" },
+  { name: "effort: high", color: "d93f0b", description: "Multiple days" },
+] as const;
+
+export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS, ...EFFORT_LABELS];
 
 export type StatusName = (typeof STATUS_LABELS)[number]["name"];
 export type PriorityName = (typeof PRIORITY_LABELS)[number]["name"];
+export type EffortName = (typeof EFFORT_LABELS)[number]["name"];

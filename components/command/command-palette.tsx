@@ -55,7 +55,7 @@ const navItems = [
 export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issuesProp }: CommandPaletteProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], milestone: [], search: "" });
   const issues = issuesProp ?? allIssues;
 
   const navigate = useCallback(

@@ -8,6 +8,7 @@ export interface NormalizedIssue {
   repo: { owner: string; name: string; fullName: string };
   status: "to do" | "doing" | "in review" | "done" | null;
   priority: "critical" | "high" | "medium" | "low" | null;
+  effort: "low" | "medium" | "high" | null;
   assignees: NormalizedUser[];
   labels: NormalizedLabel[];
   milestone: { title: string; number: number } | null;
@@ -81,6 +82,7 @@ export interface FilterConfig {
   assignees: string[];
   labels: string[];
   priority: string[];
+  effort: string[];
   status: string[];
   state: "open" | "closed" | "all";
   milestone: string[];

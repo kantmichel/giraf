@@ -37,6 +37,9 @@ export function useIssues(filters: FilterConfig) {
     if (filters.priority.length > 0) {
       issues = issues.filter((i) => i.priority && filters.priority.includes(i.priority));
     }
+    if (filters.effort.length > 0) {
+      issues = issues.filter((i) => i.effort && filters.effort.includes(i.effort));
+    }
     if (filters.assignees.length > 0) {
       issues = issues.filter((i) =>
         i.assignees.some((a) => filters.assignees.includes(a.login))

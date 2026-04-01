@@ -15,7 +15,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
-import { STATUS_LABELS, PRIORITY_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from "@/lib/constants";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -56,6 +56,11 @@ export function FilterBar({
   const priorityOptions = PRIORITY_LABELS.map((l) => ({
     value: l.name.replace("priority: ", ""),
     label: l.name.replace("priority: ", ""),
+  }));
+
+  const effortOptions = EFFORT_LABELS.map((l) => ({
+    value: l.name.replace("effort: ", ""),
+    label: l.name.replace("effort: ", ""),
   }));
 
   const assigneeOptions = useMemo(() => {
@@ -99,6 +104,12 @@ export function FilterBar({
         options={priorityOptions}
         selected={filters.priority}
         onSelectionChange={(priority) => onFilterChange({ priority })}
+      />
+      <FilterMultiSelect
+        title="Effort"
+        options={effortOptions}
+        selected={filters.effort}
+        onSelectionChange={(effort) => onFilterChange({ effort })}
       />
       <FilterMultiSelect
         title="Assignee"

@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [paletteIssue, setPaletteIssue] = useState<NormalizedIssue | null>(null);
 
   // Fetch issues so we can sync paletteIssue with cache updates
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], status: [], milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], milestone: [], search: "" });
 
   // Sync paletteIssue with cache (optimistic updates)
   useEffect(() => {

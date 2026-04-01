@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IssueStatusBadge } from "./issue-status-badge";
 import { IssuePriorityBadge } from "./issue-priority-badge";
+import { IssueEffortBadge } from "./issue-effort-badge";
 import { IssueRepoBadge } from "./issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import type { NormalizedIssue } from "@/types/github";
@@ -24,10 +25,10 @@ type SortColumn =
   | "title"
   | "repo"
   | "priority"
+  | "effort"
   | "assignee"
   | "createdAt"
-  | "updatedAt"
-  | "milestone";
+  | "updatedAt";
 
 type SortDirection = "asc" | "desc";
 
@@ -77,10 +78,11 @@ function compareValues(
       return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir;
     case "updatedAt":
       return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * dir;
-    case "milestone": {
-      const ma = a.milestone?.title ?? "\uffff";
-      const mb = b.milestone?.title ?? "\uffff";
-      return ma.localeCompare(mb) * dir;
+    case "effort": {
+      const EFFORT_RANK: Record<string, number> = { low: 0, medium: 1, high: 2 };
+      const ea = a.effort ? (EFFORT_RANK[a.effort] ?? 99) : 99;
+      const eb = b.effort ? (EFFORT_RANK[b.effort] ?? 99) : 99;
+      return (ea - eb) * dir;
     }
     default:
       return 0;
@@ -152,17 +154,17 @@ export function IssueTable({ issues, isLoading, onIssueClick }: IssueTableProps)
             <SortableHead column="title" className="min-w-[200px]">Title</SortableHead>
             <SortableHead column="repo" className="w-40">Repo</SortableHead>
             <SortableHead column="priority" className="w-24">Priority</SortableHead>
+            <SortableHead column="effort" className="w-24">Effort</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-40">Labels</TableHead>
             <SortableHead column="createdAt" className="w-28">Created</SortableHead>
             <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
-            <SortableHead column="milestone" className="w-28">Milestone</SortableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sortedIssues.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+              <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                 No issues found.
               </TableCell>
             </TableRow>
@@ -197,6 +199,9 @@ export function IssueTable({ issues, isLoading, onIssueClick }: IssueTableProps)
                 </TableCell>
                 <TableCell>
                   <IssuePriorityBadge priority={issue.priority} />
+                </TableCell>
+                <TableCell>
+                  <IssueEffortBadge effort={issue.effort} />
                 </TableCell>
                 <TableCell>
                   {issue.assignees.length > 0 ? (
@@ -248,11 +253,6 @@ export function IssueTable({ issues, isLoading, onIssueClick }: IssueTableProps)
                 </TableCell>
                 <TableCell>
                   <RelativeTime date={issue.updatedAt} />
-                </TableCell>
-                <TableCell>
-                  <span className="text-xs text-muted-foreground">
-                    {issue.milestone?.title ?? "—"}
-                  </span>
                 </TableCell>
               </TableRow>
             ))

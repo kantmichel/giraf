@@ -9,6 +9,7 @@ const DEFAULT_FILTERS: FilterConfig = {
   assignees: [],
   labels: [],
   priority: [],
+  effort: [],
   status: [],
   state: "open",
   milestone: [],
@@ -31,6 +32,7 @@ export function useFilterState() {
       assignees: parseArray(searchParams.get("assignees")),
       labels: parseArray(searchParams.get("labels")),
       priority: parseArray(searchParams.get("priority")),
+      effort: parseArray(searchParams.get("effort")),
       status: parseArray(searchParams.get("status")),
       state: (searchParams.get("state") as FilterConfig["state"]) || "open",
       milestone: parseArray(searchParams.get("milestone")),
@@ -52,6 +54,7 @@ export function useFilterState() {
       if (next.repos.length) params.set("repos", next.repos.join(","));
       if (next.status.length) params.set("status", next.status.join(","));
       if (next.priority.length) params.set("priority", next.priority.join(","));
+      if (next.effort.length) params.set("effort", next.effort.join(","));
       if (next.assignees.length) params.set("assignees", next.assignees.join(","));
       if (next.labels.length) params.set("labels", next.labels.join(","));
       if (next.milestone.length) params.set("milestone", next.milestone.join(","));
@@ -74,6 +77,7 @@ export function useFilterState() {
       filters.repos.length > 0 ||
       filters.status.length > 0 ||
       filters.priority.length > 0 ||
+      filters.effort.length > 0 ||
       filters.assignees.length > 0 ||
       filters.labels.length > 0 ||
       filters.milestone.length > 0 ||
