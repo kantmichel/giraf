@@ -22,6 +22,7 @@ import { IssueAiStatus } from "./issue-ai-status";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
+import { toast } from "sonner";
 import type { NormalizedIssue } from "@/types/github";
 
 type SortColumn =
@@ -232,7 +233,17 @@ export function IssueTable({
                         <ExternalLink className="size-3" />
                       </a>
                     </div>
-                    <span className="text-xs text-muted-foreground">#{issue.number}</span>
+                    <button
+                      className="text-xs text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigator.clipboard.writeText(issue.htmlUrl)
+                        toast.success("Link copied to clipboard")
+                      }}
+                      title="Copy link to clipboard"
+                    >
+                      #{issue.number}
+                    </button>
                   </TableCell>
                   <TableCell>
                     <IssueRepoBadge repo={issue.repo.fullName} />

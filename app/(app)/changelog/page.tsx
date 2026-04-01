@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.16.1",
+    title: "Click-to-Copy Issue Link",
+    description:
+      "Clicking the issue number (#) in the issues table now copies the GitHub issue URL to your clipboard with a toast confirmation.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.16.0",
     title: "Closed Issues Browser",
     description:
