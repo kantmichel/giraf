@@ -15,11 +15,12 @@ import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
-import { usePreferences } from "@/hooks/use-preferences";
+import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
   const { data: prefs } = usePreferences();
+  const updatePrefs = useUpdatePreferences();
   const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState(prefs?.preferred_view);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
@@ -114,6 +115,8 @@ function IssuesContent() {
             issues={issues}
             isLoading={loading}
             onIssueClick={setSelectedIssue}
+            initialSorts={prefs?.kanban_sort ?? undefined}
+            onSortsChange={(sorts) => updatePrefs.mutate({ kanban_sort: sorts })}
           />
         )}
       </div>

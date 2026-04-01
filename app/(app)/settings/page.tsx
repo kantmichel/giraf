@@ -13,12 +13,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { List, LayoutList, Columns3 } from "lucide-react";
+import { List, LayoutList, Columns3, ArrowDownNarrowWide, ArrowUpNarrowWide } from "lucide-react";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useClaudeEnabledRepos, useToggleClaudeRepo } from "@/hooks/use-claude-repos";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import type { ViewType } from "@/components/filters/view-switcher";
+import type { SortField, SortDirection, ColumnSort } from "@/components/kanban/kanban-board";
 import type { NormalizedUser } from "@/types/github";
 
 interface Budget {
@@ -279,9 +280,38 @@ const viewOptions: { value: ViewType; label: string; icon: typeof List }[] = [
   { value: "kanban", label: "Kanban", icon: Columns3 },
 ];
 
+const KANBAN_COLUMNS = [
+  { id: "to do", label: "To Do" },
+  { id: "doing", label: "Doing" },
+  { id: "in review", label: "In Review" },
+  { id: "done", label: "Done" },
+];
+
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: "priority", label: "Priority" },
+  { value: "repo", label: "Repo" },
+  { value: "effort", label: "Effort" },
+  { value: "time", label: "Time" },
+];
+
+const DEFAULT_COLUMN_SORT: ColumnSort = { field: "priority", direction: "desc" };
+
 function PreferredViewSettings() {
   const { data: prefs, isLoading } = usePreferences();
   const updatePrefs = useUpdatePreferences();
+
+  const selectedView = prefs?.preferred_view ?? "list";
+  const kanbanSort = prefs?.kanban_sort ?? {};
+
+  function getColumnSort(columnId: string): ColumnSort {
+    return kanbanSort[columnId] || DEFAULT_COLUMN_SORT;
+  }
+
+  function updateColumnSort(columnId: string, update: Partial<ColumnSort>) {
+    const current = getColumnSort(columnId);
+    const next = { ...kanbanSort, [columnId]: { ...current, ...update } };
+    updatePrefs.mutate({ kanban_sort: next });
+  }
 
   return (
     <Card>
@@ -291,29 +321,83 @@ function PreferredViewSettings() {
           Choose which view opens by default when navigating to Issues.
         </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {isLoading ? (
           <Skeleton className="h-10 w-64" />
         ) : (
-          <ToggleGroup
-            type="single"
-            value={prefs?.preferred_view ?? "list"}
-            onValueChange={(v) => {
-              if (v) updatePrefs.mutate({ preferred_view: v as ViewType });
-            }}
-            className="justify-start"
-          >
-            {viewOptions.map((opt) => (
-              <ToggleGroupItem
-                key={opt.value}
-                value={opt.value}
-                className="gap-2 px-4"
-              >
-                <opt.icon className="size-4" />
-                {opt.label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          <>
+            <ToggleGroup
+              type="single"
+              value={selectedView}
+              onValueChange={(v) => {
+                if (v) updatePrefs.mutate({ preferred_view: v as ViewType });
+              }}
+              className="justify-start"
+            >
+              {viewOptions.map((opt) => (
+                <ToggleGroupItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="gap-2 px-4"
+                >
+                  <opt.icon className="size-4" />
+                  {opt.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+
+            {selectedView === "kanban" && (
+              <div className="space-y-3 pt-2">
+                <Separator />
+                <div>
+                  <Label className="text-xs text-muted-foreground">Default column ordering</Label>
+                  <div className="mt-2 space-y-2">
+                    {KANBAN_COLUMNS.map((col) => {
+                      const sort = getColumnSort(col.id);
+                      return (
+                        <div key={col.id} className="flex items-center gap-3">
+                          <span className="w-20 text-xs font-medium">{col.label}</span>
+                          <ToggleGroup
+                            type="single"
+                            variant="outline"
+                            size="sm"
+                            value={sort.field}
+                            onValueChange={(v) => {
+                              if (v) updateColumnSort(col.id, { field: v as SortField });
+                            }}
+                          >
+                            {SORT_OPTIONS.map((opt) => (
+                              <ToggleGroupItem
+                                key={opt.value}
+                                value={opt.value}
+                                className="h-7 px-2 text-xs"
+                              >
+                                {opt.label}
+                              </ToggleGroupItem>
+                            ))}
+                          </ToggleGroup>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="size-7"
+                            onClick={() => updateColumnSort(col.id, {
+                              direction: sort.direction === "desc" ? "asc" : "desc",
+                            })}
+                          >
+                            {sort.direction === "desc" ? (
+                              <ArrowDownNarrowWide className="size-3.5" />
+                            ) : (
+                              <ArrowUpNarrowWide className="size-3.5" />
+                            )}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

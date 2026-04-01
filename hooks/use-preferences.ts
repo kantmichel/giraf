@@ -3,9 +3,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ViewType } from "@/components/filters/view-switcher";
+import type { KanbanSortPrefs } from "@/lib/db/user-preferences";
 
-interface UserPreferences {
+export interface UserPreferences {
   preferred_view: ViewType;
+  kanban_sort: KanbanSortPrefs | null;
 }
 
 export function usePreferences() {

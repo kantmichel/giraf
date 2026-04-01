@@ -2,10 +2,13 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { PanelLeftClose } from "lucide-react";
+import { PanelLeftClose, ArrowDownNarrowWide, ArrowUpNarrowWide } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
 import { KanbanCard } from "./kanban-card";
 import { cn } from "@/lib/utils";
 import type { NormalizedIssue } from "@/types/github";
+import type { SortField, SortDirection } from "./kanban-board";
 
 interface KanbanColumnProps {
   id: string;
@@ -14,7 +17,19 @@ interface KanbanColumnProps {
   issues: NormalizedIssue[];
   onIssueClick: (issue: NormalizedIssue) => void;
   onCollapse?: () => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortChange: (field: SortField) => void;
+  onDirectionToggle: () => void;
+  timeField?: string;
 }
+
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: "priority", label: "Pri" },
+  { value: "repo", label: "Repo" },
+  { value: "effort", label: "Eff" },
+  { value: "time", label: "Time" },
+];
 
 export function KanbanColumn({
   id,
@@ -23,13 +38,18 @@ export function KanbanColumn({
   issues,
   onIssueClick,
   onCollapse,
+  sortField,
+  sortDirection,
+  onSortChange,
+  onDirectionToggle,
+  timeField,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id });
   const issueIds = issues.map((i) => `${i.repo.fullName}:${i.number}`);
 
   return (
     <div className="flex min-w-[260px] flex-1 flex-col">
-      <div className="mb-2 flex items-center gap-2 px-1">
+      <div className="mb-1 flex items-center gap-2 px-1">
         <div
           className="size-2.5 rounded-full"
           style={{ backgroundColor: `#${color}` }}
@@ -44,6 +64,37 @@ export function KanbanColumn({
             <PanelLeftClose className="size-3.5" />
           </button>
         )}
+      </div>
+      <div className="mb-2 flex items-center gap-1 px-1">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={sortField}
+          onValueChange={(v) => v && onSortChange(v as SortField)}
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <ToggleGroupItem
+              key={opt.value}
+              value={opt.value}
+              className="h-6 px-1.5 text-[10px]"
+            >
+              {opt.label}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-6"
+          onClick={onDirectionToggle}
+        >
+          {sortDirection === "desc" ? (
+            <ArrowDownNarrowWide className="size-3" />
+          ) : (
+            <ArrowUpNarrowWide className="size-3" />
+          )}
+        </Button>
       </div>
       <div
         ref={setNodeRef}
@@ -70,6 +121,8 @@ export function KanbanColumn({
                 key={issue.id}
                 issue={issue}
                 onClick={() => onIssueClick(issue)}
+                showTime={sortField === "time"}
+                timeField={timeField}
               />
             ))
           )}

@@ -6,14 +6,17 @@ import { GripVertical } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
+import { RelativeTime } from "@/components/shared/relative-time";
 import type { NormalizedIssue } from "@/types/github";
 
 interface KanbanCardProps {
   issue: NormalizedIssue;
   onClick: () => void;
+  showTime?: boolean;
+  timeField?: string;
 }
 
-export function KanbanCard({ issue, onClick }: KanbanCardProps) {
+export function KanbanCard({ issue, onClick, showTime, timeField }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -78,6 +81,19 @@ export function KanbanCard({ issue, onClick }: KanbanCardProps) {
             ))}
           </div>
         </div>
+        {showTime && (() => {
+          const timeMap: Record<string, string | null> = {
+            createdAt: issue.createdAt,
+            updatedAt: issue.updatedAt,
+            closedAt: issue.closedAt,
+          };
+          const date = timeField ? timeMap[timeField] : null;
+          return date ? (
+            <div className="mt-1.5 text-[10px] text-muted-foreground">
+              <RelativeTime date={date} />
+            </div>
+          ) : null;
+        })()}
       </button>
     </div>
   );

@@ -188,6 +188,15 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 6,
+    description: "Kanban sort preferences",
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE user_preferences ADD COLUMN kanban_sort TEXT DEFAULT NULL;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
