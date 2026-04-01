@@ -57,6 +57,32 @@ export async function PATCH(
       }
     }
 
+    // Auto-sync status based on Claude AI state transitions
+    if (updates.labels) {
+      const labels: string[] = updates.labels;
+      const claudeStatusMap: Record<string, string> = {
+        "claude-review-start": "status: doing",
+        "claude-reviewing": "status: doing",
+        "claude-review-done": "status: in review",
+        "claude-start": "status: doing",
+        "claude-working": "status: doing",
+        "claude-done": "status: in review",
+      };
+      for (const label of labels) {
+        const targetStatus = claudeStatusMap[label];
+        if (targetStatus) {
+          updates = {
+            ...updates,
+            labels: [
+              ...labels.filter((l: string) => !l.startsWith("status: ")),
+              targetStatus,
+            ],
+          };
+          break;
+        }
+      }
+    }
+
     const issue = await updateIssue(octokit, owner, repo, parseInt(number, 10), updates);
 
     // Check for auto-promotion when status changes to "done"

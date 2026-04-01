@@ -8,7 +8,9 @@ import { IssuePriorityEditor } from "./issue-priority-editor";
 import { IssueEffortEditor } from "./issue-effort-editor";
 import { IssueAssigneesEditor } from "./issue-assignees-editor";
 import { IssueLabelsEditor } from "./issue-labels-editor";
+import { IssueAiStatus } from "./issue-ai-status";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
+import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
 import type { NormalizedIssue } from "@/types/github";
 
 interface IssueDetailMetadataProps {
@@ -17,6 +19,8 @@ interface IssueDetailMetadataProps {
 
 export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
   const updateMutation = useUpdateIssue();
+  const { enabledSet } = useClaudeEnabledRepos();
+  const claudeEnabled = enabledSet.has(issue.repo.fullName);
 
   // Local labels state to avoid race conditions between rapid edits
   // AND to trigger re-renders when labels change
@@ -81,6 +85,15 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
         allLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
+
+      {claudeEnabled && (
+        <>
+          <span className="text-muted-foreground">AI</span>
+          <div className="flex items-center justify-center">
+            <IssueAiStatus issue={issue} claudeEnabled={claudeEnabled} />
+          </div>
+        </>
+      )}
 
       <span className="text-muted-foreground">Assignees</span>
       <IssueAssigneesEditor

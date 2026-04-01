@@ -201,6 +201,50 @@ export function syncClosedStatusLabels(
   }
 }
 
+const CLAUDE_STATUS_MAP: Record<string, string> = {
+  "claude-review-start": "status: doing",
+  "claude-reviewing": "status: doing",
+  "claude-review-done": "status: in review",
+  "claude-start": "status: doing",
+  "claude-working": "status: doing",
+  "claude-done": "status: in review",
+};
+
+export function syncClaudeStatusLabels(
+  octokit: Octokit,
+  issues: NormalizedIssue[]
+): void {
+  for (const issue of issues) {
+    if (issue.state === "closed") continue;
+
+    let targetStatus: string | null = null;
+    for (const label of issue.labels) {
+      if (CLAUDE_STATUS_MAP[label.name]) {
+        targetStatus = CLAUDE_STATUS_MAP[label.name];
+        break;
+      }
+    }
+    if (!targetStatus) continue;
+
+    const currentStatusLabel = issue.status ? `status: ${issue.status}` : null;
+    if (currentStatusLabel === targetStatus) continue;
+
+    const newLabels = [
+      ...issue.labels.filter((l) => !l.name.toLowerCase().startsWith(STATUS_PREFIX)),
+      { id: 0, name: targetStatus, color: targetStatus === "status: doing" ? "fbca04" : "1d76db", description: null },
+    ];
+
+    // Patch in-memory so the response is already correct
+    issue.status = targetStatus.replace("status: ", "") as StatusValue;
+    issue.labels = newLabels;
+
+    // Fire-and-forget GitHub update
+    updateIssue(octokit, issue.repo.owner, issue.repo.name, issue.number, {
+      labels: newLabels.map((l) => l.name),
+    }).catch(() => {});
+  }
+}
+
 export async function listIssueComments(
   octokit: Octokit,
   owner: string,

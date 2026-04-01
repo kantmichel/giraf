@@ -35,14 +35,14 @@ function ClaudeIcon({ className }: { className?: string }) {
   );
 }
 
-const STATE_DISPLAY: Record<string, { icon: React.ReactNode; text: string; color: string }> = {
+const STATE_DISPLAY: Record<string, { icon: React.ReactNode; text: string; color: string; pill?: string }> = {
   "review-queued": { icon: <Loader2 className="size-3.5 animate-spin text-blue-500" />, text: "Review queued", color: "text-blue-500" },
   "reviewing": { icon: <ClaudeIcon className="size-3.5 animate-pulse" />, text: "Reviewing...", color: "text-amber-500" },
-  "review-done": { icon: <Check className="size-3.5 text-green-500" />, text: "Reviewed", color: "text-green-500" },
+  "review-done": { icon: <Check className="size-3 text-amber-700 dark:text-amber-300" />, text: "Reviewed", color: "text-amber-700 dark:text-amber-300", pill: "bg-amber-100 dark:bg-amber-900/40" },
   "review-failed": { icon: <X className="size-3.5 text-red-500" />, text: "Review failed", color: "text-red-500" },
   "work-queued": { icon: <Loader2 className="size-3.5 animate-spin text-blue-500" />, text: "Work queued", color: "text-blue-500" },
   "working": { icon: <ClaudeIcon className="size-3.5 animate-pulse" />, text: "Working...", color: "text-amber-500" },
-  "done": { icon: <Check className="size-3.5 text-green-500" />, text: "Done", color: "text-green-500" },
+  "done": { icon: <Check className="size-3 text-green-700 dark:text-green-300" />, text: "Done", color: "text-green-700 dark:text-green-300", pill: "bg-green-100 dark:bg-green-900/40" },
   "failed": { icon: <X className="size-3.5 text-red-500" />, text: "Failed", color: "text-red-500" },
 };
 
@@ -55,12 +55,14 @@ export function IssueAiStatus({ issue, claudeEnabled }: IssueAiStatusProps) {
   const display = state ? STATE_DISPLAY[state] : null;
 
   function handleStartReview() {
-    const currentLabels = issue.labels.map((l) => l.name);
+    const currentLabels = issue.labels
+      .map((l) => l.name)
+      .filter((l) => !l.startsWith("status: "));
     updateIssue.mutate({
       owner: issue.repo.owner,
       repo: issue.repo.name,
       number: issue.number,
-      updates: { labels: [...currentLabels, "claude-review-start"] },
+      updates: { labels: [...currentLabels, "claude-review-start", "status: doing"] },
     });
     setOpen(false);
   }
@@ -69,12 +71,12 @@ export function IssueAiStatus({ issue, claudeEnabled }: IssueAiStatusProps) {
     const toRemove = getLabelsToRemoveForAction("start-work");
     const currentLabels = issue.labels
       .map((l) => l.name)
-      .filter((l) => !toRemove.includes(l));
+      .filter((l) => !toRemove.includes(l) && !l.startsWith("status: "));
     updateIssue.mutate({
       owner: issue.repo.owner,
       repo: issue.repo.name,
       number: issue.number,
-      updates: { labels: [...currentLabels, "claude-start"] },
+      updates: { labels: [...currentLabels, "claude-start", "status: doing"] },
     });
     setOpen(false);
   }
@@ -97,7 +99,10 @@ export function IssueAiStatus({ issue, claudeEnabled }: IssueAiStatusProps) {
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <button
-            className="flex items-center gap-1.5 whitespace-nowrap rounded-sm px-1 py-0.5 text-xs hover:bg-accent"
+            className={cn(
+              "flex items-center gap-1 whitespace-nowrap rounded-full px-1 py-0.5 text-[11px] hover:bg-accent",
+              display?.pill && `${display.pill} px-1.5 py-0.5 font-medium`
+            )}
             onClick={handleClick}
           >
             {display ? (
