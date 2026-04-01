@@ -9,6 +9,7 @@ import {
   GitFork,
   Settings,
   HelpCircle,
+  ScrollText,
   Moon,
   Sun,
   ExternalLink,
@@ -50,6 +51,7 @@ const navItems = [
   { label: "Repos", href: "/repos", icon: GitFork },
   { label: "Settings", href: "/settings", icon: Settings, shortcut: "G S" },
   { label: "Help", href: "/help", icon: HelpCircle, shortcut: "G H" },
+  { label: "Changelog", href: "/changelog", icon: ScrollText, shortcut: "G C" },
 ];
 
 export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issuesProp }: CommandPaletteProps) {

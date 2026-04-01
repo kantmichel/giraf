@@ -27,6 +27,7 @@ const shortcuts = [
       { keys: ["G", "T"], description: "Go to Triage" },
       { keys: ["G", "S"], description: "Go to Settings" },
       { keys: ["G", "H"], description: "Go to Help" },
+      { keys: ["G", "C"], description: "Go to Changelog" },
     ],
   },
 ];

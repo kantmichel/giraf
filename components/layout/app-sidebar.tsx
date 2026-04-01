@@ -9,6 +9,7 @@ import {
   GitFork,
   Settings,
   HelpCircle,
+  ScrollText,
 } from "lucide-react";
 import {
   Sidebar,
@@ -63,6 +64,11 @@ const managementNav = [
     title: "Help",
     url: "/help",
     icon: HelpCircle,
+  },
+  {
+    title: "Changelog",
+    url: "/changelog",
+    icon: ScrollText,
   },
 ];
 

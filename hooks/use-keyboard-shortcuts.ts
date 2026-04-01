@@ -60,6 +60,7 @@ export function useKeyboardShortcuts({
           a: "/issues",
           s: "/settings",
           h: "/help",
+          c: "/changelog",
         };
         const route = chordRoutes[key];
         if (route) {
