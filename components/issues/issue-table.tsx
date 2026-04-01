@@ -16,6 +16,7 @@ import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
 import { IssueEffortEditor } from "./issue-effort-editor";
 import { IssueAssigneesEditor } from "./issue-assignees-editor";
+import { IssueLabelsEditor } from "./issue-labels-editor";
 import { IssueRepoBadge } from "./issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
@@ -150,7 +151,7 @@ export function IssueTable({
     );
   }
 
-  const colCount = selectable ? 9 : 8;
+  const colCount = selectable ? 10 : 9;
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -171,6 +172,7 @@ export function IssueTable({
             <SortableHead column="priority" className="w-24">Priority</SortableHead>
             <SortableHead column="effort" className="w-24">Effort</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
+            <TableHead className="w-28">Labels</TableHead>
             <SortableHead column="createdAt" className="w-28">Created</SortableHead>
             <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
           </TableRow>
@@ -244,6 +246,14 @@ export function IssueTable({
                       repo={issue.repo.name}
                       currentAssignees={issue.assignees}
                       onUpdate={(a) => handleAssigneesUpdate(issue, a)}
+                    />
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <IssueLabelsEditor
+                      owner={issue.repo.owner}
+                      repo={issue.repo.name}
+                      currentLabels={labels}
+                      onUpdate={(l) => handleLabelsUpdate(issue, l)}
                     />
                   </TableCell>
                   <TableCell>
