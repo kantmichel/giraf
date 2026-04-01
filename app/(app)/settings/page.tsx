@@ -12,9 +12,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { List, LayoutList, Columns3 } from "lucide-react";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useClaudeEnabledRepos, useToggleClaudeRepo } from "@/hooks/use-claude-repos";
+import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
+import type { ViewType } from "@/components/filters/view-switcher";
 import type { NormalizedUser } from "@/types/github";
 
 interface Budget {
@@ -209,6 +213,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      <PreferredViewSettings />
+
       <ClaudeReposSettings />
     </div>
   );
@@ -261,6 +267,53 @@ function ClaudeReposSettings() {
               <p className="text-sm text-muted-foreground">No tracked repos. Add repos first.</p>
             )}
           </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+const viewOptions: { value: ViewType; label: string; icon: typeof List }[] = [
+  { value: "list", label: "List", icon: List },
+  { value: "table", label: "Table", icon: LayoutList },
+  { value: "kanban", label: "Kanban", icon: Columns3 },
+];
+
+function PreferredViewSettings() {
+  const { data: prefs, isLoading } = usePreferences();
+  const updatePrefs = useUpdatePreferences();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Default View</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Choose which view opens by default when navigating to Issues.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <Skeleton className="h-10 w-64" />
+        ) : (
+          <ToggleGroup
+            type="single"
+            value={prefs?.preferred_view ?? "list"}
+            onValueChange={(v) => {
+              if (v) updatePrefs.mutate({ preferred_view: v as ViewType });
+            }}
+            className="justify-start"
+          >
+            {viewOptions.map((opt) => (
+              <ToggleGroupItem
+                key={opt.value}
+                value={opt.value}
+                className="gap-2 px-4"
+              >
+                <opt.icon className="size-4" />
+                {opt.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
         )}
       </CardContent>
     </Card>

@@ -3,19 +3,20 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import type { NormalizedIssue } from "@/types/github";
 
-interface MyIssueRowProps {
+interface IssueListRowProps {
   issue: NormalizedIssue;
   onClick: () => void;
   draggable?: boolean;
 }
 
-export function MyIssueRow({ issue, onClick, draggable = false }: MyIssueRowProps) {
+export function IssueListRow({ issue, onClick, draggable = false }: IssueListRowProps) {
   const {
     attributes,
     listeners,
@@ -55,6 +56,16 @@ export function MyIssueRow({ issue, onClick, draggable = false }: MyIssueRowProp
         onClick={onClick}
       >
         <IssueStatusBadge status={issue.status} />
+        {issue.assignees.length > 0 && (
+          <div className="flex -space-x-1.5">
+            {issue.assignees.map((a) => (
+              <Avatar key={a.login} className="size-5 border border-background">
+                <AvatarImage src={a.avatarUrl} alt={a.login} />
+                <AvatarFallback className="text-[8px]">{a.login[0]}</AvatarFallback>
+              </Avatar>
+            ))}
+          </div>
+        )}
         <span className="min-w-0 flex-1 truncate text-sm font-medium">
           {issue.title}
         </span>

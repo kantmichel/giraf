@@ -4,6 +4,20 @@ import { Separator } from "@/components/ui/separator";
 const entries = [
   {
     date: "2026-04-01",
+    version: "1.19.0",
+    title: "Unified Issues Page",
+    description:
+      "My Issues and All Issues are now one page. Clicking 'My Issues' in the sidebar filters to your assigned issues. A new list view groups issues by status (Active, Up Next, Done) with drag-and-drop between sections. Choose your default view (list, table, or kanban) in Settings.",
+  },
+  {
+    date: "2026-04-01",
+    version: "1.18.0",
+    title: "Triage Improvements",
+    description:
+      "Auto-promoted issues in triage now show the issue title and link to the detail sheet. Stale issues are also clickable. Recently completed issues sort by closed date.",
+  },
+  {
+    date: "2026-04-01",
     version: "1.17.2",
     title: "Improved Issue Sorting",
     description:

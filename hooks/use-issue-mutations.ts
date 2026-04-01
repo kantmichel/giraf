@@ -24,13 +24,6 @@ interface IssuesResponse {
   fetchedRepos: number;
 }
 
-interface MyIssuesResponse {
-  active: NormalizedIssue[];
-  upNext: NormalizedIssue[];
-  recentlyCompleted: NormalizedIssue[];
-  snoozed: NormalizedIssue[];
-}
-
 // Apply updates to a NormalizedIssue, recalculating status/priority from labels
 function applyUpdateToIssue(
   issue: NormalizedIssue,
@@ -108,49 +101,6 @@ function updateIssueInList(
   );
 }
 
-// Recalculate my-issues sections after an update
-function recalculateMyIssues(
-  data: MyIssuesResponse,
-  owner: string,
-  repo: string,
-  number: number,
-  updates: UpdateIssueParams["updates"]
-): MyIssuesResponse {
-  const allIssues = [
-    ...data.active,
-    ...data.upNext,
-    ...data.recentlyCompleted,
-    ...data.snoozed,
-  ];
-
-  const issue = allIssues.find(
-    (i) => i.repo.owner === owner && i.repo.name === repo && i.number === number
-  );
-  if (!issue) return data;
-
-  const updated = applyUpdateToIssue(issue, updates);
-  const issueKey = `${issue.repo.fullName}:${issue.number}`;
-  const remove = (arr: NormalizedIssue[]) =>
-    arr.filter((i) => `${i.repo.fullName}:${i.number}` !== issueKey);
-
-  const result = {
-    active: remove(data.active),
-    upNext: remove(data.upNext),
-    recentlyCompleted: remove(data.recentlyCompleted),
-    snoozed: remove(data.snoozed),
-  };
-
-  if (updated.state === "closed") {
-    result.recentlyCompleted = [updated, ...result.recentlyCompleted];
-  } else if (updated.status === "doing" || updated.status === "in review") {
-    result.active = [updated, ...result.active];
-  } else {
-    result.upNext = [updated, ...result.upNext];
-  }
-
-  return result;
-}
-
 interface TriageCache {
   issues: NormalizedIssue[];
   count: number;
@@ -158,7 +108,6 @@ interface TriageCache {
 
 interface MutationContext {
   previousIssues: Map<string, IssuesResponse | undefined>;
-  previousMyIssues: MyIssuesResponse | undefined;
   previousTriage: TriageCache | undefined;
 }
 
@@ -181,7 +130,6 @@ export function useUpdateIssue() {
     onMutate: async (params) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["issues"] });
-      await queryClient.cancelQueries({ queryKey: ["my-issues"] });
       await queryClient.cancelQueries({ queryKey: ["triage"] });
 
       // Snapshot all issues queries
@@ -197,15 +145,6 @@ export function useUpdateIssue() {
         }
       }
 
-      // Snapshot and update my-issues
-      const previousMyIssues = queryClient.getQueryData<MyIssuesResponse>(["my-issues"]);
-      if (previousMyIssues) {
-        queryClient.setQueryData<MyIssuesResponse>(
-          ["my-issues"],
-          recalculateMyIssues(previousMyIssues, params.owner, params.repo, params.number, params.updates)
-        );
-      }
-
       // Optimistically update triage cache
       const previousTriage = queryClient.getQueryData<TriageCache>(["triage"]);
       if (previousTriage) {
@@ -215,7 +154,7 @@ export function useUpdateIssue() {
         });
       }
 
-      return { previousIssues, previousMyIssues, previousTriage };
+      return { previousIssues, previousTriage };
     },
     onError: (_error, _params, context) => {
       // Rollback all caches
@@ -224,9 +163,6 @@ export function useUpdateIssue() {
           queryClient.setQueryData(JSON.parse(keyStr), data);
         }
       }
-      if (context?.previousMyIssues) {
-        queryClient.setQueryData(["my-issues"], context.previousMyIssues);
-      }
       if (context?.previousTriage) {
         queryClient.setQueryData(["triage"], context.previousTriage);
       }
@@ -234,7 +170,6 @@ export function useUpdateIssue() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["issues"] });
-      queryClient.invalidateQueries({ queryKey: ["my-issues"] });
       queryClient.invalidateQueries({ queryKey: ["triage"] });
     },
     onSuccess: (data: any, { owner, repo, number }) => {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   LayoutList,
   ListTodo,
@@ -44,18 +45,23 @@ interface CommandPaletteProps {
   issues?: NormalizedIssue[];
 }
 
-const navItems = [
-  { label: "All Issues", href: "/issues", icon: LayoutList, shortcut: "G A" },
-  { label: "My Issues", href: "/my-issues", icon: ListTodo, shortcut: "G M" },
-  { label: "Triage", href: "/triage", icon: Inbox, shortcut: "G T" },
-  { label: "Repos", href: "/repos", icon: GitFork },
-  { label: "Settings", href: "/settings", icon: Settings, shortcut: "G S" },
-  { label: "Help", href: "/help", icon: HelpCircle, shortcut: "G H" },
-  { label: "Changelog", href: "/changelog", icon: ScrollText, shortcut: "G C" },
-];
+function useNavItems() {
+  const { data: session } = useSession();
+  const username = session?.user?.githubUsername;
+  return useMemo(() => [
+    { label: "All Issues", href: "/issues", icon: LayoutList, shortcut: "G A" },
+    { label: "My Issues", href: username ? `/issues?assignees=${username}` : "/issues", icon: ListTodo, shortcut: "G M" },
+    { label: "Triage", href: "/triage", icon: Inbox, shortcut: "G T" },
+    { label: "Repos", href: "/repos", icon: GitFork },
+    { label: "Settings", href: "/settings", icon: Settings, shortcut: "G S" },
+    { label: "Help", href: "/help", icon: HelpCircle, shortcut: "G H" },
+    { label: "Changelog", href: "/changelog", icon: ScrollText, shortcut: "G C" },
+  ], [username]);
+}
 
 export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issuesProp }: CommandPaletteProps) {
   const router = useRouter();
+  const navItems = useNavItems();
   const { resolvedTheme, setTheme } = useTheme();
   const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], milestone: [], search: "" });
   const issues = issuesProp ?? allIssues;

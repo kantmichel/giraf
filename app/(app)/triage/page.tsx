@@ -5,7 +5,7 @@ import { CheckCircle, AlertTriangle, ChevronDown, ChevronRight } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { ViewSwitcher } from "@/components/filters/view-switcher";
+import { ViewSwitcher, type ViewType } from "@/components/filters/view-switcher";
 import { FilterMultiSelect } from "@/components/filters/filter-multi-select";
 import { TriageIssueCard } from "@/components/triage/triage-issue-card";
 import { TriageTable } from "@/components/triage/triage-table";
@@ -19,7 +19,7 @@ export default function TriagePage() {
   const { data, isLoading, isError, refetch } = useTriageIssues();
   const triageAction = useTriageAction();
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
-  const [view, setView] = useState<"table" | "kanban">("table");
+  const [view, setView] = useState<ViewType>("table");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [reviewOpen, setReviewOpen] = useState(true);
   const [repoFilter, setRepoFilter] = useState<string[]>([]);

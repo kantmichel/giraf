@@ -174,6 +174,20 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 5,
+    description: "User preferences",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE user_preferences (
+          workspace_id TEXT NOT NULL,
+          github_username TEXT NOT NULL,
+          preferred_view TEXT NOT NULL DEFAULT 'list' CHECK(preferred_view IN ('list', 'table', 'kanban')),
+          PRIMARY KEY(workspace_id, github_username)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

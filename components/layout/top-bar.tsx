@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "./notification-bell";
 
 const pageNames: Record<string, string> = {
-  "/issues": "All Issues",
-  "/my-issues": "My Issues",
+  "/issues": "Issues",
   "/triage": "Triage",
   "/repos": "Repos",
   "/settings": "Settings",

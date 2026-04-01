@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   Inbox,
   LayoutList,
@@ -36,18 +37,6 @@ const triageNav = {
   badge: true,
 };
 
-const mainNav = [
-  {
-    title: "My Issues",
-    url: "/my-issues",
-    icon: ListTodo,
-  },
-  {
-    title: "All Issues",
-    url: "/issues",
-    icon: LayoutList,
-  },
-];
 
 const managementNav = [
   {
@@ -74,8 +63,15 @@ const managementNav = [
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const { data: triageData } = useTriageCount();
   const { data: reviewData } = usePriorityReview();
+
+  const username = session?.user?.githubUsername;
+  const myIssuesUrl = username ? `/issues?assignees=${username}` : "/issues";
+  const assigneesParam = searchParams.get("assignees");
+  const isMyIssuesActive = pathname === "/issues" && assigneesParam === username;
 
   const hasReviewIssues = reviewData && (
     reviewData.overBudget.critical.over > 0 ||
@@ -140,20 +136,30 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Issues</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNav.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.url}
-                    tooltip={item.title}
-                  >
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isMyIssuesActive}
+                  tooltip="My Issues"
+                >
+                  <Link href={myIssuesUrl}>
+                    <ListTodo />
+                    <span>My Issues</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/issues" && !isMyIssuesActive}
+                  tooltip="All Issues"
+                >
+                  <Link href="/issues">
+                    <LayoutList />
+                    <span>All Issues</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

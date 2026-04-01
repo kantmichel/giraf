@@ -81,7 +81,6 @@ export function useBulkTriageAction() {
       queryClient.invalidateQueries({ queryKey: ["triage"] });
       queryClient.invalidateQueries({ queryKey: ["triage-count"] });
       queryClient.invalidateQueries({ queryKey: ["issues"] });
-      queryClient.invalidateQueries({ queryKey: ["my-issues"] });
 
       const messages = {
         accept: `Accepted ${data.succeeded} issue${data.succeeded !== 1 ? "s" : ""}`,

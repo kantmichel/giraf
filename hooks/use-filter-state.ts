@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterConfig } from "@/types/github";
+import type { ViewType } from "@/components/filters/view-switcher";
 
 const DEFAULT_FILTERS: FilterConfig = {
   repos: [],
@@ -21,7 +22,7 @@ function parseArray(value: string | null): string[] {
   return value.split(",").filter(Boolean);
 }
 
-export function useFilterState() {
+export function useFilterState(defaultView: ViewType = "list") {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -113,12 +114,12 @@ export function useFilterState() {
     [filters]
   );
 
-  const view = (searchParams.get("view") as "table" | "kanban") || "table";
+  const view = (searchParams.get("view") as ViewType) || defaultView;
 
   const setView = useCallback(
-    (v: "table" | "kanban") => {
+    (v: ViewType) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (v === "table") {
+      if (v === defaultView) {
         params.delete("view");
       } else {
         params.set("view", v);
@@ -126,7 +127,7 @@ export function useFilterState() {
       const qs = params.toString();
       router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
-    [searchParams, router, pathname]
+    [searchParams, router, pathname, defaultView]
   );
 
   return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, DEFAULT_FILTERS };

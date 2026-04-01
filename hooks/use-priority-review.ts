@@ -45,7 +45,6 @@ export function useUndoPromotion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["priority-review"] });
       queryClient.invalidateQueries({ queryKey: ["issues"] });
-      queryClient.invalidateQueries({ queryKey: ["my-issues"] });
       toast.success("Promotion reverted");
     },
     onError: (error: Error) => {

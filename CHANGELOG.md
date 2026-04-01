@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.1.0 (2026-04-01)
+
+
+### Features
+
+* unified issues page — My Issues and All Issues merged into a single view with automatic assignee filtering
+* list view added as third view option alongside table and kanban, with drag-and-drop between status sections
+* preferred default view setting — choose list, table, or kanban as your default in Settings
+* assignee avatars shown in list view rows
+
+
+### Bug Fixes
+
+* recently completed issues now sort by closed date instead of last updated date
+* triage auto-promoted issues show title and are clickable to open in detail sheet
+* triage stale issues are now clickable to open in detail sheet
+
+
 ## 1.0.0 (2026-03-28)
 
 

@@ -9,15 +9,18 @@ import { FilterBar } from "@/components/filters/filter-bar";
 import { ViewSwitcher } from "@/components/filters/view-switcher";
 import { IssueTable } from "@/components/issues/issue-table";
 import { IssueBulkActions } from "@/components/issues/issue-bulk-actions";
+import { IssueListView } from "@/components/issues/issue-list-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { IssueDetailSidebar } from "@/components/issues/issue-detail-sidebar";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
+import { usePreferences } from "@/hooks/use-preferences";
 import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
-  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState();
+  const { data: prefs } = usePreferences();
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState(prefs?.preferred_view);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
@@ -90,7 +93,13 @@ function IssuesContent() {
             onClearSelection={() => setSelectedIds(new Set())}
           />
         )}
-        {view === "table" ? (
+        {view === "list" ? (
+          <IssueListView
+            issues={issues}
+            isLoading={loading}
+            onIssueClick={setSelectedIssue}
+          />
+        ) : view === "table" ? (
           <IssueTable
             issues={issues}
             isLoading={loading}

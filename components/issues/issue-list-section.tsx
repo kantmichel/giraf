@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { MyIssueRow } from "./my-issue-row";
+import { IssueListRow } from "./issue-list-row";
 import { cn } from "@/lib/utils";
 import type { NormalizedIssue } from "@/types/github";
 
-interface MyIssuesSectionProps {
+interface IssueListSectionProps {
   id: string;
   title: string;
   issues: NormalizedIssue[];
@@ -17,14 +17,14 @@ interface MyIssuesSectionProps {
   onIssueClick: (issue: NormalizedIssue) => void;
 }
 
-export function MyIssuesSection({
+export function IssueListSection({
   id,
   title,
   issues,
   defaultOpen = true,
   droppable = false,
   onIssueClick,
-}: MyIssuesSectionProps) {
+}: IssueListSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const { isOver, setNodeRef } = useDroppable({ id, disabled: !droppable });
 
@@ -62,7 +62,7 @@ export function MyIssuesSection({
               </p>
             ) : (
               issues.map((issue) => (
-                <MyIssueRow
+                <IssueListRow
                   key={issue.id}
                   issue={issue}
                   onClick={() => onIssueClick(issue)}

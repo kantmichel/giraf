@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -23,6 +24,8 @@ export function useKeyboardShortcuts({
   onOpenShortcutHelp,
 }: UseKeyboardShortcutsOptions) {
   const router = useRouter();
+  const { data: session } = useSession();
+  const username = session?.user?.githubUsername;
   const chordRef = useRef<string | null>(null);
   const chordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -55,7 +58,7 @@ export function useKeyboardShortcuts({
       if (chordRef.current === "g") {
         clearChord();
         const chordRoutes: Record<string, string> = {
-          m: "/my-issues",
+          m: username ? `/issues?assignees=${username}` : "/issues",
           t: "/triage",
           a: "/issues",
           s: "/settings",
@@ -91,5 +94,5 @@ export function useKeyboardShortcuts({
       window.removeEventListener("keydown", onKeyDown);
       clearChord();
     };
-  }, [router, onOpenCommandPalette, onOpenShortcutHelp, clearChord]);
+  }, [router, onOpenCommandPalette, onOpenShortcutHelp, clearChord, username]);
 }
