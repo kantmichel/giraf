@@ -33,7 +33,7 @@ interface Budget {
 
 export default function SettingsPage() {
   const { data: session } = useSession();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [budget, setBudget] = useState<Budget>({ critical_max: 2, high_max: 3, medium_max: 5 });
   const [saving, setSaving] = useState(false);
@@ -230,7 +230,7 @@ function DefaultFiltersSettings() {
   const { data: prefs, isLoading } = usePreferences();
   const updatePrefs = useUpdatePreferences();
   const { data: trackedRepos } = useTrackedRepos();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
 
   const defaults = prefs?.default_filters ?? {};
 

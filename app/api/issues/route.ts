@@ -4,6 +4,7 @@ import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { listRepoIssues, syncClosedStatusLabels, syncClaudeStatusLabels } from "@/lib/github/issues";
+import { listRepoReleases, enrichIssuesWithVersions } from "@/lib/github/releases";
 import { detectClosedNotifications } from "@/lib/detect-closed-notifications";
 import type { NormalizedIssue } from "@/types/github";
 
@@ -47,6 +48,13 @@ export async function GET(request: Request) {
         });
       }
     });
+
+    // Enrich closed issues with release version
+    const releaseResults = await Promise.allSettled(
+      trackedRepos.map((repo) => listRepoReleases(octokit, repo.owner, repo.repo))
+    );
+    const allReleases = releaseResults.flatMap((r) => r.status === "fulfilled" ? r.value : []);
+    enrichIssuesWithVersions(issues, allReleases);
 
     // Auto-fix closed issues missing "status: done" label (fire-and-forget)
     syncClosedStatusLabels(octokit, issues);

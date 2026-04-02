@@ -24,6 +24,7 @@ interface FilterMultiSelectProps {
   options: { value: string; label: string }[];
   selected: string[];
   onSelectionChange: (selected: string[]) => void;
+  groups?: { label: string; options: { value: string; label: string }[] }[];
 }
 
 export function FilterMultiSelect({
@@ -31,6 +32,7 @@ export function FilterMultiSelect({
   options,
   selected,
   onSelectionChange,
+  groups,
 }: FilterMultiSelectProps) {
   const [open, setOpen] = useState(false);
 
@@ -60,28 +62,55 @@ export function FilterMultiSelect({
           <CommandInput placeholder={`Filter ${title.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
-            <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option.value}
-                  onSelect={() => handleToggle(option.value)}
-                >
-                  <div
-                    className={cn(
-                      "mr-2 flex size-4 items-center justify-center rounded-sm border",
-                      selected.includes(option.value)
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-muted-foreground/30"
-                    )}
-                  >
-                    {selected.includes(option.value) && (
-                      <Check className="size-3" />
-                    )}
-                  </div>
-                  <span className="text-sm">{option.label}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
+            {groups
+              ? groups.map((group) => (
+                  <CommandGroup key={group.label} heading={group.label}>
+                    {group.options.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        onSelect={() => handleToggle(option.value)}
+                      >
+                        <div
+                          className={cn(
+                            "mr-2 flex size-4 items-center justify-center rounded-sm border",
+                            selected.includes(option.value)
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-muted-foreground/30"
+                          )}
+                        >
+                          {selected.includes(option.value) && (
+                            <Check className="size-3" />
+                          )}
+                        </div>
+                        <span className="text-sm">{option.label}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                ))
+              : (
+                <CommandGroup>
+                  {options.map((option) => (
+                    <CommandItem
+                      key={option.value}
+                      onSelect={() => handleToggle(option.value)}
+                    >
+                      <div
+                        className={cn(
+                          "mr-2 flex size-4 items-center justify-center rounded-sm border",
+                          selected.includes(option.value)
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/30"
+                        )}
+                      >
+                        {selected.includes(option.value) && (
+                          <Check className="size-3" />
+                        )}
+                      </div>
+                      <span className="text-sm">{option.label}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
           </CommandList>
           {selected.length > 0 && (
             <div className="border-t p-1">

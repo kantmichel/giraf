@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest, Tag } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -165,7 +165,7 @@ export function IssueTable({
     );
   }
 
-  const colCount = (selectable ? 11 : 10) + (showClosedColumn ? 1 : 0);
+  const colCount = (selectable ? 12 : 11) + (showClosedColumn ? 1 : 0);
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -187,6 +187,7 @@ export function IssueTable({
             <SortableHead column="effort" className="w-24">Effort</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-28">Labels</TableHead>
+            <TableHead className="w-24">Version</TableHead>
             <TableHead className="w-36">AI</TableHead>
             {showClosedColumn && (
               <SortableHead column="closedAt" className="w-28">Closed</SortableHead>
@@ -299,6 +300,14 @@ export function IssueTable({
                       currentLabels={labels}
                       onUpdate={(l) => handleLabelsUpdate(issue, l)}
                     />
+                  </TableCell>
+                  <TableCell>
+                    {issue.version && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Tag className="size-3" />
+                        {issue.version}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <IssueAiStatus

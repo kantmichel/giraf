@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 const entries = [
   {
     date: "2026-04-02",
+    version: "1.26.0",
+    title: "Version Filter & Release Tracking",
+    description:
+      "Issues are now mapped to GitHub releases based on their closed date. A Version column in the table shows which release tag each closed issue belongs to. The Version filter dropdown appears when versioned issues exist, with options grouped by repo. Switch to closed or all view to see release associations.",
+  },
+  {
+    date: "2026-04-02",
     version: "1.25.0",
     title: "Default Filter Presets",
     description:

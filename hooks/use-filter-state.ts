@@ -5,7 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterConfig } from "@/types/github";
 import type { ViewType } from "@/components/filters/view-switcher";
 
-const FILTER_PARAMS = ["repos", "status", "priority", "effort", "ai", "hasPr", "assignees", "labels", "milestone", "q", "state", "_cleared"];
+const FILTER_PARAMS = ["repos", "status", "priority", "effort", "ai", "version", "hasPr", "assignees", "labels", "milestone", "q", "state", "_cleared"];
 
 function hasAnyFilterParams(sp: URLSearchParams): boolean {
   return FILTER_PARAMS.some((p) => sp.has(p));
@@ -19,6 +19,7 @@ const DEFAULT_FILTERS: FilterConfig = {
   effort: [],
   status: [],
   ai: [],
+  version: [],
   hasPr: false,
   state: "open",
   milestone: [],
@@ -44,6 +45,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       effort: parseArray(searchParams.get("effort")),
       status: parseArray(searchParams.get("status")),
       ai: parseArray(searchParams.get("ai")),
+      version: parseArray(searchParams.get("version")),
       hasPr: searchParams.get("hasPr") === "1",
       state: (searchParams.get("state") as FilterConfig["state"]) || "open",
       milestone: parseArray(searchParams.get("milestone")),
@@ -74,6 +76,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       if (next.priority.length) params.set("priority", next.priority.join(","));
       if (next.effort.length) params.set("effort", next.effort.join(","));
       if (next.ai.length) params.set("ai", next.ai.join(","));
+      if (next.version.length) params.set("version", next.version.join(","));
       if (next.hasPr) params.set("hasPr", "1");
       if (next.assignees.length) params.set("assignees", next.assignees.join(","));
       if (next.labels.length) params.set("labels", next.labels.join(","));
@@ -124,6 +127,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       filters.priority.length > 0 ||
       filters.effort.length > 0 ||
       filters.ai.length > 0 ||
+      filters.version.length > 0 ||
       filters.hasPr ||
       filters.assignees.length > 0 ||
       filters.labels.length > 0 ||

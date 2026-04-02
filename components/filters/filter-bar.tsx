@@ -87,11 +87,39 @@ export function FilterBar({
     return options.sort((a, b) => a.label.localeCompare(b.label));
   }, [allIssues]);
 
+  const versionData = useMemo(() => {
+    const source = filters.repos.length > 0
+      ? allIssues.filter((i) => filters.repos.includes(i.repo.fullName))
+      : allIssues;
+
+    const byRepo = new Map<string, Set<string>>();
+    for (const issue of source) {
+      if (!issue.version) continue;
+      const repo = issue.repo.name;
+      if (!byRepo.has(repo)) byRepo.set(repo, new Set());
+      byRepo.get(repo)!.add(issue.version);
+    }
+
+    const groups = Array.from(byRepo.entries())
+      .map(([repo, versions]) => ({
+        label: repo,
+        options: Array.from(versions).sort().reverse().map((v) => ({ value: v, label: v })),
+      }))
+      .filter((g) => g.options.length > 0);
+
+    const flat = Array.from(
+      new Set(source.filter((i) => i.version).map((i) => i.version!))
+    ).sort().reverse().map((v) => ({ value: v, label: v }));
+
+    return { groups, flat };
+  }, [allIssues, filters.repos]);
+
   const activeCount =
     filters.repos.length +
     filters.status.length +
     filters.priority.length +
     filters.ai.length +
+    filters.version.length +
     filters.assignees.length +
     (filters.hasPr ? 1 : 0) +
     (filters.search ? 1 : 0) +
@@ -129,6 +157,15 @@ export function FilterBar({
         selected={filters.ai}
         onSelectionChange={(ai) => onFilterChange({ ai })}
       />
+      {versionData.flat.length > 0 && (
+        <FilterMultiSelect
+          title="Version"
+          options={versionData.flat}
+          groups={versionData.groups.length > 1 ? versionData.groups : undefined}
+          selected={filters.version}
+          onSelectionChange={(version) => onFilterChange({ version })}
+        />
+      )}
       <FilterMultiSelect
         title="Assignee"
         options={assigneeOptions}

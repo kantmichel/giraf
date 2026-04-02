@@ -104,7 +104,7 @@ function OverBudgetSection({
 
 export function PriorityReview({ onIssueClick }: { onIssueClick?: (issue: NormalizedIssue) => void }) {
   const { data: session } = useSession();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
   const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
   const user = selectedUser || session?.user?.githubUsername;
   const { data, isLoading } = usePriorityReview(user);

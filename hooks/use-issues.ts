@@ -71,6 +71,9 @@ export function useIssues(filters: FilterConfig, weekOffset = 0) {
     if (filters.ai.length > 0) {
       issues = issues.filter((i) => i.claudeState && filters.ai.includes(i.claudeState));
     }
+    if (filters.version.length > 0) {
+      issues = issues.filter((i) => i.version && filters.version.includes(i.version));
+    }
     if (filters.hasPr) {
       issues = issues.filter((i) => i.linkedPrs.length > 0);
     }

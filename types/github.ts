@@ -87,6 +87,7 @@ export interface FilterConfig {
   effort: string[];
   status: string[];
   ai: string[];
+  version: string[];
   hasPr: boolean;
   state: "open" | "closed" | "all";
   milestone: string[];
