@@ -3,6 +3,20 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
+    date: "2026-04-02",
+    version: "1.25.0",
+    title: "Default Filter Presets",
+    description:
+      "Save your preferred filters in Settings so they auto-apply when opening the Issues page. Set default repos, status, priority, effort, AI state, assignees, and open/closed/all. Presets persist across sessions like kanban sort preferences. Clearing filters on the issues page won't re-apply defaults until your next visit.",
+  },
+  {
+    date: "2026-04-02",
+    version: "1.24.0",
+    title: "AI Filter & PR Toggle",
+    description:
+      "New AI filter dropdown in the issues filter bar lets you filter by Claude workflow state — reviewing, reviewed, working, done, failed, and more. A new PR toggle button filters to issues that have linked pull requests.",
+  },
+  {
     date: "2026-04-01",
     version: "1.23.0",
     title: "Metrics Dashboard & Mini Metrics Row",
