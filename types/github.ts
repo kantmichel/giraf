@@ -86,6 +86,8 @@ export interface FilterConfig {
   priority: string[];
   effort: string[];
   status: string[];
+  ai: string[];
+  hasPr: boolean;
   state: "open" | "closed" | "all";
   milestone: string[];
   search: string;

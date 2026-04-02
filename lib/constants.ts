@@ -18,6 +18,17 @@ export const EFFORT_LABELS = [
   { name: "effort: high", color: "d93f0b", description: "Multiple days" },
 ] as const;
 
+export const AI_STATE_LABELS = [
+  { value: "review-queued", label: "Review queued" },
+  { value: "reviewing", label: "Reviewing" },
+  { value: "review-done", label: "Reviewed" },
+  { value: "review-failed", label: "Review failed" },
+  { value: "work-queued", label: "Work queued" },
+  { value: "working", label: "Working" },
+  { value: "done", label: "Done" },
+  { value: "failed", label: "Failed" },
+] as const;
+
 export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS, ...EFFORT_LABELS];
 
 export type StatusName = (typeof STATUS_LABELS)[number]["name"];

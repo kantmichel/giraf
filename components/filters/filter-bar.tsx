@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X, SlidersHorizontal } from "lucide-react";
+import { X, SlidersHorizontal, GitPullRequest } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
@@ -16,7 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
 import { WeekNavigator } from "./week-navigator";
-import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS } from "@/lib/constants";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -68,6 +68,11 @@ export function FilterBar({
     label: l.name.replace("effort: ", ""),
   }));
 
+  const aiOptions = AI_STATE_LABELS.map((l) => ({
+    value: l.value,
+    label: l.label,
+  }));
+
   const assigneeOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: { value: string; label: string }[] = [];
@@ -86,7 +91,9 @@ export function FilterBar({
     filters.repos.length +
     filters.status.length +
     filters.priority.length +
+    filters.ai.length +
     filters.assignees.length +
+    (filters.hasPr ? 1 : 0) +
     (filters.search ? 1 : 0) +
     (filters.state !== "open" ? 1 : 0);
 
@@ -117,11 +124,26 @@ export function FilterBar({
         onSelectionChange={(effort) => onFilterChange({ effort })}
       />
       <FilterMultiSelect
+        title="AI"
+        options={aiOptions}
+        selected={filters.ai}
+        onSelectionChange={(ai) => onFilterChange({ ai })}
+      />
+      <FilterMultiSelect
         title="Assignee"
         options={assigneeOptions}
         selected={filters.assignees}
         onSelectionChange={(assignees) => onFilterChange({ assignees })}
       />
+      <Toggle
+        size="sm"
+        pressed={filters.hasPr}
+        onPressedChange={(pressed) => onFilterChange({ hasPr: pressed })}
+        className="h-8 gap-1 border px-2 text-xs data-[state=on]:bg-accent"
+      >
+        <GitPullRequest className="size-3.5" />
+        PR
+      </Toggle>
       <div className="flex items-center gap-0.5 rounded-md border p-0.5">
         {(["open", "closed", "all"] as const).map((s) => (
           <Toggle

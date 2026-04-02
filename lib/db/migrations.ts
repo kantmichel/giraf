@@ -207,6 +207,15 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 8,
+    description: "Default filter presets",
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE user_preferences ADD COLUMN default_filters TEXT DEFAULT NULL;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

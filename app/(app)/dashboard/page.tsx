@@ -16,6 +16,8 @@ const defaultFilters: FilterConfig = {
   priority: [],
   effort: [],
   status: [],
+  ai: [],
+  hasPr: false,
   state: "open",
   milestone: [],
   search: "",

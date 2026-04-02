@@ -22,7 +22,7 @@ import type { NormalizedIssue } from "@/types/github";
 function IssuesContent() {
   const { data: prefs } = usePreferences();
   const updatePrefs = useUpdatePreferences();
-  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState(prefs?.preferred_view);
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);

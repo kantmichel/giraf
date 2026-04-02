@@ -4,12 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { ViewType } from "@/components/filters/view-switcher";
 import type { KanbanSortPrefs } from "@/lib/db/user-preferences";
+import type { FilterConfig } from "@/types/github";
 
 export interface UserPreferences {
   preferred_view: ViewType;
   kanban_sort: KanbanSortPrefs | null;
   dashboard_metrics: string[] | null;
   metrics_collapsed: boolean;
+  default_filters: Partial<FilterConfig> | null;
 }
 
 export function usePreferences() {

@@ -68,6 +68,12 @@ export function useIssues(filters: FilterConfig, weekOffset = 0) {
         i.assignees.some((a) => filters.assignees.includes(a.login))
       );
     }
+    if (filters.ai.length > 0) {
+      issues = issues.filter((i) => i.claudeState && filters.ai.includes(i.claudeState));
+    }
+    if (filters.hasPr) {
+      issues = issues.filter((i) => i.linkedPrs.length > 0);
+    }
     if (filters.labels.length > 0) {
       issues = issues.filter((i) =>
         i.labels.some((l) => filters.labels.includes(l.name))
