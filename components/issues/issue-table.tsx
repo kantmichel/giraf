@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -239,17 +239,33 @@ export function IssueTable({
                         <ExternalLink className="size-3" />
                       </a>
                     </div>
-                    <button
-                      className="text-xs text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigator.clipboard.writeText(issue.htmlUrl)
-                        toast.success("Link copied to clipboard")
-                      }}
-                      title="Copy link to clipboard"
-                    >
-                      #{issue.number}
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        className="text-xs text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigator.clipboard.writeText(issue.htmlUrl)
+                          toast.success("Link copied to clipboard")
+                        }}
+                        title="Copy link to clipboard"
+                      >
+                        #{issue.number}
+                      </button>
+                      {issue.linkedPrs.map((pr) => (
+                        <a
+                          key={pr.number}
+                          href={pr.htmlUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                          title={pr.title}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <GitPullRequest className="size-3" />
+                          #{pr.number}
+                        </a>
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <IssueRepoBadge repo={issue.repo.fullName} />

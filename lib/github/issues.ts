@@ -1,5 +1,5 @@
 import type { Octokit } from "@octokit/rest";
-import type { NormalizedIssue, NormalizedUser, NormalizedLabel, IssueComment } from "@/types/github";
+import type { NormalizedIssue, NormalizedUser, NormalizedLabel, NormalizedLinkedPr, IssueComment } from "@/types/github";
 import { handleGitHubError } from "./errors";
 import { extractClaudeState } from "@/lib/claude-workflow";
 
@@ -94,6 +94,20 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
   };
 }
 
+/**
+ * Extract issue numbers referenced by closing keywords in text.
+ * Matches: close/closes/closed/fix/fixes/fixed/resolve/resolves/resolved #N
+ */
+function extractClosingRefs(text: string): number[] {
+  const regex = /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
+  const numbers: number[] = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    numbers.push(parseInt(match[1], 10));
+  }
+  return numbers;
+}
+
 export async function listRepoIssues(
   octokit: Octokit,
   owner: string,
@@ -117,9 +131,36 @@ export async function listRepoIssues(
       since: options?.since,
     });
 
-    return data
-      .filter((issue) => !issue.pull_request)
-      .map((issue) => normalizeIssue(issue, owner, repo));
+    // Separate issues from PRs (GitHub's issues endpoint returns both)
+    const issues = data.filter((item) => !item.pull_request);
+    const prs = data.filter((item) => !!item.pull_request);
+
+    // Build map: issue number -> linked PRs (from closing keywords in PR title/body)
+    const prsByIssue = new Map<number, NormalizedLinkedPr[]>();
+    for (const pr of prs) {
+      const text = `${pr.title ?? ""} ${pr.body ?? ""}`;
+      const refs = extractClosingRefs(text);
+      for (const issueNum of refs) {
+        if (!prsByIssue.has(issueNum)) prsByIssue.set(issueNum, []);
+        const state: NormalizedLinkedPr["state"] = pr.draft
+          ? "draft"
+          : pr.pull_request?.merged_at
+            ? "merged"
+            : (pr.state as "open" | "closed");
+        prsByIssue.get(issueNum)!.push({
+          number: pr.number,
+          title: pr.title ?? "",
+          state,
+          htmlUrl: pr.html_url,
+        });
+      }
+    }
+
+    return issues.map((issue) => {
+      const normalized = normalizeIssue(issue, owner, repo);
+      normalized.linkedPrs = prsByIssue.get(issue.number) ?? [];
+      return normalized;
+    });
   } catch (error) {
     handleGitHubError(error);
   }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { GitPullRequest } from "lucide-react";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
@@ -110,6 +111,27 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
         currentLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
+
+      {issue.linkedPrs.length > 0 && (
+        <>
+          <span className="text-muted-foreground">Pull {issue.linkedPrs.length === 1 ? "Request" : "Requests"}</span>
+          <div className="flex flex-wrap gap-2">
+            {issue.linkedPrs.map((pr) => (
+              <a
+                key={pr.number}
+                href={pr.htmlUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground hover:underline"
+                title={pr.title}
+              >
+                <GitPullRequest className="size-3.5" />
+                #{pr.number}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
 
       <span className="text-muted-foreground">Created by</span>
       <div className="flex items-center gap-2">
