@@ -22,7 +22,7 @@ export function IssueDetailHeader({ issue, onClose }: IssueDetailHeaderProps) {
 
   function handleCopy() {
     const repoName = issue.repo.name;
-    const text = `${repoName} - ${issue.number} - ${issue.title}`;
+    const text = `${repoName} - #${issue.number} - ${issue.title}`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
