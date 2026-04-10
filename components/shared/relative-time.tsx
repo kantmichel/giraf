@@ -9,7 +9,7 @@ export function RelativeTime({ date }: { date: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="whitespace-nowrap text-xs text-muted-foreground">
+        <span className="whitespace-nowrap text-xs text-muted-foreground" suppressHydrationWarning>
           {relative}
         </span>
       </TooltipTrigger>

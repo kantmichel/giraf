@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X, UserPlus, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -54,10 +54,11 @@ export function TriageActions({
   const myUsername = session?.user?.githubUsername;
 
   // Favorite teammate persisted in localStorage
-  const [favoriteTeammate, setFavoriteTeammate] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("gira-favorite-teammate");
-  });
+  const [favoriteTeammate, setFavoriteTeammate] = useState<string | null>(null);
+  useEffect(() => {
+    const stored = localStorage.getItem("gira-favorite-teammate");
+    if (stored) setFavoriteTeammate(stored);
+  }, []);
 
   function saveFavorite(login: string) {
     setFavoriteTeammate(login);

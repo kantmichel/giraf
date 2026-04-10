@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Tag, Zap, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,10 +41,10 @@ export function IssueBulkActions({
   const [assignOpen, setAssignOpen] = useState(false);
   const [assignToMe, setAssignToMe] = useState(true);
   const myUsername = session?.user?.githubUsername;
-  const [favoriteTeammate] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("gira-favorite-teammate");
-  });
+  const [favoriteTeammate, setFavoriteTeammate] = useState<string | null>(null);
+  useEffect(() => {
+    setFavoriteTeammate(localStorage.getItem("gira-favorite-teammate"));
+  }, []);
   const [assignTeammate, setAssignTeammate] = useState(false);
 
   if (selectedIssues.length === 0) return null;
