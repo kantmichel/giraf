@@ -23,8 +23,8 @@ const COLUMNS = [
 
 const DEFAULT_SORT: ColumnSort = { field: "priority", direction: "desc" };
 
-const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-const EFFORT_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const PRIORITY_RANK: Record<string, number> = { critical: 3, high: 2, medium: 1, low: 0 };
+const EFFORT_RANK: Record<string, number> = { high: 2, medium: 1, low: 0 };
 
 const TIME_FIELD_MAP: Record<string, keyof NormalizedIssue> = {
   "to do": "createdAt",
@@ -46,8 +46,8 @@ function createComparator(sort: ColumnSort, columnId: string) {
 
     switch (sort.field) {
       case "priority": {
-        const pa = a.priority ? (PRIORITY_RANK[a.priority] ?? 99) : 99;
-        const pb = b.priority ? (PRIORITY_RANK[b.priority] ?? 99) : 99;
+        const pa = a.priority ? (PRIORITY_RANK[a.priority] ?? -1) : -1;
+        const pb = b.priority ? (PRIORITY_RANK[b.priority] ?? -1) : -1;
         result = pa - pb;
         break;
       }
@@ -55,8 +55,8 @@ function createComparator(sort: ColumnSort, columnId: string) {
         result = a.repo.fullName.localeCompare(b.repo.fullName);
         break;
       case "effort": {
-        const ea = a.effort ? (EFFORT_RANK[a.effort] ?? 99) : 99;
-        const eb = b.effort ? (EFFORT_RANK[b.effort] ?? 99) : 99;
+        const ea = a.effort ? (EFFORT_RANK[a.effort] ?? -1) : -1;
+        const eb = b.effort ? (EFFORT_RANK[b.effort] ?? -1) : -1;
         result = ea - eb;
         break;
       }
