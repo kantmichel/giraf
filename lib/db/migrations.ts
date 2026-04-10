@@ -216,6 +216,71 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 9,
+    description: "Imported agent workflows and workflow run cache",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE agent_workflows (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id),
+          repo_owner TEXT NOT NULL,
+          repo_name TEXT NOT NULL,
+          workflow_id INTEGER NOT NULL,
+          workflow_name TEXT NOT NULL,
+          workflow_path TEXT NOT NULL,
+          display_name TEXT,
+          description TEXT,
+          stages_json TEXT NOT NULL,
+          schedule_crons_json TEXT NOT NULL DEFAULT '[]',
+          enabled INTEGER NOT NULL DEFAULT 1,
+          imported_at TEXT NOT NULL,
+          imported_by TEXT NOT NULL,
+          last_synced_at TEXT,
+          UNIQUE(workspace_id, repo_owner, repo_name, workflow_id)
+        );
+        CREATE INDEX idx_agent_workflows_workspace ON agent_workflows(workspace_id);
+        CREATE INDEX idx_agent_workflows_enabled ON agent_workflows(enabled);
+
+        CREATE TABLE workflow_runs (
+          id INTEGER PRIMARY KEY,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id),
+          agent_workflow_id INTEGER REFERENCES agent_workflows(id),
+          repo_owner TEXT NOT NULL,
+          repo_name TEXT NOT NULL,
+          workflow_id INTEGER NOT NULL,
+          workflow_name TEXT NOT NULL,
+          workflow_path TEXT NOT NULL,
+          head_sha TEXT,
+          head_branch TEXT,
+          event TEXT NOT NULL,
+          status TEXT NOT NULL,
+          conclusion TEXT,
+          html_url TEXT NOT NULL,
+          run_number INTEGER,
+          run_started_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          actor_login TEXT,
+          actor_avatar_url TEXT,
+          jobs_json TEXT,
+          fetched_at TEXT NOT NULL
+        );
+        CREATE INDEX idx_workflow_runs_workspace ON workflow_runs(workspace_id);
+        CREATE INDEX idx_workflow_runs_agent_workflow ON workflow_runs(agent_workflow_id);
+        CREATE INDEX idx_workflow_runs_status ON workflow_runs(status);
+        CREATE INDEX idx_workflow_runs_created ON workflow_runs(created_at DESC);
+
+        CREATE TABLE workflow_sync_state (
+          workspace_id TEXT NOT NULL,
+          agent_workflow_id INTEGER NOT NULL REFERENCES agent_workflows(id),
+          last_synced_at TEXT NOT NULL,
+          last_run_id INTEGER,
+          PRIMARY KEY (workspace_id, agent_workflow_id)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

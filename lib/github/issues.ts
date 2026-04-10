@@ -120,7 +120,10 @@ export async function listRepoIssues(
   }
 ): Promise<NormalizedIssue[]> {
   try {
-    const { data } = await octokit.rest.issues.listForRepo({
+    // Auto-paginate so we don't silently cap the response at 100 items.
+    // Necessary for callers that pass a wide `since` window (e.g. the
+    // agents dashboard fetches closed issues since Oct 1 2025).
+    const data = await octokit.paginate(octokit.rest.issues.listForRepo, {
       owner,
       repo,
       state: options?.state ?? "open",

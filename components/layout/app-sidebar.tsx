@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   BarChart3,
+  Bot,
   Inbox,
   LayoutList,
   ListTodo,
@@ -170,6 +171,18 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href="/issues">
                     <LayoutList />
                     <span>All Issues</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/agents"}
+                  tooltip="Agents"
+                >
+                  <Link href="/agents">
+                    <Bot />
+                    <span>Agents</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
