@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { startOfMonth } from "date-fns";
 import { getRequiredSession } from "@/lib/auth";
 import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
@@ -6,6 +7,7 @@ import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { listRepoIssues, syncClosedStatusLabels, syncClaudeStatusLabels } from "@/lib/github/issues";
 import { listRepoReleases, enrichIssuesWithVersions } from "@/lib/github/releases";
 import { detectClosedNotifications } from "@/lib/detect-closed-notifications";
+import { fetchClosedIssuesWithCache } from "@/lib/agents/cached-closed-issues";
 import type { NormalizedIssue } from "@/types/github";
 
 export async function GET(request: Request) {
@@ -28,10 +30,26 @@ export async function GET(request: Request) {
     const since = searchParams.get("since") || undefined;
     const octokit = getOctokit(session.accessToken);
 
+    // When fetching closed issues with a `since` older than the current
+    // month start, use the persistent SQLite cache so only the current
+    // month hits the GitHub API on each request.
+    const currentMonthStartIso = startOfMonth(new Date()).toISOString();
+    const useClosedCache =
+      state === "closed" && !!since && since < currentMonthStartIso;
+
     const results = await Promise.allSettled(
-      trackedRepos.map((repo) =>
-        listRepoIssues(octokit, repo.owner, repo.repo, { state, since })
-      )
+      trackedRepos.map((repo) => {
+        if (useClosedCache && since) {
+          return fetchClosedIssuesWithCache(
+            octokit,
+            workspace.id,
+            repo.owner,
+            repo.repo,
+            new Date(since)
+          );
+        }
+        return listRepoIssues(octokit, repo.owner, repo.repo, { state, since });
+      })
     );
 
     const issues: NormalizedIssue[] = [];

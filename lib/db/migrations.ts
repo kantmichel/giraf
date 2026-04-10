@@ -281,6 +281,36 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 10,
+    description: "Persistent cache for historical closed issues",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE cached_closed_issues (
+          workspace_id TEXT NOT NULL,
+          repo_owner TEXT NOT NULL,
+          repo_name TEXT NOT NULL,
+          issue_number INTEGER NOT NULL,
+          closed_at TEXT NOT NULL,
+          issue_json TEXT NOT NULL,
+          cached_at TEXT NOT NULL,
+          PRIMARY KEY (workspace_id, repo_owner, repo_name, issue_number)
+        );
+        CREATE INDEX idx_cached_closed_issues_closed_at
+          ON cached_closed_issues(workspace_id, repo_owner, repo_name, closed_at DESC);
+
+        CREATE TABLE closed_issues_cache_state (
+          workspace_id TEXT NOT NULL,
+          repo_owner TEXT NOT NULL,
+          repo_name TEXT NOT NULL,
+          cache_start TEXT NOT NULL,
+          cache_end TEXT NOT NULL,
+          last_synced_at TEXT NOT NULL,
+          PRIMARY KEY (workspace_id, repo_owner, repo_name)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

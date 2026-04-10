@@ -62,9 +62,11 @@ export function useIssues(
       if (!res.ok) throw new Error("Failed to fetch issues");
       return res.json();
     },
-    // Historical data rarely changes — cache for 5 min when a wide window
-    // is requested, otherwise use the default 1 min staleness.
-    staleTime: closedSinceIso ? 5 * 60_000 : 60_000,
+    // Historical closed issues are served from a persistent SQLite cache
+    // on the server side, so refetching is cheap — keep the standard 1 min
+    // stale window and let the hook refresh as normal to pick up the
+    // current month's updates.
+    staleTime: 60_000,
     refetchInterval: options.pollIntervalMs,
   });
 

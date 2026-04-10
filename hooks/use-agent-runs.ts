@@ -67,7 +67,7 @@ export interface AgentKpis {
 export function useAgentRuns(range: DateRange = DEFAULT_RANGE) {
   const openQuery = useIssues(EMPTY_FILTERS_OPEN, 0, { pollIntervalMs: 30_000 });
   const closedQuery = useIssues(EMPTY_FILTERS_CLOSED, 0, {
-    pollIntervalMs: 5 * 60_000,
+    pollIntervalMs: 60_000,
     closedSince: AGENT_CLOSED_SINCE,
   });
 
