@@ -1,6 +1,7 @@
 "use client";
 
-import { Trash2, GitFork } from "lucide-react";
+import { useState } from "react";
+import { Trash2, GitFork, RefreshCw } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,11 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useTrackedRepos, useRemoveTrackedRepo } from "@/hooks/use-tracked-repos";
+import { useTrackedRepos, useRemoveTrackedRepo, useSyncLabels } from "@/hooks/use-tracked-repos";
 
 export function TrackedReposList() {
   const { data: repos, isLoading } = useTrackedRepos();
   const removeMutation = useRemoveTrackedRepo();
+  const syncMutation = useSyncLabels();
+  const [syncingRepo, setSyncingRepo] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -47,7 +50,7 @@ export function TrackedReposList() {
           <TableRow>
             <TableHead>Repository</TableHead>
             <TableHead>Added</TableHead>
-            <TableHead className="w-12" />
+            <TableHead className="w-24" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -74,16 +77,33 @@ export function TrackedReposList() {
                 {formatDistanceToNow(new Date(repo.added_at), { addSuffix: true })}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    removeMutation.mutate({ owner: repo.owner, repo: repo.repo })
-                  }
-                  disabled={removeMutation.isPending}
-                >
-                  <Trash2 className="size-4 text-muted-foreground" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    title="Sync Gira labels"
+                    onClick={() => {
+                      const key = `${repo.owner}/${repo.repo}`;
+                      setSyncingRepo(key);
+                      syncMutation.mutate({ owner: repo.owner, repo: repo.repo }, {
+                        onSettled: () => setSyncingRepo(null),
+                      });
+                    }}
+                    disabled={syncMutation.isPending}
+                  >
+                    <RefreshCw className={`size-4 text-muted-foreground ${syncingRepo === `${repo.owner}/${repo.repo}` ? "animate-spin" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() =>
+                      removeMutation.mutate({ owner: repo.owner, repo: repo.repo })
+                    }
+                    disabled={removeMutation.isPending}
+                  >
+                    <Trash2 className="size-4 text-muted-foreground" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

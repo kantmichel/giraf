@@ -45,6 +45,35 @@ export function useAddTrackedRepo() {
   });
 }
 
+export function useSyncLabels() {
+  return useMutation({
+    mutationFn: async ({ owner, repo }: { owner: string; repo: string }) => {
+      const res = await fetch(`/api/repos/${owner}/${repo}/labels/sync`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to sync labels");
+      }
+      return res.json() as Promise<{ created: string[]; existing: string[] }>;
+    },
+    onSuccess: (data, variables) => {
+      if (data.created.length > 0) {
+        toast.success(
+          `${variables.owner}/${variables.repo} — created ${data.created.length} missing labels`
+        );
+      } else {
+        toast.success(
+          `${variables.owner}/${variables.repo} — all labels present`
+        );
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}
+
 export function useRemoveTrackedRepo() {
   const queryClient = useQueryClient();
 
