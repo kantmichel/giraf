@@ -16,7 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
 import { WeekNavigator } from "./week-navigator";
-import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS } from "@/lib/constants";
+import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -53,25 +53,39 @@ export function FilterBar({
     [trackedRepos]
   );
 
-  const statusOptions = STATUS_LABELS.map((l) => ({
-    value: l.name.replace("status: ", ""),
-    label: l.name.replace("status: ", ""),
-  }));
+  const unsetOption = { value: UNSET_FILTER_VALUE, label: "not set" };
 
-  const priorityOptions = PRIORITY_LABELS.map((l) => ({
-    value: l.name.replace("priority: ", ""),
-    label: l.name.replace("priority: ", ""),
-  }));
+  const statusOptions = [
+    ...STATUS_LABELS.map((l) => ({
+      value: l.name.replace("status: ", ""),
+      label: l.name.replace("status: ", ""),
+    })),
+    unsetOption,
+  ];
 
-  const effortOptions = EFFORT_LABELS.map((l) => ({
-    value: l.name.replace("effort: ", ""),
-    label: l.name.replace("effort: ", ""),
-  }));
+  const priorityOptions = [
+    ...PRIORITY_LABELS.map((l) => ({
+      value: l.name.replace("priority: ", ""),
+      label: l.name.replace("priority: ", ""),
+    })),
+    unsetOption,
+  ];
 
-  const aiOptions = AI_STATE_LABELS.map((l) => ({
-    value: l.value,
-    label: l.label,
-  }));
+  const effortOptions = [
+    ...EFFORT_LABELS.map((l) => ({
+      value: l.name.replace("effort: ", ""),
+      label: l.name.replace("effort: ", ""),
+    })),
+    unsetOption,
+  ];
+
+  const aiOptions = [
+    ...AI_STATE_LABELS.map((l) => ({
+      value: l.value,
+      label: l.label,
+    })),
+    unsetOption,
+  ];
 
   const assigneeOptions = useMemo(() => {
     const seen = new Set<string>();

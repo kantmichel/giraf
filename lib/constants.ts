@@ -31,6 +31,9 @@ export const AI_STATE_LABELS = [
 
 export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS, ...EFFORT_LABELS];
 
+/** Sentinel value used in filter dropdowns to match issues with no value set */
+export const UNSET_FILTER_VALUE = "__unset__";
+
 export type StatusName = (typeof STATUS_LABELS)[number]["name"];
 export type PriorityName = (typeof PRIORITY_LABELS)[number]["name"];
 export type EffortName = (typeof EFFORT_LABELS)[number]["name"];
