@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -33,6 +33,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { useIssues } from "@/hooks/use-issues";
 import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
@@ -63,8 +64,9 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
   const router = useRouter();
   const navItems = useNavItems();
   const { resolvedTheme, setTheme } = useTheme();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
-  const issues = issuesProp ?? allIssues;
+  const [issueState, setIssueState] = useState<"open" | "closed" | "all">("open");
+  const { allIssues } = useIssues({ state: issueState, repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
+  const issues = issueState === "open" && issuesProp ? issuesProp : allIssues;
 
   const navigate = useCallback(
     (href: string) => {
@@ -76,14 +78,14 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogHeader className="sr-only">
-        <DialogTitle>Command Palette</DialogTitle>
-        <DialogDescription>Search and navigate</DialogDescription>
-      </DialogHeader>
       <DialogContent
         className="top-1/3 translate-y-0 overflow-hidden rounded-xl p-0"
         showCloseButton={false}
       >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Command Palette</DialogTitle>
+          <DialogDescription>Search and navigate</DialogDescription>
+        </DialogHeader>
         <Command
           className="rounded-xl"
           filter={(value, search) => {
@@ -92,6 +94,27 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
           }}
         >
           <CommandInput placeholder="Search issues, navigate, or run actions..." />
+          <div className="flex items-center gap-1 border-b px-3 py-1.5" cmdk-group="">
+            <span className="text-[11px] text-muted-foreground">Issues:</span>
+            <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+              {(["open", "closed", "all"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  className={cn(
+                    "rounded-sm px-1.5 py-0.5 text-[11px] transition-colors",
+                    issueState === s
+                      ? "bg-accent font-medium text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setIssueState(s)}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
 
