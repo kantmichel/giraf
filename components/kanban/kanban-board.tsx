@@ -8,9 +8,10 @@ import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { STATUS_LABELS } from "@/lib/constants";
+import { computeWsjf } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
-export type SortField = "priority" | "repo" | "effort" | "time";
+export type SortField = "priority" | "repo" | "effort" | "wsjf" | "time";
 export type SortDirection = "asc" | "desc";
 export interface ColumnSort { field: SortField; direction: SortDirection }
 
@@ -58,6 +59,14 @@ function createComparator(sort: ColumnSort, columnId: string) {
         const ea = a.effort ? (EFFORT_RANK[a.effort] ?? -1) : -1;
         const eb = b.effort ? (EFFORT_RANK[b.effort] ?? -1) : -1;
         result = ea - eb;
+        break;
+      }
+      case "wsjf": {
+        // Match the existing pattern: unset sorts as -1 so it lands at the
+        // bottom of desc and the top of asc, consistent with priority/effort.
+        const wa = computeWsjf(a.priority, a.effort) ?? -1;
+        const wb = computeWsjf(b.priority, b.effort) ?? -1;
+        result = wa - wb;
         break;
       }
       case "time":

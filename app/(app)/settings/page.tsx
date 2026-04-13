@@ -436,6 +436,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "priority", label: "Priority" },
   { value: "repo", label: "Repo" },
   { value: "effort", label: "Effort" },
+  { value: "wsjf", label: "WSJF" },
   { value: "time", label: "Time" },
 ];
 

@@ -23,6 +23,7 @@ import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
 import { toast } from "sonner";
+import { computeWsjf, formatWsjf } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
 type SortColumn =
@@ -31,6 +32,7 @@ type SortColumn =
   | "repo"
   | "priority"
   | "effort"
+  | "wsjf"
   | "assignee"
   | "createdAt"
   | "updatedAt"
@@ -50,6 +52,15 @@ function compareValues(a: NormalizedIssue, b: NormalizedIssue, column: SortColum
     case "repo": return a.repo.fullName.localeCompare(b.repo.fullName) * dir;
     case "priority": return ((a.priority ? PRIORITY_RANK[a.priority] ?? 99 : 99) - (b.priority ? PRIORITY_RANK[b.priority] ?? 99 : 99)) * dir;
     case "effort": return ((a.effort ? EFFORT_RANK[a.effort] ?? 99 : 99) - (b.effort ? EFFORT_RANK[b.effort] ?? 99 : 99)) * dir;
+    case "wsjf": {
+      // Unset scores sort to the bottom regardless of direction.
+      const sa = computeWsjf(a.priority, a.effort);
+      const sb = computeWsjf(b.priority, b.effort);
+      if (sa === null && sb === null) return 0;
+      if (sa === null) return 1;
+      if (sb === null) return -1;
+      return (sa - sb) * dir;
+    }
     case "assignee": return (a.assignees[0]?.login ?? "\uffff").localeCompare(b.assignees[0]?.login ?? "\uffff") * dir;
     case "createdAt": return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir;
     case "updatedAt": return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * dir;
@@ -165,7 +176,7 @@ export function IssueTable({
     );
   }
 
-  const colCount = (selectable ? 12 : 11) + (showClosedColumn ? 1 : 0);
+  const colCount = (selectable ? 13 : 12) + (showClosedColumn ? 1 : 0);
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -185,6 +196,7 @@ export function IssueTable({
             <SortableHead column="repo" className="w-32">Repo</SortableHead>
             <SortableHead column="priority" className="w-24">Priority</SortableHead>
             <SortableHead column="effort" className="w-24">Effort</SortableHead>
+            <SortableHead column="wsjf" className="w-20">WSJF</SortableHead>
             <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
             <TableHead className="w-28">Labels</TableHead>
             <TableHead className="w-24">Version</TableHead>
@@ -284,6 +296,19 @@ export function IssueTable({
                       allLabels={labels}
                       onUpdate={(l) => handleLabelsUpdate(issue, l)}
                     />
+                  </TableCell>
+                  <TableCell className="text-sm tabular-nums text-muted-foreground">
+                    {(() => {
+                      const score = computeWsjf(issue.priority, issue.effort);
+                      return (
+                        <span
+                          className={score !== null ? "font-medium text-foreground" : ""}
+                          title={score !== null ? `priority(${issue.priority}) ÷ effort(${issue.effort})` : "Set priority and effort to calculate"}
+                        >
+                          {formatWsjf(score)}
+                        </span>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <IssueAssigneesEditor

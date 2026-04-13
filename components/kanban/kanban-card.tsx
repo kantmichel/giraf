@@ -7,6 +7,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
+import { computeWsjf, formatWsjf } from "@/lib/wsjf";
+import { cn } from "@/lib/utils";
 import type { NormalizedIssue } from "@/types/github";
 
 interface KanbanCardProps {
@@ -14,9 +16,10 @@ interface KanbanCardProps {
   onClick: () => void;
   showTime?: boolean;
   timeField?: string;
+  emphasizeWsjf?: boolean;
 }
 
-export function KanbanCard({ issue, onClick, showTime, timeField }: KanbanCardProps) {
+export function KanbanCard({ issue, onClick, showTime, timeField, emphasizeWsjf }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -70,6 +73,23 @@ export function KanbanCard({ issue, onClick, showTime, timeField }: KanbanCardPr
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
             <IssueRepoBadge repo={issue.repo.fullName} />
+            {(() => {
+              const score = computeWsjf(issue.priority, issue.effort);
+              if (score === null) return null;
+              return (
+                <span
+                  className={cn(
+                    "rounded px-1 text-[10px] tabular-nums",
+                    emphasizeWsjf
+                      ? "bg-primary/10 font-semibold text-primary"
+                      : "text-muted-foreground"
+                  )}
+                  title={`WSJF: priority(${issue.priority}) ÷ effort(${issue.effort})`}
+                >
+                  {formatWsjf(score)}
+                </span>
+              );
+            })()}
           </div>
           <div className="flex items-center gap-1">
             <IssuePriorityBadge priority={issue.priority} />

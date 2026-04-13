@@ -28,6 +28,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "priority", label: "Pri" },
   { value: "repo", label: "Repo" },
   { value: "effort", label: "Eff" },
+  { value: "wsjf", label: "WSJF" },
   { value: "time", label: "Time" },
 ];
 
@@ -123,6 +124,7 @@ export function KanbanColumn({
                 onClick={() => onIssueClick(issue)}
                 showTime={sortField === "time"}
                 timeField={timeField}
+                emphasizeWsjf={sortField === "wsjf"}
               />
             ))
           )}
