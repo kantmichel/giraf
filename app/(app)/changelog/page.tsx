@@ -3,6 +3,76 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
+    date: "2026-04-13",
+    version: "1.31.0",
+    title: "Impact Label Boost",
+    description:
+      "Tag issues with 'impact: customer' (or any 'impact: <type>' you create) to multiply their WSJF score by 1.5× per label, capped at 3×. Boosted scores display in purple with a lightning icon on the table and kanban cards. New Settings card discovers every impact label across tracked repos with N/M coverage, syncs missing labels in one click, and lets you create new types (e.g. 'impact: revenue') that get pushed to all repos at once.",
+  },
+  {
+    date: "2026-04-13",
+    version: "1.30.0",
+    title: "WSJF Priority Scoring",
+    description:
+      "New WSJF (Weighted Shortest Job First) column on the issues table — score = priority ÷ effort, range 0.33–4.00. Critical + low effort issues float to 4.0; missing labels show as \"—\". Kanban cards display a small score badge next to the issue number, and WSJF is selectable as a per-column sort in the kanban (and as a default in Settings).",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.29.1",
+    title: "Closed-Issues SQLite Cache",
+    description:
+      "Historical closed issues are now cached locally in SQLite, since past months are immutable. First /agents load does a one-time backfill; every subsequent load makes ~1 GitHub API call per repo for the current month instead of refetching the entire window. Saves dozens of API calls per page load and lets the agents dashboard cover months of history without rate-limit pain.",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.29.0",
+    title: "Agents Control Room",
+    description:
+      "New /agents page that visualizes every automated run — Claude AI workflows + GitHub Actions — in one place. Three KPI cards (Active, Completed, Health) with a date range selector. Active runs show as horizontal pipeline rails with stage blocks; click any run for a drawer with linked PRs, Claude comment log, and GH Action job details. PR Attention panel ranks open agent PRs by risk (age + conflicts + review state). Workflow import flow under Settings opts in to which workflows get synced.",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.28.1",
+    title: "Command Palette Open/Closed/All Toggle",
+    description:
+      "The command palette issue search now has an open/closed/all toggle so you can find a closed issue (e.g. #81) without leaving the palette. Defaults to open to keep the cached fast path; switching to closed or all triggers a fresh fetch.",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.28.0",
+    title: "\"Not set\" Filter Option",
+    description:
+      "Added an explicit \"not set\" choice at the bottom of the Status, Priority, Effort, AI, and Version filter dropdowns so you can target issues that are missing those fields — useful for triage and label cleanup.",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.27.2",
+    title: "Kanban Priority Sort Direction Fix",
+    description:
+      "Fixed a bug where sorting kanban columns by priority \"desc\" put low/unset items first instead of critical. Same fix applied to effort sorting. Direction semantics now read naturally — desc means \"most important first.\"",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.27.1",
+    title: "Hydration Mismatch Fixes",
+    description:
+      "Resolved server/client hydration warnings caused by reading from localStorage during render (favorite teammate) and by relative time strings naturally diverging between SSR and client. Pages now render without console noise on first load.",
+  },
+  {
+    date: "2026-04-10",
+    version: "1.27.0",
+    title: "Sync Gira Labels to Tracked Repos",
+    description:
+      "Per-repo label sync action on the Tracked Repos page — push the canonical Gira label set (status / priority / effort / claude) to a GitHub repo with one click. Skips labels that already exist; toast tells you how many were created.",
+  },
+  {
+    date: "2026-04-07",
+    version: "1.26.1",
+    title: "Copy Metadata Issue Number Fix",
+    description:
+      "Fixed the issue number shown in the copy-metadata output when copying issue details from the detail header.",
+  },
+  {
     date: "2026-04-02",
     version: "1.26.0",
     title: "Version Filter & Release Tracking",
