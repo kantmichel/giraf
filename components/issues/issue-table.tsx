@@ -73,6 +73,32 @@ function issueKey(issue: NormalizedIssue): string {
   return `${issue.repo.fullName}:${issue.number}`;
 }
 
+/**
+ * Toggleable columns. Title is intentionally excluded — every issue needs a
+ * visible identifier. Closed/selectable are also excluded; they're driven by
+ * filter state and props, not user prefs.
+ */
+export const TABLE_COLUMN_DEFS = [
+  { id: "status", label: "Status" },
+  { id: "repo", label: "Repo" },
+  { id: "priority", label: "Priority" },
+  { id: "effort", label: "Effort" },
+  { id: "wsjf", label: "WSJF" },
+  { id: "assignee", label: "Assignee" },
+  { id: "labels", label: "Labels" },
+  { id: "version", label: "Version" },
+  { id: "ai", label: "AI" },
+  { id: "createdAt", label: "Created" },
+  { id: "updatedAt", label: "Updated" },
+] as const;
+
+export type TableColumnId = (typeof TABLE_COLUMN_DEFS)[number]["id"];
+
+/** Default visibility map — every toggleable column visible. */
+export function defaultTableColumnVisibility(): Record<string, boolean> {
+  return Object.fromEntries(TABLE_COLUMN_DEFS.map((c) => [c.id, true]));
+}
+
 interface IssueTableProps {
   issues: NormalizedIssue[];
   isLoading: boolean;
@@ -81,6 +107,8 @@ interface IssueTableProps {
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
   showClosedColumn?: boolean;
+  /** Map of column id → visible. Missing keys default to true. */
+  visibleColumns?: Record<string, boolean>;
 }
 
 export function IssueTable({
@@ -91,7 +119,9 @@ export function IssueTable({
   selectedIds,
   onSelectionChange,
   showClosedColumn = false,
+  visibleColumns,
 }: IssueTableProps) {
+  const isVisible = (id: TableColumnId) => visibleColumns?.[id] !== false;
   const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const updateIssue = useUpdateIssue();
@@ -176,7 +206,13 @@ export function IssueTable({
     );
   }
 
-  const colCount = (selectable ? 13 : 12) + (showClosedColumn ? 1 : 0);
+  // Always-visible: title + (selectable checkbox?) + (closed?). Plus toggleable visible.
+  const visibleToggleableCount = TABLE_COLUMN_DEFS.filter((c) => isVisible(c.id)).length;
+  const colCount =
+    1 /* title */ +
+    visibleToggleableCount +
+    (selectable ? 1 : 0) +
+    (showClosedColumn ? 1 : 0);
 
   return (
     <div className="overflow-x-auto rounded-lg border">
@@ -191,21 +227,21 @@ export function IssueTable({
                 />
               </TableHead>
             )}
-            <SortableHead column="status" className="w-24">Status</SortableHead>
+            {isVisible("status") && <SortableHead column="status" className="w-24">Status</SortableHead>}
             <SortableHead column="title" className="min-w-[200px]">Title</SortableHead>
-            <SortableHead column="repo" className="w-32">Repo</SortableHead>
-            <SortableHead column="priority" className="w-24">Priority</SortableHead>
-            <SortableHead column="effort" className="w-24">Effort</SortableHead>
-            <SortableHead column="wsjf" className="w-20">WSJF</SortableHead>
-            <SortableHead column="assignee" className="w-28">Assignee</SortableHead>
-            <TableHead className="w-28">Labels</TableHead>
-            <TableHead className="w-24">Version</TableHead>
-            <TableHead className="w-36">AI</TableHead>
+            {isVisible("repo") && <SortableHead column="repo" className="w-32">Repo</SortableHead>}
+            {isVisible("priority") && <SortableHead column="priority" className="w-24">Priority</SortableHead>}
+            {isVisible("effort") && <SortableHead column="effort" className="w-24">Effort</SortableHead>}
+            {isVisible("wsjf") && <SortableHead column="wsjf" className="w-20">WSJF</SortableHead>}
+            {isVisible("assignee") && <SortableHead column="assignee" className="w-28">Assignee</SortableHead>}
+            {isVisible("labels") && <TableHead className="w-28">Labels</TableHead>}
+            {isVisible("version") && <TableHead className="w-24">Version</TableHead>}
+            {isVisible("ai") && <TableHead className="w-36">AI</TableHead>}
             {showClosedColumn && (
               <SortableHead column="closedAt" className="w-28">Closed</SortableHead>
             )}
-            <SortableHead column="createdAt" className="w-28">Created</SortableHead>
-            <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>
+            {isVisible("createdAt") && <SortableHead column="createdAt" className="w-28">Created</SortableHead>}
+            {isVisible("updatedAt") && <SortableHead column="updatedAt" className="w-28">Updated</SortableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -228,13 +264,15 @@ export function IssueTable({
                       />
                     </TableCell>
                   )}
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssueStatusEditor
-                      currentStatus={issue.status}
-                      allLabels={labels}
-                      onUpdate={(l) => handleLabelsUpdate(issue, l)}
-                    />
-                  </TableCell>
+                  {isVisible("status") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssueStatusEditor
+                        currentStatus={issue.status}
+                        allLabels={labels}
+                        onUpdate={(l) => handleLabelsUpdate(issue, l)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <button
@@ -280,90 +318,110 @@ export function IssueTable({
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <IssueRepoBadge repo={issue.repo.fullName} />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssuePriorityEditor
-                      currentPriority={issue.priority}
-                      allLabels={labels}
-                      onUpdate={(l) => handleLabelsUpdate(issue, l)}
-                    />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssueEffortEditor
-                      currentEffort={issue.effort}
-                      allLabels={labels}
-                      onUpdate={(l) => handleLabelsUpdate(issue, l)}
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm tabular-nums text-muted-foreground">
-                    {(() => {
-                      const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
-                      const boosted = score !== null && issue.impacts.length > 0;
-                      const tooltip = score === null
-                        ? "Set priority and effort to calculate"
-                        : boosted
-                          ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
-                          : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
-                      return (
-                        <span
-                          className={
-                            boosted
-                              ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
-                              : score !== null
-                                ? "font-medium text-foreground"
-                                : ""
-                          }
-                          title={tooltip}
-                        >
-                          {boosted && <Zap className="size-3" />}
-                          {formatWsjf(score)}
+                  {isVisible("repo") && (
+                    <TableCell>
+                      <IssueRepoBadge repo={issue.repo.fullName} />
+                    </TableCell>
+                  )}
+                  {isVisible("priority") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssuePriorityEditor
+                        currentPriority={issue.priority}
+                        allLabels={labels}
+                        onUpdate={(l) => handleLabelsUpdate(issue, l)}
+                      />
+                    </TableCell>
+                  )}
+                  {isVisible("effort") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssueEffortEditor
+                        currentEffort={issue.effort}
+                        allLabels={labels}
+                        onUpdate={(l) => handleLabelsUpdate(issue, l)}
+                      />
+                    </TableCell>
+                  )}
+                  {isVisible("wsjf") && (
+                    <TableCell className="text-sm tabular-nums text-muted-foreground">
+                      {(() => {
+                        const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
+                        const boosted = score !== null && issue.impacts.length > 0;
+                        const tooltip = score === null
+                          ? "Set priority and effort to calculate"
+                          : boosted
+                            ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
+                            : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
+                        return (
+                          <span
+                            className={
+                              boosted
+                                ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
+                                : score !== null
+                                  ? "font-medium text-foreground"
+                                  : ""
+                            }
+                            title={tooltip}
+                          >
+                            {boosted && <Zap className="size-3" />}
+                            {formatWsjf(score)}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
+                  )}
+                  {isVisible("assignee") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssueAssigneesEditor
+                        owner={issue.repo.owner}
+                        repo={issue.repo.name}
+                        currentAssignees={issue.assignees}
+                        onUpdate={(a) => handleAssigneesUpdate(issue, a)}
+                      />
+                    </TableCell>
+                  )}
+                  {isVisible("labels") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssueLabelsEditor
+                        owner={issue.repo.owner}
+                        repo={issue.repo.name}
+                        currentLabels={labels}
+                        onUpdate={(l) => handleLabelsUpdate(issue, l)}
+                      />
+                    </TableCell>
+                  )}
+                  {isVisible("version") && (
+                    <TableCell>
+                      {issue.version && (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Tag className="size-3" />
+                          {issue.version}
                         </span>
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssueAssigneesEditor
-                      owner={issue.repo.owner}
-                      repo={issue.repo.name}
-                      currentAssignees={issue.assignees}
-                      onUpdate={(a) => handleAssigneesUpdate(issue, a)}
-                    />
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssueLabelsEditor
-                      owner={issue.repo.owner}
-                      repo={issue.repo.name}
-                      currentLabels={labels}
-                      onUpdate={(l) => handleLabelsUpdate(issue, l)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {issue.version && (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Tag className="size-3" />
-                        {issue.version}
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
-                    <IssueAiStatus
-                      issue={issue}
-                      claudeEnabled={claudeEnabledRepos.has(issue.repo.fullName)}
-                    />
-                  </TableCell>
+                      )}
+                    </TableCell>
+                  )}
+                  {isVisible("ai") && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IssueAiStatus
+                        issue={issue}
+                        claudeEnabled={claudeEnabledRepos.has(issue.repo.fullName)}
+                      />
+                    </TableCell>
+                  )}
                   {showClosedColumn && (
                     <TableCell>
                       {issue.closedAt && <RelativeTime date={issue.closedAt} />}
                     </TableCell>
                   )}
-                  <TableCell>
-                    <RelativeTime date={issue.createdAt} />
-                  </TableCell>
-                  <TableCell>
-                    <RelativeTime date={issue.updatedAt} />
-                  </TableCell>
+                  {isVisible("createdAt") && (
+                    <TableCell>
+                      <RelativeTime date={issue.createdAt} />
+                    </TableCell>
+                  )}
+                  {isVisible("updatedAt") && (
+                    <TableCell>
+                      <RelativeTime date={issue.updatedAt} />
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })

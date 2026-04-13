@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 const entries = [
   {
     date: "2026-04-13",
+    version: "1.32.0",
+    title: "Customizable Table Columns",
+    description:
+      "Table view now has a Columns button that opens a dropdown of 11 toggleable columns (status, repo, priority, effort, WSJF, assignee, labels, version, AI, created, updated). Deselect to hide instantly; click Save view to persist the layout for next time. A Reset button restores all columns. Title is always shown.",
+  },
+  {
+    date: "2026-04-13",
     version: "1.31.0",
     title: "Impact Label Boost",
     description:

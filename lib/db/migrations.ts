@@ -311,6 +311,15 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 11,
+    description: "Table column visibility preferences",
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE user_preferences ADD COLUMN table_columns TEXT DEFAULT NULL;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

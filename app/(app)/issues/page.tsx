@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { ViewSwitcher } from "@/components/filters/view-switcher";
-import { IssueTable } from "@/components/issues/issue-table";
+import { IssueTable, defaultTableColumnVisibility } from "@/components/issues/issue-table";
+import { TableColumnsMenu } from "@/components/issues/table-columns-menu";
 import { IssueBulkActions } from "@/components/issues/issue-bulk-actions";
 import { IssueListView } from "@/components/issues/issue-list-view";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
@@ -27,6 +28,16 @@ function IssuesContent() {
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Column visibility — null means "follow saved prefs". Toggles populate the
+  // override so the view updates instantly; Save persists to prefs and clears
+  // the override so we sync back to the saved value.
+  const [columnOverride, setColumnOverride] = useState<Record<string, boolean> | null>(null);
+  const savedColumns = prefs?.table_columns ?? defaultTableColumnVisibility();
+  const visibleColumns = columnOverride ?? savedColumns;
+  const hasUnsavedColumnChanges =
+    columnOverride !== null &&
+    JSON.stringify(columnOverride) !== JSON.stringify(savedColumns);
 
   const selectedIssuesForBulk = useMemo(() => {
     return issues.filter((i) => selectedIds.has(`${i.repo.fullName}:${i.number}`));
@@ -88,6 +99,20 @@ function IssuesContent() {
               onWeekOffsetChange={setWeekOffset}
             />
           </div>
+          {view === "table" && (
+            <TableColumnsMenu
+              value={visibleColumns}
+              onChange={setColumnOverride}
+              onSave={() =>
+                updatePrefs.mutate(
+                  { table_columns: visibleColumns },
+                  { onSuccess: () => setColumnOverride(null) },
+                )
+              }
+              isSaving={updatePrefs.isPending}
+              hasUnsavedChanges={hasUnsavedColumnChanges}
+            />
+          )}
           <ViewSwitcher view={view} onViewChange={setView} />
         </div>
         {view === "table" && selectedIssuesForBulk.length > 0 && (
@@ -111,6 +136,7 @@ function IssuesContent() {
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             showClosedColumn={filters.state === "closed"}
+            visibleColumns={visibleColumns}
           />
         ) : (
           <KanbanBoard
