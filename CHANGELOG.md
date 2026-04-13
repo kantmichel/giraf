@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.1.0](https://github.com/kantmichel/giraf/compare/v1.0.0...v1.1.0) (2026-04-13)
+
+
+### Features
+
+* **agents:** Control Room dashboard for Claude + GH Actions agents ([6ee99c0](https://github.com/kantmichel/giraf/commit/6ee99c00743b3d10fe00034cfc9c63f746888b46))
+* **agents:** persistent SQLite cache for historical closed issues ([95a8e9f](https://github.com/kantmichel/giraf/commit/95a8e9f25526dadcffee80bcdf4b9fdae1c85d63))
+* AI filter, PR toggle, and default filter presets ([52de361](https://github.com/kantmichel/giraf/commit/52de361a7d74c9074f7c8ea678462e33a630e436))
+* auto-sync status with Claude AI workflow and show AI in issue detail ([b870e29](https://github.com/kantmichel/giraf/commit/b870e29530eac9d42c74a7a0254d963224a67194))
+* changelog page with version badges and full history ([0cac479](https://github.com/kantmichel/giraf/commit/0cac479c006ad4dcea94d46858e3b51195a279ea))
+* Claude AI workflow column with review → work pipeline ([dc0eea6](https://github.com/kantmichel/giraf/commit/dc0eea6d9274848abea9987738358be413de53a2))
+* click issue number to copy GitHub link to clipboard ([22efc4c](https://github.com/kantmichel/giraf/commit/22efc4cb3a6b35e532f2e6086887ff457e0af9d8))
+* closed issue notifications with watch/follow system ([33ebba3](https://github.com/kantmichel/giraf/commit/33ebba3f8a486c02b4a5f7514a993439d533ba62))
+* closed issues browser with week navigation + auto status sync on close ([3ac536b](https://github.com/kantmichel/giraf/commit/3ac536b59c817b2720580772e891661e4a240d60))
+* **command:** open/closed/all toggle for issue search ([5a96082](https://github.com/kantmichel/giraf/commit/5a9608223699365afb6a51b833a4aaa97aeb9a91))
+* copy metadata button in issue detail header ([a4da100](https://github.com/kantmichel/giraf/commit/a4da100573220cd5c561a1c497eacab008a3312c))
+* effort labels (low/medium/high) — full end-to-end support ([0e79587](https://github.com/kantmichel/giraf/commit/0e795875f55512902d9f7a1cb01e66611ab334ff))
+* extract and display linked PRs on issues ([3e952f3](https://github.com/kantmichel/giraf/commit/3e952f3be0b02525f82340a1308f1f57548bc6ef))
+* **filters:** "not set" option for enum filters ([97d443e](https://github.com/kantmichel/giraf/commit/97d443e431ddc026d6da09b3f7b363e3fa5bb06e))
+* **impact:** boost WSJF with impact labels and settings management ([7496127](https://github.com/kantmichel/giraf/commit/7496127d75b3c4052fdb241df162c9bb708ec2ab))
+* inline editing + multi-select bulk actions on issues table ([4c72d2b](https://github.com/kantmichel/giraf/commit/4c72d2b37da9f4ec0af29705df382a26da3ade62))
+* kanban column sorting with per-column controls and saved preferences ([02d24ed](https://github.com/kantmichel/giraf/commit/02d24edc4ba005d3e36dcb8b4812b6aae968c95f))
+* labels column back in table with inline editor ([77f0c0b](https://github.com/kantmichel/giraf/commit/77f0c0b60e14bac284c4e72796b0fd24bf2628b4))
+* metrics dashboard with 17 metric cards and collapsible mini row on issues page ([718e8d3](https://github.com/kantmichel/giraf/commit/718e8d359876218a1ce7d6183703f8eddcb085ff))
+* **repos:** sync Gira labels to tracked repos ([78781a1](https://github.com/kantmichel/giraf/commit/78781a14ce0a1756cfabdbadde550632e75e37db))
+* **table:** customizable column visibility with saved views ([d92d506](https://github.com/kantmichel/giraf/commit/d92d506acc459b830a708ce807227666499cdd06))
+* unified issues page with list view and default view preference ([7ebc4ef](https://github.com/kantmichel/giraf/commit/7ebc4efd185fc902ca5498c633b93bc260230e11))
+* version filter with GitHub release tracking, grouped multi-select ([5eb3d7f](https://github.com/kantmichel/giraf/commit/5eb3d7fd34d755bf9fb43c3eed055255a087eb44))
+* **wsjf:** WSJF priority scoring column for table and kanban ([1de76dd](https://github.com/kantmichel/giraf/commit/1de76dd42f27ba512d71396ec00ea5abf46dc555))
+
+
+### Bug Fixes
+
+* AI column wider + no text wrap ([92e03cd](https://github.com/kantmichel/giraf/commit/92e03cd1af03187a19a52547175c27176e27bad0))
+* command palette issue search — pass issues from AppShell, improve number matching ([b7ab25b](https://github.com/kantmichel/giraf/commit/b7ab25b89e7747c8f6b27e089d3da0a7f984e301))
+* dynamic version from package.json, footer links with UTM ([add329d](https://github.com/kantmichel/giraf/commit/add329dd26d27f081bdd433fef7f5edb12857aa0))
+* exact substring search in command palette, show all issues ([76363f5](https://github.com/kantmichel/giraf/commit/76363f5e90d32018cc00cd9208444b809d30756a))
+* gitignore db-shm files, remove tracked one ([0bfaf5e](https://github.com/kantmichel/giraf/commit/0bfaf5e670d434377fcd05f1379c1ef604a3511a))
+* hide effort labels from Labels column in table ([60ac7a9](https://github.com/kantmichel/giraf/commit/60ac7a98a9bbd745e7c37437e02b81acdf6c277d))
+* **kanban:** correct priority sort direction semantics ([ce00565](https://github.com/kantmichel/giraf/commit/ce00565d802b652802f176844d49390c4a795425))
+* repo filter uses short names (aliases) ([aebadd7](https://github.com/kantmichel/giraf/commit/aebadd7bd7bae8aedbf5282d665234e52fc39e37))
+* show issue title and make triage items clickable in priority review ([28d1386](https://github.com/kantmichel/giraf/commit/28d1386ba88228d6b2102b87377ae2aff1458e77))
+* sort closed issues by closed date, open issues by created date ([d9971ee](https://github.com/kantmichel/giraf/commit/d9971eebb56a0a57ecf4b4daecd1d9918476aed4))
+* **ssr:** resolve hydration mismatches on localStorage state ([4bcd0f8](https://github.com/kantmichel/giraf/commit/4bcd0f8698f6458ed1c2d5c0ece53ecdad131192))
+* wrap notification detection in try/catch to prevent 500 errors ([b0a866f](https://github.com/kantmichel/giraf/commit/b0a866fd604f0797278c410b0c5a3eac01addbd8))
+
 ## 1.1.0 (2026-04-01)
 
 
