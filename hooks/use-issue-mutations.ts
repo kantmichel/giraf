@@ -42,6 +42,7 @@ function applyUpdateToIssue(
     const statusLabel = updates.labels.find((l) => l.startsWith("status: "));
     const priorityLabel = updates.labels.find((l) => l.startsWith("priority: "));
     const effortLabel = updates.labels.find((l) => l.startsWith("effort: "));
+    const impactLabels = updates.labels.filter((l) => l.startsWith("impact: "));
 
     updated = {
       ...updated,
@@ -55,6 +56,7 @@ function applyUpdateToIssue(
       effort: effortLabel
         ? (effortLabel.replace("effort: ", "") as NormalizedIssue["effort"])
         : null,
+      impacts: impactLabels.map((l) => l.replace("impact: ", "")),
       claudeState: extractClaudeState(newLabels),
     };
   }

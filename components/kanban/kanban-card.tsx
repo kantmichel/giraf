@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Zap } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
@@ -74,18 +74,25 @@ export function KanbanCard({ issue, onClick, showTime, timeField, emphasizeWsjf 
             <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
             <IssueRepoBadge repo={issue.repo.fullName} />
             {(() => {
-              const score = computeWsjf(issue.priority, issue.effort);
+              const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
               if (score === null) return null;
+              const boosted = issue.impacts.length > 0;
+              const tooltip = boosted
+                ? `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
+                : `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
               return (
                 <span
                   className={cn(
-                    "rounded px-1 text-[10px] tabular-nums",
-                    emphasizeWsjf
-                      ? "bg-primary/10 font-semibold text-primary"
-                      : "text-muted-foreground"
+                    "inline-flex items-center gap-0.5 rounded px-1 text-[10px] tabular-nums",
+                    boosted
+                      ? "bg-[#7057ff]/10 font-semibold text-[#7057ff]"
+                      : emphasizeWsjf
+                        ? "bg-primary/10 font-semibold text-primary"
+                        : "text-muted-foreground"
                   )}
-                  title={`WSJF: priority(${issue.priority}) ÷ effort(${issue.effort})`}
+                  title={tooltip}
                 >
+                  {boosted && <Zap className="size-2.5" />}
                   {formatWsjf(score)}
                 </span>
               );

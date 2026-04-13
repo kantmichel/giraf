@@ -17,6 +17,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { List, LayoutList, Columns3, ArrowDownNarrowWide, ArrowUpNarrowWide } from "lucide-react";
 import { FilterMultiSelect } from "@/components/filters/filter-multi-select";
 import { AgentWorkflowImport } from "@/components/settings/agent-workflow-import";
+import { ImpactLabelsSettings } from "@/components/settings/impact-labels-settings";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS } from "@/lib/constants";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
@@ -219,6 +220,8 @@ export default function SettingsPage() {
       </Card>
 
       <PreferredViewSettings />
+
+      <ImpactLabelsSettings />
 
       <DefaultFiltersSettings />
 

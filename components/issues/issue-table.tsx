@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest, Tag } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest, Tag, Zap } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -54,8 +54,8 @@ function compareValues(a: NormalizedIssue, b: NormalizedIssue, column: SortColum
     case "effort": return ((a.effort ? EFFORT_RANK[a.effort] ?? 99 : 99) - (b.effort ? EFFORT_RANK[b.effort] ?? 99 : 99)) * dir;
     case "wsjf": {
       // Unset scores sort to the bottom regardless of direction.
-      const sa = computeWsjf(a.priority, a.effort);
-      const sb = computeWsjf(b.priority, b.effort);
+      const sa = computeWsjf(a.priority, a.effort, a.impacts);
+      const sb = computeWsjf(b.priority, b.effort, b.impacts);
       if (sa === null && sb === null) return 0;
       if (sa === null) return 1;
       if (sb === null) return -1;
@@ -299,12 +299,25 @@ export function IssueTable({
                   </TableCell>
                   <TableCell className="text-sm tabular-nums text-muted-foreground">
                     {(() => {
-                      const score = computeWsjf(issue.priority, issue.effort);
+                      const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
+                      const boosted = score !== null && issue.impacts.length > 0;
+                      const tooltip = score === null
+                        ? "Set priority and effort to calculate"
+                        : boosted
+                          ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
+                          : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
                       return (
                         <span
-                          className={score !== null ? "font-medium text-foreground" : ""}
-                          title={score !== null ? `priority(${issue.priority}) ÷ effort(${issue.effort})` : "Set priority and effort to calculate"}
+                          className={
+                            boosted
+                              ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
+                              : score !== null
+                                ? "font-medium text-foreground"
+                                : ""
+                          }
+                          title={tooltip}
                         >
+                          {boosted && <Zap className="size-3" />}
                           {formatWsjf(score)}
                         </span>
                       );

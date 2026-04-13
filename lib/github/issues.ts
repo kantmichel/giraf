@@ -6,6 +6,7 @@ import { extractClaudeState } from "@/lib/claude-workflow";
 const STATUS_PREFIX = "status: ";
 const PRIORITY_PREFIX = "priority: ";
 const EFFORT_PREFIX = "effort: ";
+const IMPACT_PREFIX = "impact: ";
 
 type StatusValue = "to do" | "doing" | "in review" | "done";
 type PriorityValue = "critical" | "high" | "medium" | "low";
@@ -33,6 +34,12 @@ function extractEffort(labels: NormalizedLabel[]): EffortValue | null {
   );
   if (!effortLabel) return null;
   return effortLabel.name.toLowerCase().replace(EFFORT_PREFIX, "") as EffortValue;
+}
+
+function extractImpacts(labels: NormalizedLabel[]): string[] {
+  return labels
+    .filter((l) => l.name.toLowerCase().startsWith(IMPACT_PREFIX))
+    .map((l) => l.name.toLowerCase().replace(IMPACT_PREFIX, ""));
 }
 
 function normalizeLabels(
@@ -75,6 +82,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
     status: extractStatus(labels),
     priority: extractPriority(labels),
     effort: extractEffort(labels),
+    impacts: extractImpacts(labels),
     claudeState: extractClaudeState(labels),
     assignees: normalizeAssignees(issue.assignees),
     labels,

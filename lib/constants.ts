@@ -18,6 +18,10 @@ export const EFFORT_LABELS = [
   { name: "effort: high", color: "d93f0b", description: "Multiple days" },
 ] as const;
 
+export const IMPACT_LABELS = [
+  { name: "impact: customer", color: "7057ff", description: "Direct customer impact — boosts WSJF score" },
+] as const;
+
 export const AI_STATE_LABELS = [
   { value: "review-queued", label: "Review queued" },
   { value: "reviewing", label: "Reviewing" },
@@ -29,7 +33,7 @@ export const AI_STATE_LABELS = [
   { value: "failed", label: "Failed" },
 ] as const;
 
-export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS, ...EFFORT_LABELS];
+export const GIRA_LABELS = [...STATUS_LABELS, ...PRIORITY_LABELS, ...EFFORT_LABELS, ...IMPACT_LABELS];
 
 /** Sentinel value used in filter dropdowns to match issues with no value set */
 export const UNSET_FILTER_VALUE = "__unset__";
@@ -37,3 +41,4 @@ export const UNSET_FILTER_VALUE = "__unset__";
 export type StatusName = (typeof STATUS_LABELS)[number]["name"];
 export type PriorityName = (typeof PRIORITY_LABELS)[number]["name"];
 export type EffortName = (typeof EFFORT_LABELS)[number]["name"];
+export type ImpactName = (typeof IMPACT_LABELS)[number]["name"];

@@ -64,8 +64,8 @@ function createComparator(sort: ColumnSort, columnId: string) {
       case "wsjf": {
         // Match the existing pattern: unset sorts as -1 so it lands at the
         // bottom of desc and the top of asc, consistent with priority/effort.
-        const wa = computeWsjf(a.priority, a.effort) ?? -1;
-        const wb = computeWsjf(b.priority, b.effort) ?? -1;
+        const wa = computeWsjf(a.priority, a.effort, a.impacts) ?? -1;
+        const wb = computeWsjf(b.priority, b.effort, b.impacts) ?? -1;
         result = wa - wb;
         break;
       }

@@ -9,6 +9,8 @@ export interface NormalizedIssue {
   status: "to do" | "doing" | "in review" | "done" | null;
   priority: "critical" | "high" | "medium" | "low" | null;
   effort: "low" | "medium" | "high" | null;
+  /** Impact tags (e.g. "customer") parsed from `impact: <type>` labels. Empty array if none. */
+  impacts: string[];
   claudeState: "review-queued" | "reviewing" | "review-done" | "review-failed" | "work-queued" | "working" | "done" | "failed" | null;
   assignees: NormalizedUser[];
   labels: NormalizedLabel[];
