@@ -4,6 +4,7 @@ import {
   startOfMonth,
   startOfWeek,
   startOfYear,
+  subDays,
   subHours,
   subMonths,
 } from "date-fns";
@@ -15,7 +16,11 @@ export type DateRangePreset =
   | "this-month"
   | "last-month"
   | "this-year"
-  | "all-time";
+  | "all-time"
+  | "last-30-days"
+  | "last-90-days"
+  | "last-365-days"
+  | "since-repo-creation";
 
 export interface DateRange {
   preset: DateRangePreset;
@@ -97,6 +102,44 @@ export function computeDateRange(preset: DateRangePreset): DateRange {
         shortLabel: "this year",
       };
     }
+    case "last-30-days": {
+      return {
+        preset,
+        from: subDays(now, 30),
+        to: null,
+        label: "Last 30 days",
+        shortLabel: "last 30 days",
+      };
+    }
+    case "last-90-days": {
+      return {
+        preset,
+        from: subDays(now, 90),
+        to: null,
+        label: "Last 90 days",
+        shortLabel: "last 90 days",
+      };
+    }
+    case "last-365-days": {
+      return {
+        preset,
+        from: subDays(now, 365),
+        to: null,
+        label: "Last year",
+        shortLabel: "last year",
+      };
+    }
+    case "since-repo-creation": {
+      // Without a repo creation date this preset is equivalent to all-time.
+      // Callers with a repo context should use computeDateRangeForRepo.
+      return {
+        preset,
+        from: null,
+        to: null,
+        label: "Since repo creation",
+        shortLabel: "since repo creation",
+      };
+    }
     case "all-time":
     default: {
       return {
@@ -108,6 +151,27 @@ export function computeDateRange(preset: DateRangePreset): DateRange {
       };
     }
   }
+}
+
+/**
+ * Like `computeDateRange` but resolves `since-repo-creation` against an actual
+ * repo creation timestamp. Other presets delegate unchanged.
+ */
+export function computeDateRangeForRepo(
+  preset: DateRangePreset,
+  repoCreatedAt: Date | string | null
+): DateRange {
+  if (preset !== "since-repo-creation") return computeDateRange(preset);
+  if (!repoCreatedAt) return computeDateRange("all-time");
+  const from =
+    typeof repoCreatedAt === "string" ? new Date(repoCreatedAt) : repoCreatedAt;
+  return {
+    preset,
+    from,
+    to: null,
+    label: "Since repo creation",
+    shortLabel: "since repo creation",
+  };
 }
 
 /**

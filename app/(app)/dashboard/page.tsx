@@ -7,6 +7,7 @@ import { useClosedIssues } from "@/hooks/use-closed-issues";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import { METRICS_REGISTRY, DEFAULT_SELECTED_METRICS } from "@/lib/metrics/registry";
 import { MetricRenderer } from "@/components/metrics";
+import { MetricCommitVelocity } from "@/components/metrics/metric-commit-velocity";
 import type { FilterConfig } from "@/types/github";
 
 const defaultFilters: FilterConfig = {
@@ -47,6 +48,7 @@ function DashboardContent() {
           Toggle metrics to show on the issues page.
         </p>
       </div>
+      <MetricCommitVelocity />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {METRICS_REGISTRY.map((metric) => (
           <MetricRenderer

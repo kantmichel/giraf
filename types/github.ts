@@ -81,6 +81,70 @@ export interface IssueComment {
   htmlUrl: string;
 }
 
+export type CommitSource = "default_branch" | "pr_original";
+
+export interface RepoCommitRow {
+  workspace_id: string;
+  repo_owner: string;
+  repo_name: string;
+  commit_sha: string;
+  source: CommitSource;
+  /** ISO timestamp; ALWAYS author.date for consistency across squashed and rebased flows. */
+  committed_at: string;
+  author_login: string | null;
+  pr_number: number | null;
+  is_merge: number;
+  cached_at: string;
+}
+
+export interface RepoCommitsSyncStateRow {
+  workspace_id: string;
+  repo_owner: string;
+  repo_name: string;
+  repo_created_at: string | null;
+  series_a_oldest_iso: string | null;
+  series_a_last_synced_at: string | null;
+  series_a_in_progress: number;
+  series_a_progress_seen: number;
+  series_a_last_error: string | null;
+  series_b_last_pr_number: number | null;
+  series_b_last_pr_updated: string | null;
+  series_b_last_synced_at: string | null;
+  series_b_in_progress: number;
+  series_b_progress_seen: number;
+  series_b_progress_total: number | null;
+  series_b_backfill_done: number;
+  series_b_last_error: string | null;
+}
+
+export type CommitVelocityBucketSize = "day" | "week" | "month";
+
+export interface CommitVelocityBucket {
+  /** ISO date (YYYY-MM-DD) representing the start of the bucket in UTC. */
+  date: string;
+  seriesA: number;
+  seriesB: number;
+}
+
+export interface SeriesSyncStatus {
+  lastSyncedAt: string | null;
+  inProgress: boolean;
+  progressSeen: number;
+  progressTotal?: number | null;
+  backfillDone?: boolean;
+  lastError: string | null;
+}
+
+export interface CommitVelocityResponse {
+  repo: { owner: string; name: string; createdAt: string | null };
+  range: { from: string; to: string; bucket: CommitVelocityBucketSize };
+  buckets: CommitVelocityBucket[];
+  syncStatus: {
+    seriesA: SeriesSyncStatus;
+    seriesB: SeriesSyncStatus;
+  };
+}
+
 export interface FilterConfig {
   repos: string[];
   assignees: string[];

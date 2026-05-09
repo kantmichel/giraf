@@ -320,6 +320,52 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 12,
+    description: "Repository commit history cache (default branch + PR-original)",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE repo_commits (
+          workspace_id   TEXT    NOT NULL,
+          repo_owner     TEXT    NOT NULL,
+          repo_name      TEXT    NOT NULL,
+          commit_sha     TEXT    NOT NULL,
+          source         TEXT    NOT NULL CHECK(source IN ('default_branch','pr_original')),
+          committed_at   TEXT    NOT NULL,
+          author_login   TEXT,
+          pr_number      INTEGER,
+          is_merge       INTEGER NOT NULL DEFAULT 0,
+          cached_at      TEXT    NOT NULL,
+          PRIMARY KEY(workspace_id, repo_owner, repo_name, source, commit_sha)
+        );
+        CREATE INDEX idx_repo_commits_range
+          ON repo_commits(workspace_id, repo_owner, repo_name, source, committed_at);
+        CREATE INDEX idx_repo_commits_pr
+          ON repo_commits(workspace_id, repo_owner, repo_name, source, pr_number);
+
+        CREATE TABLE repo_commits_sync_state (
+          workspace_id              TEXT    NOT NULL,
+          repo_owner                TEXT    NOT NULL,
+          repo_name                 TEXT    NOT NULL,
+          repo_created_at           TEXT,
+          series_a_oldest_iso       TEXT,
+          series_a_last_synced_at   TEXT,
+          series_a_in_progress      INTEGER NOT NULL DEFAULT 0,
+          series_a_progress_seen    INTEGER NOT NULL DEFAULT 0,
+          series_a_last_error       TEXT,
+          series_b_last_pr_number   INTEGER,
+          series_b_last_pr_updated  TEXT,
+          series_b_last_synced_at   TEXT,
+          series_b_in_progress      INTEGER NOT NULL DEFAULT 0,
+          series_b_progress_seen    INTEGER NOT NULL DEFAULT 0,
+          series_b_progress_total   INTEGER,
+          series_b_backfill_done    INTEGER NOT NULL DEFAULT 0,
+          series_b_last_error       TEXT,
+          PRIMARY KEY(workspace_id, repo_owner, repo_name)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
