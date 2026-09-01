@@ -1,4 +1,6 @@
-.PHONY: update install dev
+.PHONY: all update install run
+
+all: update install run
 
 update:
 	git pull
@@ -8,5 +10,3 @@ install:
 
 run:
 	npm run dev
-
-all: update install run
