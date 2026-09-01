@@ -3,6 +3,13 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
+    date: "2026-09-01",
+    version: "1.33.0",
+    title: "Issue Age Filtering & Sorting",
+    description:
+      "New Age filter on the issues page buckets issues by how long ago they were created (< 1 day, 1–7 days, 7–30 days, 30–90 days, > 90 days) and, like every other filter, lives in the URL. The list view gets a Newest/Oldest toggle so you can pull the most stale issues to the top, the kanban gains an \"Age\" per-column sort, and every kanban card now carries an age pill — grey under a month, amber under three, red beyond that.",
+  },
+  {
     date: "2026-04-13",
     version: "1.32.0",
     title: "Customizable Table Columns",

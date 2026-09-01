@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { UNSET_FILTER_VALUE } from "@/lib/constants";
+import { matchesAgeBuckets } from "@/lib/issue-age";
+import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue, FilterConfig } from "@/types/github";
 
 interface IssuesResponse {
@@ -22,6 +24,11 @@ interface UseIssuesOptions {
    * rarely changes.
    */
   closedSince?: Date;
+  /**
+   * Date ordering of the returned list: "newest" (default) puts the most
+   * recent first. Applies to closedAt on the closed view, createdAt otherwise.
+   */
+  sortDir?: IssueSortDir;
 }
 
 export function useIssues(
@@ -39,6 +46,7 @@ export function useIssues(
   );
 
   const closedSinceIso = options.closedSince?.toISOString();
+  const sortDir = options.sortDir ?? "newest";
 
   const query = useQuery<IssuesResponse>({
     queryKey: [
@@ -109,6 +117,10 @@ export function useIssues(
         (includeUnset && !i.effort) || (i.effort && values.includes(i.effort))
       );
     }
+    if (filters.age.length > 0) {
+      const now = new Date();
+      issues = issues.filter((i) => matchesAgeBuckets(i.createdAt, filters.age, now));
+    }
     if (filters.assignees.length > 0) {
       issues = issues.filter((i) =>
         i.assignees.some((a) => filters.assignees.includes(a.login))
@@ -141,19 +153,23 @@ export function useIssues(
       issues = issues.filter((i) => i.title.toLowerCase().includes(q));
     }
 
-    // Sort closed issues by closedAt desc, open issues by createdAt desc
+    // Sort closed issues by closedAt, open issues by createdAt — newest first
+    // unless the caller asked for the oldest (most stale) first.
+    const dir = sortDir === "oldest" ? 1 : -1;
     if (filters.state === "closed") {
-      issues = [...issues].sort((a, b) =>
-        new Date(b.closedAt!).getTime() - new Date(a.closedAt!).getTime()
+      issues = [...issues].sort(
+        (a, b) =>
+          (new Date(a.closedAt!).getTime() - new Date(b.closedAt!).getTime()) * dir
       );
     } else {
-      issues = [...issues].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      issues = [...issues].sort(
+        (a, b) =>
+          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir
       );
     }
 
     return issues;
-  }, [query.data?.issues, filters, weekStart, weekEnd]);
+  }, [query.data?.issues, filters, weekStart, weekEnd, sortDir]);
 
   return {
     ...query,

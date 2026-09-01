@@ -11,7 +11,7 @@ import { STATUS_LABELS } from "@/lib/constants";
 import { computeWsjf } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
-export type SortField = "priority" | "repo" | "effort" | "wsjf" | "time";
+export type SortField = "priority" | "repo" | "effort" | "wsjf" | "time" | "age";
 export type SortDirection = "asc" | "desc";
 export interface ColumnSort { field: SortField; direction: SortDirection }
 
@@ -71,6 +71,11 @@ function createComparator(sort: ColumnSort, columnId: string) {
       }
       case "time":
         result = getTimeValue(a, columnId) - getTimeValue(b, columnId);
+        break;
+      case "age":
+        // Ascending by age (= descending by createdAt), so the default
+        // "desc" direction puts the oldest issues at the top of the column.
+        result = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         break;
     }
 

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FilterBar } from "@/components/filters/filter-bar";
 import { ViewSwitcher } from "@/components/filters/view-switcher";
+import { DateSortToggle } from "@/components/filters/date-sort-toggle";
 import { IssueTable, defaultTableColumnVisibility } from "@/components/issues/issue-table";
 import { TableColumnsMenu } from "@/components/issues/table-columns-menu";
 import { IssueBulkActions } from "@/components/issues/issue-bulk-actions";
@@ -23,9 +24,9 @@ import type { NormalizedIssue } from "@/types/github";
 function IssuesContent() {
   const { data: prefs } = usePreferences();
   const updatePrefs = useUpdatePreferences();
-  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
-  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset);
+  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir });
   const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -99,6 +100,13 @@ function IssuesContent() {
               onWeekOffsetChange={setWeekOffset}
             />
           </div>
+          {view === "list" && (
+            <DateSortToggle
+              value={sortDir}
+              onChange={setSortDir}
+              dateLabel={filters.state === "closed" ? "closed" : "created"}
+            />
+          )}
           {view === "table" && (
             <TableColumnsMenu
               value={visibleColumns}
@@ -126,6 +134,7 @@ function IssuesContent() {
             issues={issues}
             isLoading={loading}
             onIssueClick={setSelectedIssue}
+            sortDir={sortDir}
           />
         ) : view === "table" ? (
           <IssueTable

@@ -19,6 +19,7 @@ import { FilterMultiSelect } from "@/components/filters/filter-multi-select";
 import { AgentWorkflowImport } from "@/components/settings/agent-workflow-import";
 import { ImpactLabelsSettings } from "@/components/settings/impact-labels-settings";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS } from "@/lib/constants";
+import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useClaudeEnabledRepos, useToggleClaudeRepo } from "@/hooks/use-claude-repos";
@@ -35,7 +36,7 @@ interface Budget {
 
 export default function SettingsPage() {
   const { data: session } = useSession();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [budget, setBudget] = useState<Budget>({ critical_max: 2, high_max: 3, medium_max: 5 });
   const [saving, setSaving] = useState(false);
@@ -236,7 +237,7 @@ function DefaultFiltersSettings() {
   const { data: prefs, isLoading } = usePreferences();
   const updatePrefs = useUpdatePreferences();
   const { data: trackedRepos } = useTrackedRepos();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
 
   const defaults = prefs?.default_filters ?? {};
 
@@ -324,6 +325,12 @@ function DefaultFiltersSettings() {
                 options={effortOptions}
                 selected={defaults.effort ?? []}
                 onSelectionChange={(effort) => update({ effort })}
+              />
+              <FilterMultiSelect
+                title="Age"
+                options={AGE_FILTER_OPTIONS}
+                selected={defaults.age ?? []}
+                onSelectionChange={(age) => update({ age })}
               />
               <FilterMultiSelect
                 title="AI"

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { IssueListSection } from "./issue-list-section";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
+import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue } from "@/types/github";
 
 const SECTION_STATUS_MAP: Record<string, string> = {
@@ -15,9 +16,11 @@ interface IssueListViewProps {
   issues: NormalizedIssue[];
   isLoading: boolean;
   onIssueClick: (issue: NormalizedIssue) => void;
+  /** Date ordering — Active and Up Next arrive pre-sorted; Done follows it too. */
+  sortDir?: IssueSortDir;
 }
 
-export function IssueListView({ issues, isLoading, onIssueClick }: IssueListViewProps) {
+export function IssueListView({ issues, isLoading, onIssueClick, sortDir = "newest" }: IssueListViewProps) {
   const updateIssue = useUpdateIssue();
   const [activeIssue, setActiveIssue] = useState<NormalizedIssue | null>(null);
 
@@ -36,13 +39,16 @@ export function IssueListView({ issues, isLoading, onIssueClick }: IssueListView
       }
     }
 
-    // Sort done by closedAt descending
-    done.sort((a, b) =>
-      new Date(b.closedAt || b.updatedAt).getTime() - new Date(a.closedAt || a.updatedAt).getTime()
+    // Sort done by closedAt, following the chosen direction
+    const dir = sortDir === "oldest" ? 1 : -1;
+    done.sort(
+      (a, b) =>
+        (new Date(a.closedAt || a.updatedAt).getTime() -
+          new Date(b.closedAt || b.updatedAt).getTime()) * dir
     );
 
     return { active, upNext, done };
-  }, [issues]);
+  }, [issues, sortDir]);
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveIssue(null);

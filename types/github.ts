@@ -152,6 +152,8 @@ export interface FilterConfig {
   priority: string[];
   effort: string[];
   status: string[];
+  /** Age bucket ids from AGE_BUCKETS, matched against createdAt. */
+  age: string[];
   ai: string[];
   version: string[];
   hasPr: boolean;

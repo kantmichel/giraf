@@ -17,6 +17,7 @@ const defaultFilters: FilterConfig = {
   priority: [],
   effort: [],
   status: [],
+  age: [],
   ai: [],
   version: [],
   hasPr: false,

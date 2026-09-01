@@ -43,9 +43,10 @@ const concepts = [
     icon: LayoutList,
     title: "All Issues",
     description:
-      "A unified table view of every issue across all tracked repos. Filter by repo, status, priority, assignee, or search by title. Click any column header to sort.",
+      "A unified table view of every issue across all tracked repos. Filter by repo, status, priority, effort, age, assignee, or search by title. Click any column header to sort.",
     details: [
       "Filters are stored in the URL — share a filtered view by copying the link.",
+      "The Age filter buckets issues by how long ago they were created (< 1 day through > 90 days); kanban cards show the same age as a colored pill.",
       "Click an issue title to open the detail sidebar without leaving the page.",
       "The state toggle (open/closed/all) refetches from GitHub. Other filters work client-side for speed.",
     ],

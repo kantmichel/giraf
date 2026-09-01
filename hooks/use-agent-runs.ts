@@ -26,6 +26,7 @@ const EMPTY_FILTERS_OPEN: FilterConfig = {
   priority: [],
   effort: [],
   status: [],
+  age: [],
   ai: [],
   version: [],
   hasPr: false,

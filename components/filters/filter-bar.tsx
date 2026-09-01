@@ -17,6 +17,7 @@ import { FilterMultiSelect } from "./filter-multi-select";
 import { FilterSearch } from "./filter-search";
 import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
+import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -132,6 +133,8 @@ export function FilterBar({
     filters.repos.length +
     filters.status.length +
     filters.priority.length +
+    filters.effort.length +
+    filters.age.length +
     filters.ai.length +
     filters.version.length +
     filters.assignees.length +
@@ -164,6 +167,12 @@ export function FilterBar({
         options={effortOptions}
         selected={filters.effort}
         onSelectionChange={(effort) => onFilterChange({ effort })}
+      />
+      <FilterMultiSelect
+        title="Age"
+        options={AGE_FILTER_OPTIONS}
+        selected={filters.age}
+        onSelectionChange={(age) => onFilterChange({ age })}
       />
       <FilterMultiSelect
         title="AI"

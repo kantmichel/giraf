@@ -6,6 +6,7 @@ import { GripVertical, Zap } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
+import { IssueAgeBadge } from "@/components/issues/issue-age-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { computeWsjf, formatWsjf } from "@/lib/wsjf";
 import { cn } from "@/lib/utils";
@@ -97,6 +98,7 @@ export function KanbanCard({ issue, onClick, showTime, timeField, emphasizeWsjf 
                 </span>
               );
             })()}
+            <IssueAgeBadge createdAt={issue.createdAt} />
           </div>
           <div className="flex items-center gap-1">
             <IssuePriorityBadge priority={issue.priority} />

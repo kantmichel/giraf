@@ -5,7 +5,10 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { FilterConfig } from "@/types/github";
 import type { ViewType } from "@/components/filters/view-switcher";
 
-const FILTER_PARAMS = ["repos", "status", "priority", "effort", "ai", "version", "hasPr", "assignees", "labels", "milestone", "q", "state", "_cleared"];
+/** Ordering of the issue list by date — created date, or closed date on the closed view. */
+export type IssueSortDir = "newest" | "oldest";
+
+const FILTER_PARAMS = ["repos", "status", "priority", "effort", "age", "ai", "version", "hasPr", "assignees", "labels", "milestone", "q", "state", "_cleared"];
 
 function hasAnyFilterParams(sp: URLSearchParams): boolean {
   return FILTER_PARAMS.some((p) => sp.has(p));
@@ -18,6 +21,7 @@ const DEFAULT_FILTERS: FilterConfig = {
   priority: [],
   effort: [],
   status: [],
+  age: [],
   ai: [],
   version: [],
   hasPr: false,
@@ -44,6 +48,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       priority: parseArray(searchParams.get("priority")),
       effort: parseArray(searchParams.get("effort")),
       status: parseArray(searchParams.get("status")),
+      age: parseArray(searchParams.get("age")),
       ai: parseArray(searchParams.get("ai")),
       version: parseArray(searchParams.get("version")),
       hasPr: searchParams.get("hasPr") === "1",
@@ -70,11 +75,16 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       const currentView = searchParams.get("view");
       if (currentView) params.set("view", currentView);
 
+      // Preserve the created-date sort direction
+      const currentSort = searchParams.get("sort");
+      if (currentSort) params.set("sort", currentSort);
+
       if (next.state !== "open") params.set("state", next.state);
       if (next.repos.length) params.set("repos", next.repos.join(","));
       if (next.status.length) params.set("status", next.status.join(","));
       if (next.priority.length) params.set("priority", next.priority.join(","));
       if (next.effort.length) params.set("effort", next.effort.join(","));
+      if (next.age.length) params.set("age", next.age.join(","));
       if (next.ai.length) params.set("ai", next.ai.join(","));
       if (next.version.length) params.set("version", next.version.join(","));
       if (next.hasPr) params.set("hasPr", "1");
@@ -116,6 +126,8 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     const params = new URLSearchParams();
     const currentView = searchParams.get("view");
     if (currentView) params.set("view", currentView);
+    const currentSort = searchParams.get("sort");
+    if (currentSort) params.set("sort", currentSort);
     params.set("_cleared", "1");
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
@@ -126,6 +138,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       filters.status.length > 0 ||
       filters.priority.length > 0 ||
       filters.effort.length > 0 ||
+      filters.age.length > 0 ||
       filters.ai.length > 0 ||
       filters.version.length > 0 ||
       filters.hasPr ||
@@ -155,6 +168,23 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     setFilters(defaultFilters);
   }, [defaultFilters, searchParams, setFilters]);
 
+  const sortDir: IssueSortDir =
+    searchParams.get("sort") === "oldest" ? "oldest" : "newest";
+
+  const setSortDir = useCallback(
+    (dir: IssueSortDir) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (dir === "newest") {
+        params.delete("sort");
+      } else {
+        params.set("sort", dir);
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
+  );
+
   const view = (searchParams.get("view") as ViewType) || defaultView;
 
   const setView = useCallback(
@@ -171,5 +201,5 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     [searchParams, router, pathname, defaultView]
   );
 
-  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, DEFAULT_FILTERS };
+  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, DEFAULT_FILTERS };
 }

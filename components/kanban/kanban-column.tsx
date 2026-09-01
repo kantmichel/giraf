@@ -30,6 +30,7 @@ const SORT_OPTIONS: { value: SortField; label: string }[] = [
   { value: "effort", label: "Eff" },
   { value: "wsjf", label: "WSJF" },
   { value: "time", label: "Time" },
+  { value: "age", label: "Age" },
 ];
 
 export function KanbanColumn({
