@@ -99,6 +99,58 @@ Issues that already have both a status/priority label **and** an assignee are au
 
 After the initial triage, only truly new issues will appear in the inbox going forward.
 
+## Running with Docker
+
+The image is self-contained: `next build` runs with `output: "standalone"`, and
+every setting (GitHub OAuth, NextAuth, database path) is read at runtime, so the
+same image runs locally and in production.
+
+```bash
+# Build and run on http://localhost:3000, using .env.local for secrets
+make docker-run
+
+# or, just the image
+make docker-build
+docker run -p 3000:3000 --env-file .env.local -v giraf-data:/app/data giraf:local
+```
+
+The SQLite database lives at `/app/data/gira.db` inside the container
+(`DATABASE_PATH` defaults to it). Mount a volume there or the database is lost
+on every redeploy.
+
+## Deployment
+
+Pushes to `main` run `.github/workflows/deploy.yml`: lint, typecheck and build
+first (`test.yml`, the same workflow every other branch runs), then a Docker
+image is pushed to the GitHub Container Registry as
+`ghcr.io/<owner>/giraf:latest` (also tagged with the commit SHA), and finally
+Dokploy is asked to redeploy.
+
+### Dokploy setup
+
+1. Create an **Application** with source type **Docker**, image
+   `ghcr.io/<owner>/giraf:latest`. Add a registry credential if the package is
+   private.
+2. **Environment** — set:
+
+   | Variable | Value |
+   | --- | --- |
+   | `GITHUB_CLIENT_ID` | from the GitHub OAuth App |
+   | `GITHUB_CLIENT_SECRET` | from the GitHub OAuth App |
+   | `NEXTAUTH_SECRET` | `openssl rand -base64 32` |
+   | `NEXTAUTH_URL` | the public URL, e.g. `https://giraf.example.com` |
+
+   `DATABASE_PATH`, `PORT` and `HOSTNAME` are already set in the image.
+3. **Mounts** — add a volume mount at `/app/data` so the SQLite database
+   survives redeploys.
+4. **Domains** — point the domain at container port `3000`.
+5. **Deployments → Webhook URL** — copy it, then in the GitHub repo under
+   *Settings → Environments → DOKPLOY* add a variable `DOKPLOY_WEBHOOK_URL`
+   with that URL. Until it is set, the deploy job publishes the image and skips
+   the redeploy step.
+6. Update the GitHub OAuth App's callback URL to
+   `https://giraf.example.com/api/auth/callback/github`.
+
 ## License
 
 AGPL-3.0

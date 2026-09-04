@@ -1,0 +1,16 @@
+services:
+  giraf:
+    build: .
+    image: giraf:local
+    ports:
+      - 3000:3000
+    env_file:
+      - .env.local
+    environment:
+      # Overrides the .env.local value, which points at the host checkout.
+      DATABASE_PATH: /app/data/gira.db
+    volumes:
+      - giraf-data:/app/data
+
+volumes:
+  giraf-data:

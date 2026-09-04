@@ -1,0 +1,42 @@
+# Build context: only what `next build` and the runtime need.
+
+# dependencies & build output (reinstalled/rebuilt inside the image)
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+
+# secrets — never bake these into an image; they are runtime env vars
+.env
+.env.*
+!.env.example
+
+# local database — the container gets its own volume. Only the db files: the
+# tracked data/.gitkeep has to survive so the directory exists during the build.
+data/*.db*
+
+# vcs & tooling
+.git
+.github
+.gitignore
+.vscode
+.prettierrc
+.prettierignore
+Dockerfile
+.dockerignore
+docker-compose.yml
+Makefile
+
+# docs & repo-level media (the app serves everything it needs from public/)
+README.md
+CHANGELOG.md
+LICENSE
+gira.md
+/*.png
+/*.ico
+/*.svg
+
+# misc
+.DS_Store
+npm-debug.log*
