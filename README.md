@@ -141,6 +141,13 @@ Dokploy is asked to redeploy.
    | `NEXTAUTH_URL` | the public URL, e.g. `https://giraf.example.com` |
 
    `DATABASE_PATH`, `PORT` and `HOSTNAME` are already set in the image.
+
+   `NEXTAUTH_URL` is what every sign-in and OAuth callback URL is built from.
+   **Leave it out and they fall back to `http://localhost:3000`** — the app
+   loads, and signing in sends you to localhost. Behind a reverse proxy you can
+   set `AUTH_TRUST_HOST=true` instead, which takes the origin from the proxy's
+   `X-Forwarded-Host` / `X-Forwarded-Proto` headers; where both are set,
+   `AUTH_TRUST_HOST` wins.
 3. **Mounts** — add a volume mount at `/app/data` so the SQLite database
    survives redeploys.
 4. **Domains** — point the domain at container port `3000`.
