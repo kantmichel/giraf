@@ -1,7 +1,10 @@
 import type { NormalizedIssue } from "@/types/github";
 
+// Priority uses an exponential-ish scale so `critical` outranks lower priorities
+// even when its effort is high. With effort max of 3, critical=10 guarantees
+// critical+high (3.33) > high+low (3.0) — critical is always a top contender.
 const PRIORITY_VALUE: Record<NonNullable<NormalizedIssue["priority"]>, number> = {
-  critical: 4,
+  critical: 10,
   high: 3,
   medium: 2,
   low: 1,
@@ -32,7 +35,8 @@ export function computeImpactMultiplier(impacts: string[]): number {
  * WSJF (Weighted Shortest Job First) score: (priority ÷ effort) × impact multiplier.
  * Returns null when either priority or effort is unset.
  *
- * Base range: 0.33 (low priority + high effort) to 4.00 (critical + low effort).
+ * Base range: 0.33 (low + high effort) to 10.0 (critical + low effort).
+ * Critical priority is weighted so even critical+high-effort (3.33) beats high+low-effort (3.0).
  * With impacts, score is multiplied by 1.5^N (capped at 3×).
  */
 export function computeWsjf(

@@ -3,11 +3,25 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
+    date: "2026-09-18",
+    version: "1.36.0",
+    title: "Critical-Priority WSJF Boost",
+    description:
+      "Re-weighted the WSJF priority scale so critical issues are always top contenders. Critical jumped from 4 → 10, meaning even critical + high-effort (3.33) now beats high + low-effort (3.0). Previously a critical bug with messy fix could rank below a quick nice-to-have. New score range is 0.33 → 10.0; impact-label boosts still multiply on top.",
+  },
+  {
     date: "2026-09-01",
-    version: "1.33.0",
+    version: "1.35.0",
     title: "Issue Age Filtering & Sorting",
     description:
       "New Age filter on the issues page buckets issues by how long ago they were created (< 1 day, 1–7 days, 7–30 days, 30–90 days, > 90 days) and, like every other filter, lives in the URL. The list view gets a Newest/Oldest toggle so you can pull the most stale issues to the top, the kanban gains an \"Age\" per-column sort, and every kanban card now carries an age pill — grey under a month, amber under three, red beyond that.",
+  },
+  {
+    date: "2026-05-10",
+    version: "1.33.0",
+    title: "Commit Velocity Chart",
+    description:
+      "New full-width Commit Velocity chart on the Dashboard that defeats squash-merge distortion by plotting two series side by side: commits on the default branch, and the original commits inside merged PRs (recovered from /pulls/{n}/commits). Backed by a SQLite cache (migration v12) with day/week/month bucketing. Header offers single-repo dropdown (defaults to pulse-fe), date presets including since-repo-creation, and an exclude-merge-commits toggle. First load backfills full repo history; subsequent loads paint instantly from cache.",
   },
   {
     date: "2026-04-13",
