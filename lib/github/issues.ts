@@ -1,6 +1,7 @@
 import type { Octokit } from "@octokit/rest";
 import type { NormalizedIssue, NormalizedUser, NormalizedLabel, NormalizedLinkedPr, IssueComment } from "@/types/github";
 import { handleGitHubError } from "./errors";
+import { listOpenPulls } from "./pulls";
 import { extractClaudeState } from "@/lib/claude-workflow";
 
 const STATUS_PREFIX = "status: ";
@@ -163,7 +164,30 @@ export async function listRepoIssues(
           title: pr.title ?? "",
           state,
           htmlUrl: pr.html_url,
+          reviewers: [],
         });
+      }
+    }
+
+    // The issues endpoint's PR stubs carry no reviewer data, so fetch it from
+    // the pulls endpoint. Skipped entirely unless some linked PR is still live,
+    // which keeps closed-issue queries (e.g. the agents dashboard) from paying
+    // for a call whose results they could never match.
+    const hasLivePr = [...prsByIssue.values()].some((prs) =>
+      prs.some((pr) => pr.state === "open" || pr.state === "draft")
+    );
+    if (hasLivePr) {
+      const openPulls = await listOpenPulls(octokit, owner, repo);
+      const reviewersByPr = new Map<number, NormalizedUser[]>(
+        openPulls.map((pull) => [
+          pull.number,
+          normalizeAssignees(pull.requested_reviewers),
+        ])
+      );
+      for (const prs of prsByIssue.values()) {
+        for (const pr of prs) {
+          pr.reviewers = reviewersByPr.get(pr.number) ?? [];
+        }
       }
     }
 

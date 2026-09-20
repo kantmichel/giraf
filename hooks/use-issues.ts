@@ -122,8 +122,14 @@ export function useIssues(
       issues = issues.filter((i) => matchesAgeBuckets(i.createdAt, filters.age, now));
     }
     if (filters.assignees.length > 0) {
-      issues = issues.filter((i) =>
-        i.assignees.some((a) => filters.assignees.includes(a.login))
+      // Someone asked to review a linked PR is on the hook for the issue just
+      // as much as its assignee, so this filter matches either role.
+      issues = issues.filter(
+        (i) =>
+          i.assignees.some((a) => filters.assignees.includes(a.login)) ||
+          i.linkedPrs.some((pr) =>
+            pr.reviewers.some((r) => filters.assignees.includes(r.login))
+          )
       );
     }
     if (filters.ai.length > 0) {

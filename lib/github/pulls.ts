@@ -17,7 +17,7 @@ export interface GHPullListItem {
   base: { ref: string };
   head: { ref: string };
   requested_reviewers:
-    | { login: string; avatar_url: string; type: string }[]
+    | { id: number; login: string; avatar_url: string; type: string }[]
     | undefined
     | null;
 }

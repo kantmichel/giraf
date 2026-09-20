@@ -41,6 +41,9 @@ export interface NormalizedLinkedPr {
   title: string;
   state: "open" | "closed" | "merged" | "draft";
   htmlUrl: string;
+  /** Requested reviewers. Only populated for open PRs — GitHub drops the
+   *  request once a PR is merged or closed. */
+  reviewers: NormalizedUser[];
 }
 
 export interface GitHubRepo {

@@ -3,11 +3,11 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
-    date: "2026-09-18",
+    date: "2026-09-20",
     version: "1.36.0",
-    title: "Critical-Priority WSJF Boost",
+    title: "WSJF Critical Boost & Reviewer-Aware Filtering",
     description:
-      "Re-weighted the WSJF priority scale so critical issues are always top contenders. Critical jumped from 4 → 10, meaning even critical + high-effort (3.33) now beats high + low-effort (3.0). Previously a critical bug with messy fix could rank below a quick nice-to-have. New score range is 0.33 → 10.0; impact-label boosts still multiply on top.",
+      "Two changes. First, the WSJF priority scale was re-weighted so critical issues are always top contenders: critical jumped from 4 → 10, meaning even critical + high-effort (3.33) now beats high + low-effort (3.0). Previously a critical bug with a messy fix could rank below a quick nice-to-have. New score range is 0.33 → 10.0; impact-label boosts still multiply on top. Second, filtering by assignee now also matches people requested as reviewers on a linked PR — if Douwe is reviewing the PR that closes an issue, that issue shows up under his name even though it is assigned to someone else. Reviewer data covers open PRs only, since GitHub drops the review request once a PR is merged or closed.",
   },
   {
     date: "2026-09-01",
