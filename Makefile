@@ -11,7 +11,7 @@ install:
 run:
 	npm run dev
 
-# Production image, same one CI builds and Dokploy runs.
+# Self-contained production image, for running the app locally in a container.
 docker-build:
 	docker build -t giraf:local .
 

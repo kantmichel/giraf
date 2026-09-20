@@ -1,13 +1,9 @@
 name: Test
 
-# Runs lint, typecheck and build on every branch except main. Pushes to main
-# are covered by deploy.yml, which calls this workflow (workflow_call) before
-# it builds and deploys — so there is exactly one definition of "how it runs".
+# Runs lint, typecheck and build on every branch, main included.
 
 on:
   push:
-    branches-ignore: [ main ]
-  workflow_call:
   workflow_dispatch:
 
 permissions:
