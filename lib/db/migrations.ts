@@ -366,6 +366,19 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 13,
+    description: "Drop the watch system and the unused issue_relationships table",
+    up: (db) => {
+      // IF EXISTS because watched_issues was already absent from at least one
+      // database despite migration 4 claiming to have created it, which is how
+      // the watch button came to fail on every call.
+      db.exec(`
+        DROP TABLE IF EXISTS watched_issues;
+        DROP TABLE IF EXISTS issue_relationships;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

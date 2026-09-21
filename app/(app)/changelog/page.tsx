@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 const entries = [
   {
     date: "2026-09-21",
+    version: "1.38.0",
+    title: "Shareable Issue Links",
+    description:
+      "Opening an issue now updates the URL, so the address bar is always a link to exactly what is on screen — paste one and it opens straight to that issue, filters and all. The unused watch button is gone; it had been failing silently against a missing table, which was also swallowing every closed-issue notification.",
+  },
+  {
+    date: "2026-09-21",
     version: "1.37.0",
     title: "Dependency-Aware Priority",
     description:

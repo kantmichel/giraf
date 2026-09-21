@@ -79,6 +79,14 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       const currentSort = searchParams.get("sort");
       if (currentSort) params.set("sort", currentSort);
 
+      // Narrowing the list shouldn't slam the detail panel shut.
+      const openRepo = searchParams.get("repo");
+      const openNumber = searchParams.get("issue");
+      if (openRepo && openNumber) {
+        params.set("repo", openRepo);
+        params.set("issue", openNumber);
+      }
+
       if (next.state !== "open") params.set("state", next.state);
       if (next.repos.length) params.set("repos", next.repos.join(","));
       if (next.status.length) params.set("status", next.status.join(","));
@@ -107,6 +115,34 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     [filters, searchParams, router, pathname, weekOffset]
   );
 
+  /**
+   * The issue whose detail panel is open, held in the URL so the address bar is
+   * always a shareable link to what is on screen. Repo names are unique across
+   * the tracked set, so the owner is left out to keep the link readable.
+   */
+  const openIssueRef = useMemo(() => {
+    const repo = searchParams.get("repo");
+    const number = parseInt(searchParams.get("issue") ?? "", 10);
+    if (!repo || isNaN(number)) return null;
+    return { repo, number };
+  }, [searchParams]);
+
+  const setOpenIssueRef = useCallback(
+    (ref: { repo: string; number: number } | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (ref) {
+        params.set("repo", ref.repo);
+        params.set("issue", String(ref.number));
+      } else {
+        params.delete("repo");
+        params.delete("issue");
+      }
+      const qs = params.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [searchParams, router, pathname]
+  );
+
   const setWeekOffset = useCallback(
     (offset: number) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -128,6 +164,12 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     if (currentView) params.set("view", currentView);
     const currentSort = searchParams.get("sort");
     if (currentSort) params.set("sort", currentSort);
+    const openRepo = searchParams.get("repo");
+    const openNumber = searchParams.get("issue");
+    if (openRepo && openNumber) {
+      params.set("repo", openRepo);
+      params.set("issue", openNumber);
+    }
     params.set("_cleared", "1");
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
@@ -201,5 +243,5 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
     [searchParams, router, pathname, defaultView]
   );
 
-  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, DEFAULT_FILTERS };
+  return { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, openIssueRef, setOpenIssueRef, DEFAULT_FILTERS };
 }

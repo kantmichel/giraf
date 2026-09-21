@@ -1,5 +1,4 @@
 import { insertClosedNotification, cleanupOldNotifications } from "@/lib/db/notifications";
-import { getWatchedKeys } from "@/lib/db/watched-issues";
 import type { NormalizedIssue } from "@/types/github";
 
 export function detectClosedNotifications(
@@ -8,14 +7,11 @@ export function detectClosedNotifications(
   issues: NormalizedIssue[]
 ): void {
   try {
-    const watchedKeys = getWatchedKeys(workspaceId, username);
-
     const relevant = issues.filter((i) => {
       if (i.state !== "closed") return false;
       return (
         i.createdBy.login === username ||
-        i.assignees.some((a) => a.login === username) ||
-        watchedKeys.has(`${i.repo.fullName}:${i.number}`)
+        i.assignees.some((a) => a.login === username)
       );
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { GitFork, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,15 +19,13 @@ import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
-import type { NormalizedIssue } from "@/types/github";
 
 function IssuesContent() {
   const { data: prefs } = usePreferences();
   const updatePrefs = useUpdatePreferences();
-  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
+  const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, openIssueRef, setOpenIssueRef } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir });
-  const [selectedIssue, setSelectedIssue] = useState<NormalizedIssue | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Column visibility — null means "follow saved prefs". Toggles populate the
@@ -44,12 +42,22 @@ function IssuesContent() {
     return issues.filter((i) => selectedIds.has(`${i.repo.fullName}:${i.number}`));
   }, [issues, selectedIds]);
 
-  // Sync selectedIssue with cache updates (optimistic updates)
-  useEffect(() => {
-    if (!selectedIssue) return;
-    const updated = allIssues.find((i) => i.id === selectedIssue.id);
-    if (updated) setSelectedIssue(updated);
-  }, [allIssues]); // eslint-disable-line react-hooks/exhaustive-deps
+  const openIssue = useCallback(
+    (issue: { repo: { name: string }; number: number }) =>
+      setOpenIssueRef({ repo: issue.repo.name, number: issue.number }),
+    [setOpenIssueRef]
+  );
+
+  // Derived from the URL rather than held alongside it, which also means the
+  // panel picks up optimistic cache updates for free.
+  const selectedIssue = useMemo(() => {
+    if (!openIssueRef) return null;
+    return (
+      allIssues.find(
+        (i) => i.repo.name === openIssueRef.repo && i.number === openIssueRef.number
+      ) ?? null
+    );
+  }, [allIssues, openIssueRef]);
 
   if (isError) {
     return (
@@ -133,14 +141,14 @@ function IssuesContent() {
           <IssueListView
             issues={issues}
             isLoading={loading}
-            onIssueClick={setSelectedIssue}
+            onIssueClick={openIssue}
             sortDir={sortDir}
           />
         ) : view === "table" ? (
           <IssueTable
             issues={issues}
             isLoading={loading}
-            onIssueClick={setSelectedIssue}
+            onIssueClick={openIssue}
             selectable
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
@@ -151,7 +159,7 @@ function IssuesContent() {
           <KanbanBoard
             issues={issues}
             isLoading={loading}
-            onIssueClick={setSelectedIssue}
+            onIssueClick={openIssue}
             initialSorts={prefs?.kanban_sort ?? undefined}
             onSortsChange={(sorts) => updatePrefs.mutate({ kanban_sort: sorts })}
           />
@@ -160,7 +168,7 @@ function IssuesContent() {
       <IssueDetailSidebar
         issue={selectedIssue}
         open={selectedIssue !== null}
-        onClose={() => setSelectedIssue(null)}
+        onClose={() => setOpenIssueRef(null)}
       />
     </>
   );

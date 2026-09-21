@@ -137,19 +137,9 @@ CREATE TABLE snoozed_issues (
   PRIMARY KEY(workspace_id, repo_full_name, issue_number)
 );
 
--- Issue relationships (blocks, relates to, duplicate of)
-CREATE TABLE issue_relationships (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  workspace_id TEXT NOT NULL,
-  source_repo TEXT NOT NULL,
-  source_issue INTEGER NOT NULL,
-  target_repo TEXT NOT NULL,
-  target_issue INTEGER NOT NULL,
-  relationship_type TEXT NOT NULL CHECK(relationship_type IN ('blocks', 'blocked_by', 'relates_to', 'duplicate_of')),
-  created_by TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(workspace_id, source_repo, source_issue, target_repo, target_issue, relationship_type)
-);
+-- Issue relationships are not stored locally. Blocked-by edges are read from
+-- GitHub's native issue dependencies, so there is one source of truth and no
+-- local copy to keep in sync. See lib/github/dependencies.ts.
 
 -- Triage state per issue (tracks whether issue has been triaged)
 CREATE TABLE triage_state (
