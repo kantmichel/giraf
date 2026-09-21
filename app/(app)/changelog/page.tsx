@@ -7,14 +7,14 @@ const entries = [
     version: "1.37.0",
     title: "Dependency-Aware Priority",
     description:
-      "A ticket that blocks another now always outranks it, no matter what the numbers say. Gira reads GitHub's native \"blocked by\" relationships and lifts each blocker's WSJF to just above the highest score it blocks, so the ordering holds in every score-sorted view and propagates down a chain. Lifted scores show in amber with an up-chevron, and the tooltip spells out why — \"lifted to 4.01 — blocks pulse-fe#998 (own score 1.0)\". An untriaged blocker gets lifted too: something gating real work should surface even before anyone gives it a priority. Dependency cycles fall back to the issue's own score rather than looping. The issue detail panel gains a Blocked by row listing each blocker with its live status, struck through once it is closed or done. Set the relationships in GitHub; Gira only reads them.",
+      "A ticket that blocks another now always outranks it. Gira reads GitHub's native \"blocked by\" links and lifts each blocker's WSJF just above the highest score it blocks, propagating down a chain. Lifted scores show amber, with a tooltip explaining the lift. The issue detail panel gains a Blocked by row showing each blocker's live status.",
   },
   {
     date: "2026-09-20",
     version: "1.36.0",
     title: "WSJF Critical Boost & Reviewer-Aware Filtering",
     description:
-      "Two changes. First, the WSJF priority scale was re-weighted so critical issues are always top contenders: critical jumped from 4 → 10, meaning even critical + high-effort (3.33) now beats high + low-effort (3.0). Previously a critical bug with a messy fix could rank below a quick nice-to-have. New score range is 0.33 → 10.0; impact-label boosts still multiply on top. Second, filtering by assignee now also matches people requested as reviewers on a linked PR — if Douwe is reviewing the PR that closes an issue, that issue shows up under his name even though it is assigned to someone else. Reviewer data covers open PRs only, since GitHub drops the review request once a PR is merged or closed.",
+      "Critical priority jumped from 4 → 10, so critical work outranks lower tiers even when the effort is high. New range is 0.33 → 10.0, with impact boosts still multiplying on top. Filtering by assignee now also matches reviewers requested on a linked PR, so a review you owe shows up under your name — open PRs only.",
   },
   {
     date: "2026-09-01",
@@ -28,7 +28,7 @@ const entries = [
     version: "1.33.0",
     title: "Commit Velocity Chart",
     description:
-      "New full-width Commit Velocity chart on the Dashboard that defeats squash-merge distortion by plotting two series side by side: commits on the default branch, and the original commits inside merged PRs (recovered from /pulls/{n}/commits). Backed by a SQLite cache (migration v12) with day/week/month bucketing. Header offers single-repo dropdown (defaults to pulse-fe), date presets including since-repo-creation, and an exclude-merge-commits toggle. First load backfills full repo history; subsequent loads paint instantly from cache.",
+      "New Commit Velocity chart on the Dashboard, plotting default-branch commits alongside the original commits inside merged PRs so squash merges stop hiding the real work. Offers a repo picker, date presets, and day/week/month bucketing. First load backfills full history; later loads paint instantly from cache.",
   },
   {
     date: "2026-04-13",
