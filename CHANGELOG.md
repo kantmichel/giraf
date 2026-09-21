@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.38.0](https://github.com/kantmichel/giraf/compare/v1.37.0...v1.38.0) (2026-09-21)
+
+
+### Features
+
+* **issues:** put the open issue in the URL, drop the watch system ([4115c2b](https://github.com/kantmichel/giraf/commit/4115c2b795698fbaeec93be998e413e88e483cac))
+
 ## [1.37.0](https://github.com/kantmichel/giraf/compare/v1.36.0...v1.37.0) (2026-09-21)
 
 
