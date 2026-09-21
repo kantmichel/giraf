@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0](https://github.com/kantmichel/giraf/compare/v1.36.0...v1.37.0) (2026-09-21)
+
+
+### Features
+
+* **wsjf:** rank blockers above the issues they block ([5b8c05a](https://github.com/kantmichel/giraf/commit/5b8c05acccd97a9b3a151ff9a6e837c3d4ca9424))
+
 ## [1.36.0](https://github.com/kantmichel/giraf/compare/v1.0.0...v1.36.0) (2026-09-20)
 
 
