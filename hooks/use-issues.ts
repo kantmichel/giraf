@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { UNSET_FILTER_VALUE } from "@/lib/constants";
 import { matchesAgeBuckets } from "@/lib/issue-age";
+import { attachEffectiveWsjf } from "@/lib/wsjf";
 import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue, FilterConfig } from "@/types/github";
 
@@ -78,9 +79,16 @@ export function useIssues(
     refetchInterval: options.pollIntervalMs,
   });
 
+  // Scored over the whole loaded set, before any filtering, so a blocker still
+  // outranks what it blocks even when the dependent row is filtered out.
+  const scoredIssues = useMemo(
+    () => attachEffectiveWsjf(query.data?.issues ?? []),
+    [query.data?.issues]
+  );
+
   const filteredIssues = useMemo(() => {
     if (!query.data?.issues) return [];
-    let issues = query.data.issues;
+    let issues = scoredIssues;
 
     // When viewing closed issues on the weekly /issues page, narrow to the
     // selected week. When a caller overrides via `closedSince`, skip this
@@ -175,12 +183,12 @@ export function useIssues(
     }
 
     return issues;
-  }, [query.data?.issues, filters, weekStart, weekEnd, sortDir]);
+  }, [query.data?.issues, scoredIssues, filters, weekStart, weekEnd, sortDir]);
 
   return {
     ...query,
     issues: filteredIssues,
-    allIssues: query.data?.issues ?? [],
+    allIssues: scoredIssues,
     errors: query.data?.errors ?? [],
     totalRepos: query.data?.totalRepos ?? 0,
     fetchedRepos: query.data?.fetchedRepos ?? 0,

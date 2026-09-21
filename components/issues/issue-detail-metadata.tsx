@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { GitPullRequest } from "lucide-react";
+import { CircleSlash, GitPullRequest } from "lucide-react";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
@@ -111,6 +111,37 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
         currentLabels={localLabels}
         onUpdate={handleLabelsUpdate}
       />
+
+      {issue.blockedBy.length > 0 && (
+        <>
+          <span className="text-muted-foreground">Blocked by</span>
+          <div className="flex flex-col gap-1">
+            {issue.blockedBy.map((dep) => {
+              const cleared = dep.state === "closed" || dep.status === "done";
+              return (
+                <a
+                  key={`${dep.owner}/${dep.repo}#${dep.number}`}
+                  href={dep.htmlUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm hover:underline"
+                  title={dep.title}
+                >
+                  <CircleSlash
+                    className={`size-3.5 shrink-0 ${cleared ? "text-muted-foreground" : "text-[#d97706]"}`}
+                  />
+                  <span className={cleared ? "text-muted-foreground line-through" : ""}>
+                    {dep.repo}#{dep.number}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {dep.state === "closed" ? "closed" : (dep.status ?? "no status")}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {issue.linkedPrs.length > 0 && (
         <>

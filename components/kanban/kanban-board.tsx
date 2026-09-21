@@ -8,7 +8,7 @@ import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { STATUS_LABELS } from "@/lib/constants";
-import { computeWsjf } from "@/lib/wsjf";
+import type { ScoredIssue } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
 export type SortField = "priority" | "repo" | "effort" | "wsjf" | "time" | "age";
@@ -42,7 +42,7 @@ function getTimeValue(issue: NormalizedIssue, columnId: string): number {
 }
 
 function createComparator(sort: ColumnSort, columnId: string) {
-  return (a: NormalizedIssue, b: NormalizedIssue): number => {
+  return (a: ScoredIssue, b: ScoredIssue): number => {
     let result = 0;
 
     switch (sort.field) {
@@ -64,8 +64,8 @@ function createComparator(sort: ColumnSort, columnId: string) {
       case "wsjf": {
         // Match the existing pattern: unset sorts as -1 so it lands at the
         // bottom of desc and the top of asc, consistent with priority/effort.
-        const wa = computeWsjf(a.priority, a.effort, a.impacts) ?? -1;
-        const wb = computeWsjf(b.priority, b.effort, b.impacts) ?? -1;
+        const wa = a.wsjf.score ?? -1;
+        const wb = b.wsjf.score ?? -1;
         result = wa - wb;
         break;
       }
@@ -92,16 +92,16 @@ function createComparator(sort: ColumnSort, columnId: string) {
 }
 
 interface KanbanBoardProps {
-  issues: NormalizedIssue[];
+  issues: ScoredIssue[];
   isLoading: boolean;
-  onIssueClick: (issue: NormalizedIssue) => void;
+  onIssueClick: (issue: ScoredIssue) => void;
   initialSorts?: Record<string, ColumnSort>;
   onSortsChange?: (sorts: Record<string, ColumnSort>) => void;
 }
 
 export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onSortsChange }: KanbanBoardProps) {
   const updateIssue = useUpdateIssue();
-  const [activeIssue, setActiveIssue] = useState<NormalizedIssue | null>(null);
+  const [activeIssue, setActiveIssue] = useState<ScoredIssue | null>(null);
   const [unsetCollapsed, setUnsetCollapsed] = useState(false);
   const [columnSorts, setColumnSorts] = useState<Record<string, ColumnSort>>(initialSorts ?? {});
 
@@ -130,7 +130,7 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
   }, [onSortsChange]);
 
   const grouped = useMemo(() => {
-    const groups: Record<string, NormalizedIssue[]> = {};
+    const groups: Record<string, ScoredIssue[]> = {};
     for (const col of COLUMNS) {
       groups[col.id] = [];
     }
@@ -159,7 +159,7 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
     if (!over) return;
 
     const targetStatus = over.id as string;
-    const issue = active.data.current?.issue as NormalizedIssue | undefined;
+    const issue = active.data.current?.issue as ScoredIssue | undefined;
     if (!issue) return;
 
     // Don't update if same column

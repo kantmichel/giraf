@@ -2,18 +2,18 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Zap } from "lucide-react";
+import { ChevronsUp, GripVertical, Zap } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { IssueAgeBadge } from "@/components/issues/issue-age-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
-import { computeWsjf, formatWsjf } from "@/lib/wsjf";
+import { formatWsjf, shortKey } from "@/lib/wsjf";
+import type { ScoredIssue } from "@/lib/wsjf";
 import { cn } from "@/lib/utils";
-import type { NormalizedIssue } from "@/types/github";
 
 interface KanbanCardProps {
-  issue: NormalizedIssue;
+  issue: ScoredIssue;
   onClick: () => void;
   showTime?: boolean;
   timeField?: string;
@@ -75,24 +75,30 @@ export function KanbanCard({ issue, onClick, showTime, timeField, emphasizeWsjf 
             <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
             <IssueRepoBadge repo={issue.repo.fullName} />
             {(() => {
-              const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
+              const { score, ownScore, liftedBy } = issue.wsjf;
               if (score === null) return null;
-              const boosted = issue.impacts.length > 0;
-              const tooltip = boosted
-                ? `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
-                : `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
+              const lifted = liftedBy.length > 0;
+              const boosted = !lifted && issue.impacts.length > 0;
+              const tooltip = lifted
+                ? `WSJF lifted to ${formatWsjf(score)} \u2014 blocks ${liftedBy.map(shortKey).join(", ")}${ownScore === null ? " (no priority or effort set)" : ` (own score ${formatWsjf(ownScore)})`}`
+                : boosted
+                  ? `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
+                  : `WSJF: priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
               return (
                 <span
                   className={cn(
                     "inline-flex items-center gap-0.5 rounded px-1 text-[10px] tabular-nums",
-                    boosted
-                      ? "bg-[#7057ff]/10 font-semibold text-[#7057ff]"
-                      : emphasizeWsjf
-                        ? "bg-primary/10 font-semibold text-primary"
-                        : "text-muted-foreground"
+                    lifted
+                      ? "bg-[#d97706]/10 font-semibold text-[#d97706]"
+                      : boosted
+                        ? "bg-[#7057ff]/10 font-semibold text-[#7057ff]"
+                        : emphasizeWsjf
+                          ? "bg-primary/10 font-semibold text-primary"
+                          : "text-muted-foreground"
                   )}
                   title={tooltip}
                 >
+                  {lifted && <ChevronsUp className="size-2.5" />}
                   {boosted && <Zap className="size-2.5" />}
                   {formatWsjf(score)}
                 </span>

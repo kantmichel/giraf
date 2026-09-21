@@ -49,6 +49,135 @@ export function computeWsjf(
   return base * computeImpactMultiplier(impacts);
 }
 
+/** Stable cross-repo identity for an issue, e.g. "flipstream-io/pulse-admin#91". */
+export function issueKey(owner: string, repo: string, number: number): string {
+  return `${owner}/${repo}#${number}`;
+}
+
+/** Margin by which a blocker is lifted above what it blocks. Large enough to
+ *  survive the two-decimal display, small enough not to distort the scale. */
+const LIFT_MARGIN = 0.01;
+
+export interface EffectiveWsjf {
+  /** Score after inheriting from blocked issues; null only when unscored and
+   *  blocking nothing. */
+  score: number | null;
+  /** Own score before any lift, for explaining the difference. */
+  ownScore: number | null;
+  /** Keys of issues this one blocks that caused the lift. Empty when unlifted. */
+  liftedBy: string[];
+}
+
+/**
+ * Effective WSJF for a whole issue set, where a blocker always outranks what it
+ * blocks. A blocker inherits the highest score among its dependents plus a
+ * margin, so ordering holds in any score-sorted view without a bespoke sort.
+ *
+ * An untriaged blocker still gets lifted: something gating scored work has to
+ * surface even when nobody has given it a priority yet.
+ *
+ * Dependency cycles are broken by falling back to the issue's own score, so a
+ * mis-entered loop degrades to today's behaviour instead of hanging.
+ */
+export function computeEffectiveWsjf(
+  issues: NormalizedIssue[]
+): Map<string, EffectiveWsjf> {
+  const keyOf = (i: NormalizedIssue) =>
+    issueKey(i.repo.owner, i.repo.name, i.number);
+
+  const ownScores = new Map<string, number | null>();
+  // Reverse of `blockedBy`: blocker key -> keys of issues waiting on it.
+  const blocks = new Map<string, string[]>();
+
+  for (const issue of issues) {
+    const key = keyOf(issue);
+    ownScores.set(key, computeWsjf(issue.priority, issue.effort, issue.impacts));
+    for (const dep of issue.blockedBy) {
+      const blockerKey = issueKey(dep.owner, dep.repo, dep.number);
+      if (!blocks.has(blockerKey)) blocks.set(blockerKey, []);
+      blocks.get(blockerKey)!.push(key);
+    }
+  }
+
+  const resolved = new Map<string, EffectiveWsjf>();
+  const visiting = new Set<string>();
+
+  function resolve(key: string): EffectiveWsjf {
+    const cached = resolved.get(key);
+    if (cached) return cached;
+
+    const ownScore = ownScores.get(key) ?? null;
+    if (visiting.has(key)) return { score: ownScore, ownScore, liftedBy: [] };
+
+    visiting.add(key);
+    let score = ownScore;
+    const liftedBy: string[] = [];
+
+    for (const blockedKey of blocks.get(key) ?? []) {
+      // A blocker for an issue outside the current set can't be ranked against
+      // it, so skip rather than invent a score.
+      if (!ownScores.has(blockedKey)) continue;
+      const blocked = resolve(blockedKey);
+      if (blocked.score === null) continue;
+      const needed = blocked.score + LIFT_MARGIN;
+      if (score === null || needed > score) {
+        score = needed;
+        liftedBy.length = 0;
+        liftedBy.push(blockedKey);
+      } else if (needed === score && !liftedBy.includes(blockedKey)) {
+        liftedBy.push(blockedKey);
+      }
+    }
+
+    visiting.delete(key);
+    const result: EffectiveWsjf = { score, ownScore, liftedBy };
+    resolved.set(key, result);
+    return result;
+  }
+
+  for (const key of ownScores.keys()) resolve(key);
+  return resolved;
+}
+
+/** Drop the owner for display: "flipstream-io/pulse-admin#93" → "pulse-admin#93". */
+export function shortKey(key: string): string {
+  return key.slice(key.indexOf("/") + 1);
+}
+
+/** An issue carrying its dependency-aware score. */
+export type ScoredIssue = NormalizedIssue & { wsjf: EffectiveWsjf };
+
+/**
+ * Prepare issues for display: attach effective scores, and fill in each
+ * blocker's status from the issues already loaded rather than asking GitHub
+ * for it (see the note on query cost in lib/github/dependencies.ts).
+ *
+ * Always run over the full loaded set rather than a filtered view: a blocker
+ * hidden by the current filters still has to lift correctly against the rows
+ * that remain.
+ */
+export function attachEffectiveWsjf(issues: NormalizedIssue[]): ScoredIssue[] {
+  const scores = computeEffectiveWsjf(issues);
+  const statusByKey = new Map(
+    issues.map((i) => [issueKey(i.repo.owner, i.repo.name, i.number), i.status])
+  );
+
+  return issues.map((issue) => {
+    const key = issueKey(issue.repo.owner, issue.repo.name, issue.number);
+    return {
+      ...issue,
+      // A blocker in an untracked repo stays unresolved, and renders on its
+      // open/closed state alone.
+      blockedBy: issue.blockedBy.map((dep) => ({
+        ...dep,
+        status:
+          statusByKey.get(issueKey(dep.owner, dep.repo, dep.number)) ?? dep.status,
+      })),
+      wsjf: scores.get(key)!,
+    };
+  });
+}
+
 /** Format a WSJF score for display, e.g. 1.5 → "1.5", null → "—". */
 export function formatWsjf(score: number | null): string {
   if (score === null) return "—";

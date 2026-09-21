@@ -16,6 +16,8 @@ export interface NormalizedIssue {
   labels: NormalizedLabel[];
   milestone: { title: string; number: number } | null;
   linkedPrs: NormalizedLinkedPr[];
+  /** Issues that must land first, from GitHub's native "blocked by". */
+  blockedBy: IssueRef[];
   version: string | null;
   createdBy: NormalizedUser;
   createdAt: string;
@@ -34,6 +36,19 @@ export interface NormalizedLabel {
   name: string;
   color: string;
   description: string | null;
+}
+
+/** Points at another issue, which may live in a different repo. Carries enough
+ *  detail to render the reference without loading that issue separately. */
+export interface IssueRef {
+  owner: string;
+  repo: string;
+  number: number;
+  title: string;
+  state: "open" | "closed";
+  /** Gira status from the issue's `status: ` label, null when unset. */
+  status: "to do" | "doing" | "in review" | "done" | null;
+  htmlUrl: string;
 }
 
 export interface NormalizedLinkedPr {

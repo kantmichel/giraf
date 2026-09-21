@@ -3,6 +3,13 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 const entries = [
   {
+    date: "2026-09-21",
+    version: "1.37.0",
+    title: "Dependency-Aware Priority",
+    description:
+      "A ticket that blocks another now always outranks it, no matter what the numbers say. Gira reads GitHub's native \"blocked by\" relationships and lifts each blocker's WSJF to just above the highest score it blocks, so the ordering holds in every score-sorted view and propagates down a chain. Lifted scores show in amber with an up-chevron, and the tooltip spells out why — \"lifted to 4.01 — blocks pulse-fe#998 (own score 1.0)\". An untriaged blocker gets lifted too: something gating real work should surface even before anyone gives it a priority. Dependency cycles fall back to the issue's own score rather than looping. The issue detail panel gains a Blocked by row listing each blocker with its live status, struck through once it is closed or done. Set the relationships in GitHub; Gira only reads them.",
+  },
+  {
     date: "2026-09-20",
     version: "1.36.0",
     title: "WSJF Critical Boost & Reviewer-Aware Filtering",

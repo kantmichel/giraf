@@ -8,14 +8,15 @@ import { Button } from "@/components/ui/button";
 import { KanbanCard } from "./kanban-card";
 import { cn } from "@/lib/utils";
 import type { NormalizedIssue } from "@/types/github";
+import type { ScoredIssue } from "@/lib/wsjf";
 import type { SortField, SortDirection } from "./kanban-board";
 
 interface KanbanColumnProps {
   id: string;
   title: string;
   color: string;
-  issues: NormalizedIssue[];
-  onIssueClick: (issue: NormalizedIssue) => void;
+  issues: ScoredIssue[];
+  onIssueClick: (issue: ScoredIssue) => void;
   onCollapse?: () => void;
   sortField: SortField;
   sortDirection: SortDirection;

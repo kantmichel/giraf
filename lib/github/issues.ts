@@ -2,6 +2,7 @@ import type { Octokit } from "@octokit/rest";
 import type { NormalizedIssue, NormalizedUser, NormalizedLabel, NormalizedLinkedPr, IssueComment } from "@/types/github";
 import { handleGitHubError } from "./errors";
 import { listOpenPulls } from "./pulls";
+import { listBlockedBy } from "./dependencies";
 import { extractClaudeState } from "@/lib/claude-workflow";
 
 const STATUS_PREFIX = "status: ";
@@ -91,6 +92,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
       ? { title: issue.milestone.title, number: issue.milestone.number }
       : null,
     linkedPrs: [],
+    blockedBy: [],
     version: null,
     createdBy: {
       id: issue.user?.id || 0,
@@ -129,19 +131,24 @@ export async function listRepoIssues(
   }
 ): Promise<NormalizedIssue[]> {
   try {
-    // Auto-paginate so we don't silently cap the response at 100 items.
-    // Necessary for callers that pass a wide `since` window (e.g. the
-    // agents dashboard fetches closed issues since Oct 1 2025).
-    const data = await octokit.paginate(octokit.rest.issues.listForRepo, {
-      owner,
-      repo,
-      state: options?.state ?? "open",
-      labels: options?.labels,
-      per_page: options?.per_page ?? 100,
-      sort: "updated",
-      direction: "desc",
-      since: options?.since,
-    });
+    // The dependency graph is independent of the issue list, and on a big repo
+    // it costs about as much, so the two run together rather than back to back.
+    const [data, blockedBy] = await Promise.all([
+      // Auto-paginate so we don't silently cap the response at 100 items.
+      // Necessary for callers that pass a wide `since` window (e.g. the
+      // agents dashboard fetches closed issues since Oct 1 2025).
+      octokit.paginate(octokit.rest.issues.listForRepo, {
+        owner,
+        repo,
+        state: options?.state ?? "open",
+        labels: options?.labels,
+        per_page: options?.per_page ?? 100,
+        sort: "updated",
+        direction: "desc",
+        since: options?.since,
+      }),
+      listBlockedBy(octokit, owner, repo, options?.state ?? "open"),
+    ]);
 
     // Separate issues from PRs (GitHub's issues endpoint returns both)
     const issues = data.filter((item) => !item.pull_request);
@@ -194,6 +201,7 @@ export async function listRepoIssues(
     return issues.map((issue) => {
       const normalized = normalizeIssue(issue, owner, repo);
       normalized.linkedPrs = prsByIssue.get(issue.number) ?? [];
+      normalized.blockedBy = blockedBy.get(issue.number) ?? [];
       return normalized;
     });
   } catch (error) {

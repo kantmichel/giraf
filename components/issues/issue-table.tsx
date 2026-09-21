@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, GitPullRequest, Tag, Zap } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronsUp, ExternalLink, GitPullRequest, Tag, Zap } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,7 +23,8 @@ import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
 import { toast } from "sonner";
-import { computeWsjf, formatWsjf } from "@/lib/wsjf";
+import { formatWsjf, shortKey } from "@/lib/wsjf";
+import type { ScoredIssue } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
 type SortColumn =
@@ -44,7 +45,7 @@ const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2,
 const STATUS_RANK: Record<string, number> = { doing: 0, "in review": 1, "to do": 2, done: 3 };
 const EFFORT_RANK: Record<string, number> = { low: 0, medium: 1, high: 2 };
 
-function compareValues(a: NormalizedIssue, b: NormalizedIssue, column: SortColumn, direction: SortDirection): number {
+function compareValues(a: ScoredIssue, b: ScoredIssue, column: SortColumn, direction: SortDirection): number {
   const dir = direction === "asc" ? 1 : -1;
   switch (column) {
     case "status": return ((a.status ? STATUS_RANK[a.status] ?? 99 : 99) - (b.status ? STATUS_RANK[b.status] ?? 99 : 99)) * dir;
@@ -54,8 +55,8 @@ function compareValues(a: NormalizedIssue, b: NormalizedIssue, column: SortColum
     case "effort": return ((a.effort ? EFFORT_RANK[a.effort] ?? 99 : 99) - (b.effort ? EFFORT_RANK[b.effort] ?? 99 : 99)) * dir;
     case "wsjf": {
       // Unset scores sort to the bottom regardless of direction.
-      const sa = computeWsjf(a.priority, a.effort, a.impacts);
-      const sb = computeWsjf(b.priority, b.effort, b.impacts);
+      const sa = a.wsjf.score;
+      const sb = b.wsjf.score;
       if (sa === null && sb === null) return 0;
       if (sa === null) return 1;
       if (sb === null) return -1;
@@ -100,9 +101,9 @@ export function defaultTableColumnVisibility(): Record<string, boolean> {
 }
 
 interface IssueTableProps {
-  issues: NormalizedIssue[];
+  issues: ScoredIssue[];
   isLoading: boolean;
-  onIssueClick?: (issue: NormalizedIssue) => void;
+  onIssueClick?: (issue: ScoredIssue) => void;
   selectable?: boolean;
   selectedIds?: Set<string>;
   onSelectionChange?: (ids: Set<string>) => void;
@@ -344,24 +345,30 @@ export function IssueTable({
                   {isVisible("wsjf") && (
                     <TableCell className="text-sm tabular-nums text-muted-foreground">
                       {(() => {
-                        const score = computeWsjf(issue.priority, issue.effort, issue.impacts);
-                        const boosted = score !== null && issue.impacts.length > 0;
-                        const tooltip = score === null
-                          ? "Set priority and effort to calculate"
-                          : boosted
-                            ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
-                            : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
+                        const { score, ownScore, liftedBy } = issue.wsjf;
+                        const lifted = liftedBy.length > 0;
+                        const boosted = !lifted && score !== null && issue.impacts.length > 0;
+                        const tooltip = lifted
+                          ? `Lifted to ${formatWsjf(score)} \u2014 blocks ${liftedBy.map(shortKey).join(", ")}${ownScore === null ? " (no priority or effort set)" : ` (own score ${formatWsjf(ownScore)})`}`
+                          : score === null
+                            ? "Set priority and effort to calculate"
+                            : boosted
+                              ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
+                              : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
                         return (
                           <span
                             className={
-                              boosted
-                                ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
-                                : score !== null
-                                  ? "font-medium text-foreground"
-                                  : ""
+                              lifted
+                                ? "inline-flex items-center gap-0.5 font-semibold text-[#d97706]"
+                                : boosted
+                                  ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
+                                  : score !== null
+                                    ? "font-medium text-foreground"
+                                    : ""
                             }
                             title={tooltip}
                           >
+                            {lifted && <ChevronsUp className="size-3" />}
                             {boosted && <Zap className="size-3" />}
                             {formatWsjf(score)}
                           </span>
