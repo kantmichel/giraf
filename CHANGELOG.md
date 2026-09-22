@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.0](https://github.com/kantmichel/giraf/compare/v1.38.0...v1.39.0) (2026-09-22)
+
+
+### Features
+
+* **wsjf:** rank by deadline, scaled by effort ([e566768](https://github.com/kantmichel/giraf/commit/e566768645b02e5f7e080054a0fc7940264d8646))
+
 ## [1.38.0](https://github.com/kantmichel/giraf/compare/v1.37.0...v1.38.0) (2026-09-21)
 
 
