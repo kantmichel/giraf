@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.1](https://github.com/kantmichel/giraf/compare/v1.39.0...v1.39.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **table:** use the app's tooltip instead of the browser's ([b2516fd](https://github.com/kantmichel/giraf/commit/b2516fd16bcb9dce0dadd1b23496c2b36a219986))
+
 ## [1.39.0](https://github.com/kantmichel/giraf/compare/v1.38.0...v1.39.0) (2026-09-22)
 
 
