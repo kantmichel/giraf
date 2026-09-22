@@ -1,10 +1,11 @@
-import { formatDistanceToNow, format } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatInstantWithTime } from "@/lib/format-date";
 
 export function RelativeTime({ date }: { date: string }) {
   const d = new Date(date);
   const relative = formatDistanceToNow(d, { addSuffix: true });
-  const absolute = format(d, "MMM d, yyyy 'at' h:mm a");
+  const absolute = formatInstantWithTime(date);
 
   return (
     <Tooltip>

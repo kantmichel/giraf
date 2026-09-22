@@ -1,7 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { formatDay } from "@/lib/format-date"
 const entries = [
+  {
+    date: "2026-09-22",
+    version: "1.39.0",
+    title: "Due Dates & Deadline Boost",
+    description:
+      "Add a `due: YYYY-MM-DD` label and the issue climbs the board as the date nears — scaled by effort, so high-effort work surfaces 25 days out and low-effort 5. Capped at 4×, so an overdue ticket can't pin itself to the top forever. Adds a sortable Due column, a kanban badge, and European date formatting throughout.",
+  },
   {
     date: "2026-09-21",
     version: "1.38.0",
@@ -337,7 +345,7 @@ export default function ChangelogPage() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-muted-foreground">
-                    {entry.date}
+                    {formatDay(entry.date)}
                   </p>
                   <Badge variant="outline" className="text-[10px]">
                     v{entry.version}

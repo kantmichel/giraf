@@ -11,6 +11,8 @@ export interface NormalizedIssue {
   effort: "low" | "medium" | "high" | null;
   /** Impact tags (e.g. "customer") parsed from `impact: <type>` labels. Empty array if none. */
   impacts: string[];
+  /** Target date as YYYY-MM-DD, from a `due: <date>` label. */
+  dueDate: string | null;
   claudeState: "review-queued" | "reviewing" | "review-done" | "review-failed" | "work-queued" | "working" | "done" | "failed" | null;
   assignees: NormalizedUser[];
   labels: NormalizedLabel[];

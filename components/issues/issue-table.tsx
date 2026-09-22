@@ -23,7 +23,8 @@ import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
 import { toast } from "sonner";
-import { formatWsjf, shortKey } from "@/lib/wsjf";
+import { formatWsjf, shortKey, daysUntilDue } from "@/lib/wsjf";
+import { formatDay, formatDayNumeric } from "@/lib/format-date";
 import type { ScoredIssue } from "@/lib/wsjf";
 import type { NormalizedIssue } from "@/types/github";
 
@@ -34,6 +35,7 @@ type SortColumn =
   | "priority"
   | "effort"
   | "wsjf"
+  | "due"
   | "assignee"
   | "createdAt"
   | "updatedAt"
@@ -62,6 +64,14 @@ function compareValues(a: ScoredIssue, b: ScoredIssue, column: SortColumn, direc
       if (sb === null) return -1;
       return (sa - sb) * dir;
     }
+    case "due": {
+      // Undated issues sort to the bottom either way; a date only means
+      // something relative to other dates.
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return a.dueDate.localeCompare(b.dueDate) * dir;
+    }
     case "assignee": return (a.assignees[0]?.login ?? "\uffff").localeCompare(b.assignees[0]?.login ?? "\uffff") * dir;
     case "createdAt": return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * dir;
     case "updatedAt": return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * dir;
@@ -85,6 +95,7 @@ export const TABLE_COLUMN_DEFS = [
   { id: "priority", label: "Priority" },
   { id: "effort", label: "Effort" },
   { id: "wsjf", label: "WSJF" },
+  { id: "due", label: "Due" },
   { id: "assignee", label: "Assignee" },
   { id: "labels", label: "Labels" },
   { id: "version", label: "Version" },
@@ -234,6 +245,7 @@ export function IssueTable({
             {isVisible("priority") && <SortableHead column="priority" className="w-24">Priority</SortableHead>}
             {isVisible("effort") && <SortableHead column="effort" className="w-24">Effort</SortableHead>}
             {isVisible("wsjf") && <SortableHead column="wsjf" className="w-20">WSJF</SortableHead>}
+            {isVisible("due") && <SortableHead column="due" className="w-24">Due</SortableHead>}
             {isVisible("assignee") && <SortableHead column="assignee" className="w-28">Assignee</SortableHead>}
             {isVisible("labels") && <TableHead className="w-28">Labels</TableHead>}
             {isVisible("version") && <TableHead className="w-24">Version</TableHead>}
@@ -345,16 +357,20 @@ export function IssueTable({
                   {isVisible("wsjf") && (
                     <TableCell className="text-sm tabular-nums text-muted-foreground">
                       {(() => {
-                        const { score, ownScore, liftedBy } = issue.wsjf;
+                        const { score, ownScore, liftedBy, dueMultiplier } = issue.wsjf;
                         const lifted = liftedBy.length > 0;
                         const boosted = !lifted && score !== null && issue.impacts.length > 0;
+                        const dueNote =
+                          dueMultiplier > 1 && issue.dueDate
+                            ? ` \u00d7 due ${formatDay(issue.dueDate)} (${dueMultiplier.toFixed(2)}\u00d7)`
+                            : "";
                         const tooltip = lifted
                           ? `Lifted to ${formatWsjf(score)} \u2014 blocks ${liftedBy.map(shortKey).join(", ")}${ownScore === null ? " (no priority or effort set)" : ` (own score ${formatWsjf(ownScore)})`}`
                           : score === null
                             ? "Set priority and effort to calculate"
                             : boosted
-                              ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})`
-                              : `priority(${issue.priority}) \u00f7 effort(${issue.effort})`;
+                              ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})${dueNote}`
+                              : `priority(${issue.priority}) \u00f7 effort(${issue.effort})${dueNote}`;
                         return (
                           <span
                             className={
@@ -371,6 +387,35 @@ export function IssueTable({
                             {lifted && <ChevronsUp className="size-3" />}
                             {boosted && <Zap className="size-3" />}
                             {formatWsjf(score)}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
+                  )}
+                  {isVisible("due") && (
+                    <TableCell className="text-sm tabular-nums text-muted-foreground">
+                      {(() => {
+                        const days = daysUntilDue(issue.dueDate);
+                        if (issue.dueDate === null || days === null) return null;
+                        const overdue = days < 0;
+                        const soon = days >= 0 && days <= 3;
+                        const relative = overdue
+                          ? `${Math.abs(days)}d overdue`
+                          : days === 0
+                            ? "today"
+                            : `in ${days}d`;
+                        return (
+                          <span
+                            className={
+                              overdue
+                                ? "font-semibold text-destructive"
+                                : soon
+                                  ? "font-semibold text-[#d97706]"
+                                  : ""
+                            }
+                            title={`Due ${formatDay(issue.dueDate)} — ${relative}`}
+                          >
+                            {formatDayNumeric(issue.dueDate)}
                           </span>
                         );
                       })()}

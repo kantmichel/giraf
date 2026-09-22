@@ -1,6 +1,7 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ageInDays, formatAge } from "@/lib/issue-age";
 import { cn } from "@/lib/utils";
+import { formatInstant } from "@/lib/format-date";
 
 /**
  * How long an issue has been around, as a compact pill. Colour thresholds
@@ -25,11 +26,7 @@ export function IssueAgeBadge({
           ? "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
           : "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300";
 
-  const absolute = new Date(createdAt).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const absolute = formatInstant(createdAt);
 
   return (
     <Tooltip>

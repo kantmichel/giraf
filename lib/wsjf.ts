@@ -31,8 +31,63 @@ export function computeImpactMultiplier(impacts: string[]): number {
   return Math.min(raw, IMPACT_BOOST_CAP);
 }
 
+/** Ceiling on the due-date multiplier. Capped so one forgotten overdue ticket
+ *  can't pin itself to the top of the board forever. */
+export const DUE_BOOST_MAX = 4;
+
 /**
- * WSJF (Weighted Shortest Job First) score: (priority ÷ effort) × impact multiplier.
+ * How many days before the due date a ticket starts climbing, by effort.
+ *
+ * Scaled by effort rather than fixed, because the question is not "when is this
+ * due" but "when must someone start". A day of work due in a week is not yet
+ * urgent; three weeks of work due in a week already is.
+ */
+const DUE_LEAD_DAYS: Record<NonNullable<NormalizedIssue["effort"]>, number> = {
+  low: 5,
+  medium: 12,
+  high: 25,
+};
+/** Used when effort is unset — mid-range, so an untriaged ticket with a date
+ *  still surfaces rather than staying invisible until the day itself. */
+const DUE_LEAD_DAYS_DEFAULT = 7;
+
+const MS_PER_DAY = 86_400_000;
+
+/**
+ * Multiplier from an approaching due date: 1.0 outside the lead window, rising
+ * smoothly to DUE_BOOST_MAX on the due date, then held there once overdue.
+ */
+export function computeDueMultiplier(
+  dueDate: string | null,
+  effort: NormalizedIssue["effort"],
+  now: Date = new Date()
+): number {
+  if (!dueDate) return 1;
+  const due = new Date(`${dueDate}T00:00:00Z`);
+  if (isNaN(due.getTime())) return 1;
+
+  const lead = effort ? DUE_LEAD_DAYS[effort] : DUE_LEAD_DAYS_DEFAULT;
+  const daysUntilDue = (due.getTime() - now.getTime()) / MS_PER_DAY;
+  if (daysUntilDue >= lead) return 1;
+
+  const progress = Math.min(1, (lead - daysUntilDue) / lead);
+  return 1 + (DUE_BOOST_MAX - 1) * progress;
+}
+
+/** Whole days until the due date; negative once overdue. Null without a date. */
+export function daysUntilDue(
+  dueDate: string | null,
+  now: Date = new Date()
+): number | null {
+  if (!dueDate) return null;
+  const due = new Date(`${dueDate}T00:00:00Z`);
+  if (isNaN(due.getTime())) return null;
+  return Math.ceil((due.getTime() - now.getTime()) / MS_PER_DAY);
+}
+
+/**
+ * WSJF (Weighted Shortest Job First) score:
+ * (priority ÷ effort) × impact multiplier × due-date multiplier.
  * Returns null when either priority or effort is unset.
  *
  * Base range: 0.33 (low + high effort) to 10.0 (critical + low effort).
@@ -43,10 +98,14 @@ export function computeWsjf(
   priority: NormalizedIssue["priority"],
   effort: NormalizedIssue["effort"],
   impacts: string[] = [],
+  dueDate: string | null = null,
+  now: Date = new Date(),
 ): number | null {
   if (!priority || !effort) return null;
   const base = PRIORITY_VALUE[priority] / EFFORT_COST[effort];
-  return base * computeImpactMultiplier(impacts);
+  return (
+    base * computeImpactMultiplier(impacts) * computeDueMultiplier(dueDate, effort, now)
+  );
 }
 
 /** Stable cross-repo identity for an issue, e.g. "flipstream-io/pulse-admin#91". */
@@ -66,6 +125,9 @@ export interface EffectiveWsjf {
   ownScore: number | null;
   /** Keys of issues this one blocks that caused the lift. Empty when unlifted. */
   liftedBy: string[];
+  /** Due-date multiplier already folded into the scores above; 1 when the date
+   *  is absent or still outside its lead window. */
+  dueMultiplier: number;
 }
 
 /**
@@ -80,18 +142,24 @@ export interface EffectiveWsjf {
  * mis-entered loop degrades to today's behaviour instead of hanging.
  */
 export function computeEffectiveWsjf(
-  issues: NormalizedIssue[]
+  issues: NormalizedIssue[],
+  now: Date = new Date()
 ): Map<string, EffectiveWsjf> {
   const keyOf = (i: NormalizedIssue) =>
     issueKey(i.repo.owner, i.repo.name, i.number);
 
   const ownScores = new Map<string, number | null>();
+  const dueMultipliers = new Map<string, number>();
   // Reverse of `blockedBy`: blocker key -> keys of issues waiting on it.
   const blocks = new Map<string, string[]>();
 
   for (const issue of issues) {
     const key = keyOf(issue);
-    ownScores.set(key, computeWsjf(issue.priority, issue.effort, issue.impacts));
+    ownScores.set(
+      key,
+      computeWsjf(issue.priority, issue.effort, issue.impacts, issue.dueDate, now)
+    );
+    dueMultipliers.set(key, computeDueMultiplier(issue.dueDate, issue.effort, now));
     for (const dep of issue.blockedBy) {
       const blockerKey = issueKey(dep.owner, dep.repo, dep.number);
       if (!blocks.has(blockerKey)) blocks.set(blockerKey, []);
@@ -107,7 +175,9 @@ export function computeEffectiveWsjf(
     if (cached) return cached;
 
     const ownScore = ownScores.get(key) ?? null;
-    if (visiting.has(key)) return { score: ownScore, ownScore, liftedBy: [] };
+    const dueMultiplier = dueMultipliers.get(key) ?? 1;
+    if (visiting.has(key))
+      return { score: ownScore, ownScore, liftedBy: [], dueMultiplier };
 
     visiting.add(key);
     let score = ownScore;
@@ -130,7 +200,7 @@ export function computeEffectiveWsjf(
     }
 
     visiting.delete(key);
-    const result: EffectiveWsjf = { score, ownScore, liftedBy };
+    const result: EffectiveWsjf = { score, ownScore, liftedBy, dueMultiplier };
     resolved.set(key, result);
     return result;
   }
@@ -156,8 +226,11 @@ export type ScoredIssue = NormalizedIssue & { wsjf: EffectiveWsjf };
  * hidden by the current filters still has to lift correctly against the rows
  * that remain.
  */
-export function attachEffectiveWsjf(issues: NormalizedIssue[]): ScoredIssue[] {
-  const scores = computeEffectiveWsjf(issues);
+export function attachEffectiveWsjf(
+  issues: NormalizedIssue[],
+  now: Date = new Date()
+): ScoredIssue[] {
+  const scores = computeEffectiveWsjf(issues, now);
   const statusByKey = new Map(
     issues.map((i) => [issueKey(i.repo.owner, i.repo.name, i.number), i.status])
   );

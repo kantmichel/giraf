@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { IssueAgeBadge } from "@/components/issues/issue-age-badge";
+import { IssueDueBadge } from "@/components/issues/issue-due-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { formatWsjf, shortKey } from "@/lib/wsjf";
 import type { ScoredIssue } from "@/lib/wsjf";
@@ -104,6 +105,7 @@ export function KanbanCard({ issue, onClick, showTime, timeField, emphasizeWsjf 
                 </span>
               );
             })()}
+            <IssueDueBadge dueDate={issue.dueDate} effort={issue.effort} />
             <IssueAgeBadge createdAt={issue.createdAt} />
           </div>
           <div className="flex items-center gap-1">
