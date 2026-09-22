@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { IssueStatusEditor } from "./issue-status-editor";
 import { IssuePriorityEditor } from "./issue-priority-editor";
@@ -304,30 +305,41 @@ export function IssueTable({
                       </a>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        className="text-xs text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigator.clipboard.writeText(issue.htmlUrl)
-                          toast.success("Link copied to clipboard")
-                        }}
-                        title="Copy link to clipboard"
-                      >
-                        #{issue.number}
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="text-xs text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              navigator.clipboard.writeText(issue.htmlUrl)
+                              toast.success("Link copied to clipboard")
+                            }}
+                          >
+                            #{issue.number}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <span className="text-xs">Copy link to clipboard</span>
+                        </TooltipContent>
+                      </Tooltip>
                       {issue.linkedPrs.map((pr) => (
-                        <a
-                          key={pr.number}
-                          href={pr.htmlUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
-                          title={pr.title}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <GitPullRequest className="size-3" />
-                          #{pr.number}
-                        </a>
+                        <Tooltip key={pr.number}>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={pr.htmlUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground hover:underline"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <GitPullRequest className="size-3" />
+                              #{pr.number}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <span className="text-xs">{pr.title}</span>
+                          </TooltipContent>
+                        </Tooltip>
                       ))}
                     </div>
                   </TableCell>
@@ -372,22 +384,28 @@ export function IssueTable({
                               ? `priority(${issue.priority}) \u00f7 effort(${issue.effort}) \u00d7 impact(${issue.impacts.join(", ")})${dueNote}`
                               : `priority(${issue.priority}) \u00f7 effort(${issue.effort})${dueNote}`;
                         return (
-                          <span
-                            className={
-                              lifted
-                                ? "inline-flex items-center gap-0.5 font-semibold text-[#d97706]"
-                                : boosted
-                                  ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
-                                  : score !== null
-                                    ? "font-medium text-foreground"
-                                    : ""
-                            }
-                            title={tooltip}
-                          >
-                            {lifted && <ChevronsUp className="size-3" />}
-                            {boosted && <Zap className="size-3" />}
-                            {formatWsjf(score)}
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                className={
+                                  lifted
+                                    ? "inline-flex items-center gap-0.5 font-semibold text-[#d97706]"
+                                    : boosted
+                                      ? "inline-flex items-center gap-0.5 font-semibold text-[#7057ff]"
+                                      : score !== null
+                                        ? "font-medium text-foreground"
+                                        : ""
+                                }
+                              >
+                                {lifted && <ChevronsUp className="size-3" />}
+                                {boosted && <Zap className="size-3" />}
+                                {formatWsjf(score)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <span className="text-xs">{tooltip}</span>
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })()}
                     </TableCell>
@@ -405,18 +423,26 @@ export function IssueTable({
                             ? "today"
                             : `in ${days}d`;
                         return (
-                          <span
-                            className={
-                              overdue
-                                ? "font-semibold text-destructive"
-                                : soon
-                                  ? "font-semibold text-[#d97706]"
-                                  : ""
-                            }
-                            title={`Due ${formatDay(issue.dueDate)} — ${relative}`}
-                          >
-                            {formatDayNumeric(issue.dueDate)}
-                          </span>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span
+                                className={
+                                  overdue
+                                    ? "font-semibold text-destructive"
+                                    : soon
+                                      ? "font-semibold text-[#d97706]"
+                                      : ""
+                                }
+                              >
+                                {formatDayNumeric(issue.dueDate)}
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              <span className="text-xs">
+                                Due {formatDay(issue.dueDate)} · {relative}
+                              </span>
+                            </TooltipContent>
+                          </Tooltip>
                         );
                       })()}
                     </TableCell>

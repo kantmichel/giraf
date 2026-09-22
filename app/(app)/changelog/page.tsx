@@ -5,6 +5,13 @@ import { formatDay } from "@/lib/format-date"
 const entries = [
   {
     date: "2026-09-22",
+    version: "1.39.1",
+    title: "Proper Tooltips on the Issues Table",
+    description:
+      "The issues table was still using the raw browser hover box for its explanations. The WSJF score, due date, linked PRs and the copy-link button now use the app's own tooltip, so they match everything else instead of rendering as an unstyled grey rectangle.",
+  },
+  {
+    date: "2026-09-22",
     version: "1.39.0",
     title: "Due Dates & Deadline Boost",
     description:
