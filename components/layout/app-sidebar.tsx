@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
+  AtSign,
   BarChart3,
   Bot,
   Inbox,
@@ -171,6 +172,18 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <Link href="/issues">
                     <LayoutList />
                     <span>All Issues</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/mentions"}
+                  tooltip="Mentions"
+                >
+                  <Link href="/mentions">
+                    <AtSign />
+                    <span>Mentions</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

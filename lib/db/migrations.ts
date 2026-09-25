@@ -394,6 +394,15 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 15,
+    description: "Dismissing a mention hides it from the bell but not the archive",
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE read_mentions ADD COLUMN dismissed INTEGER NOT NULL DEFAULT 0;
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

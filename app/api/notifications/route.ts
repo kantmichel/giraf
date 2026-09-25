@@ -4,11 +4,7 @@ import { getOctokit } from "@/lib/github/client";
 import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getUnreadNotifications, getUnreadCount, markAllRead } from "@/lib/db/notifications";
 import { listMentions } from "@/lib/github/mentions";
-import {
-  getReadMentionIds,
-  markMentionsRead,
-  pruneReadMentions,
-} from "@/lib/db/read-mentions";
+import { getMentionFlags, markMentionsRead } from "@/lib/db/read-mentions";
 
 export async function GET() {
   try {
@@ -33,13 +29,12 @@ export async function GET() {
       );
     }
 
-    const readIds = getReadMentionIds(workspace.id, username);
-    pruneReadMentions(workspace.id, username, mentions.map((m) => m.id));
-
-    const withReadState = mentions.map((m) => ({
-      ...m,
-      read: readIds.has(m.id),
-    }));
+    // Dismissed mentions drop out of the bell entirely; they remain findable
+    // on the mentions page, which reads the full history from GitHub.
+    const flags = getMentionFlags(workspace.id, username);
+    const withReadState = mentions
+      .filter((m) => !flags.get(m.id)?.dismissed)
+      .map((m) => ({ ...m, read: flags.get(m.id)?.read ?? false }));
 
     return NextResponse.json({
       notifications,

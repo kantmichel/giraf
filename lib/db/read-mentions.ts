@@ -1,22 +1,34 @@
 import { db } from "./index";
 
+export interface MentionFlags {
+  read: boolean;
+  dismissed: boolean;
+}
+
 /**
- * Which GitHub mention threads this user has dismissed in Gira.
+ * Per-thread state for GitHub mentions, keyed by notification thread id.
  *
  * Deliberately local: Gira never marks a notification read on github.com, so
- * dismissing something here cannot clear it from the real inbox before it has
- * actually been dealt with. The cost is that the two can disagree.
+ * acting here cannot clear something from the real inbox before it has been
+ * dealt with. The cost is that the two can disagree.
+ *
+ * `dismissed` only hides a mention from the bell. The mentions page reads the
+ * full history from GitHub's search API, so dismissing is never destructive.
  */
-export function getReadMentionIds(
+export function getMentionFlags(
   workspaceId: string,
   username: string
-): Set<string> {
+): Map<string, MentionFlags> {
   const rows = db
     .prepare(
-      "SELECT thread_id FROM read_mentions WHERE workspace_id = ? AND github_username = ?"
+      `SELECT thread_id, dismissed FROM read_mentions
+       WHERE workspace_id = ? AND github_username = ?`
     )
-    .all(workspaceId, username) as { thread_id: string }[];
-  return new Set(rows.map((r) => r.thread_id));
+    .all(workspaceId, username) as { thread_id: string; dismissed: number }[];
+
+  return new Map(
+    rows.map((r) => [r.thread_id, { read: true, dismissed: r.dismissed === 1 }])
+  );
 }
 
 export function markMentionsRead(
@@ -35,20 +47,15 @@ export function markMentionsRead(
   insertAll(threadIds);
 }
 
-/**
- * Drop rows for threads GitHub no longer returns, so the table cannot grow
- * without bound as old notifications age out of the API window.
- */
-export function pruneReadMentions(
+export function dismissMention(
   workspaceId: string,
   username: string,
-  liveThreadIds: string[]
+  threadId: string
 ): void {
-  if (liveThreadIds.length === 0) return;
-  const placeholders = liveThreadIds.map(() => "?").join(",");
   db.prepare(
-    `DELETE FROM read_mentions
-     WHERE workspace_id = ? AND github_username = ?
-       AND thread_id NOT IN (${placeholders})`
-  ).run(workspaceId, username, ...liveThreadIds);
+    `INSERT INTO read_mentions (workspace_id, github_username, thread_id, dismissed)
+     VALUES (?, ?, ?, 1)
+     ON CONFLICT(workspace_id, github_username, thread_id)
+     DO UPDATE SET dismissed = 1`
+  ).run(workspaceId, username, threadId);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AtSign, Bell, Copy, Check, ExternalLink } from "lucide-react";
+import { AtSign, Bell, Copy, Check, ExternalLink, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,11 +13,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { useNotifications, useMarkNotificationsRead } from "@/hooks/use-notifications";
+import { useDismissMention } from "@/hooks/use-mentions";
 import type { MentionNotification } from "@/hooks/use-notifications";
 import { toast } from "sonner";
 
 function MentionRow({ mention }: { mention: MentionNotification }) {
   const [copied, setCopied] = useState(false);
+  const dismiss = useDismissMention();
 
   function copyLink() {
     navigator.clipboard.writeText(mention.htmlUrl);
@@ -71,6 +73,20 @@ function MentionRow({ mention }: { mention: MentionNotification }) {
           </TooltipTrigger>
           <TooltipContent side="bottom">
             <span className="text-xs">Open on GitHub</span>
+          </TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => dismiss.mutate(mention.id)}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            <span className="text-xs">Dismiss — still listed under Mentions</span>
           </TooltipContent>
         </Tooltip>
       </div>
