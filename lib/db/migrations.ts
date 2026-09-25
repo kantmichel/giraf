@@ -379,6 +379,21 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 14,
+    description: "Local read state for GitHub @-mention notifications",
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS read_mentions (
+          workspace_id    TEXT NOT NULL,
+          github_username TEXT NOT NULL,
+          thread_id       TEXT NOT NULL,
+          read_at         TEXT DEFAULT (datetime('now')),
+          PRIMARY KEY(workspace_id, github_username, thread_id)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
