@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Columns3, Save, RotateCcw } from "lucide-react";
+import { TableProperties, Save, RotateCcw } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -48,17 +49,30 @@ export function TableColumnsMenu({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Columns3 className="size-4" />
-          Columns
-          {!allVisible && (
-            <span className="text-xs text-muted-foreground">
-              ({visibleCount}/{totalCount})
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            {/* Deliberately not Columns3 — that one is the kanban view in the
+                switcher sitting right next to this button. */}
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Choose columns"
+              className="gap-1 px-2"
+            >
+              <TableProperties className="size-4" />
+              {!allVisible && (
+                <span className="text-xs text-muted-foreground">
+                  {visibleCount}/{totalCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <span className="text-xs">Choose columns</span>
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent align="end" className="w-56 p-2">
         <div className="px-1 pb-1.5">
           <Label className="text-xs font-medium">Visible columns</Label>

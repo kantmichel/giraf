@@ -5,6 +5,8 @@ import { X, SlidersHorizontal, GitPullRequest } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Sheet,
   SheetContent,
@@ -31,6 +33,10 @@ interface FilterBarProps {
   weekOffset?: number;
   onWeekOffsetChange?: (offset: number) => void;
 }
+
+/** Above this many assignees a segmented control stops fitting the filter bar,
+ *  so the multi-select dropdown takes over. */
+const ASSIGNEE_TOGGLE_LIMIT = 3;
 
 export function FilterBar({
   filters,
@@ -90,12 +96,12 @@ export function FilterBar({
 
   const assigneeOptions = useMemo(() => {
     const seen = new Set<string>();
-    const options: { value: string; label: string }[] = [];
+    const options: { value: string; label: string; avatarUrl: string }[] = [];
     for (const issue of allIssues) {
       for (const a of issue.assignees) {
         if (!seen.has(a.login)) {
           seen.add(a.login);
-          options.push({ value: a.login, label: a.login });
+          options.push({ value: a.login, label: a.login, avatarUrl: a.avatarUrl });
         }
       }
     }
@@ -189,12 +195,58 @@ export function FilterBar({
           onSelectionChange={(version) => onFilterChange({ version })}
         />
       )}
-      <FilterMultiSelect
-        title="Assignee"
-        options={assigneeOptions}
-        selected={filters.assignees}
-        onSelectionChange={(assignees) => onFilterChange({ assignees })}
-      />
+      {assigneeOptions.length > 0 && assigneeOptions.length <= ASSIGNEE_TOGGLE_LIMIT ? (
+        // With a couple of people it is one click per person; the dropdown
+        // only earns its place once a segmented control would overflow the bar.
+        <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+          {assigneeOptions.map((a) => (
+            <Tooltip key={a.value}>
+              <TooltipTrigger asChild>
+                <Toggle
+                  size="sm"
+                  pressed={filters.assignees.length === 1 && filters.assignees[0] === a.value}
+                  onPressedChange={() => onFilterChange({ assignees: [a.value] })}
+                  aria-label={`Filter by ${a.label}`}
+                  className="h-6 px-1 data-[state=on]:bg-accent"
+                >
+                  {/* Dimmed until selected, so the active one reads at a glance
+                      rather than relying on the background tint alone. */}
+                  <Avatar
+                    className={
+                      filters.assignees.length === 1 && filters.assignees[0] === a.value
+                        ? "size-4"
+                        : "size-4 opacity-50"
+                    }
+                  >
+                    <AvatarImage src={a.avatarUrl} alt="" />
+                    <AvatarFallback className="text-[8px]">
+                      {a.label[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <span className="text-xs">{a.label}</span>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          <Toggle
+            size="sm"
+            pressed={filters.assignees.length === 0}
+            onPressedChange={() => onFilterChange({ assignees: [] })}
+            className="h-6 px-2 text-xs data-[state=on]:bg-accent"
+          >
+            all
+          </Toggle>
+        </div>
+      ) : (
+        <FilterMultiSelect
+          title="Assignee"
+          options={assigneeOptions}
+          selected={filters.assignees}
+          onSelectionChange={(assignees) => onFilterChange({ assignees })}
+        />
+      )}
       <Toggle
         size="sm"
         pressed={filters.hasPr}
