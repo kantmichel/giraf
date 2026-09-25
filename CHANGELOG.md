@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.2](https://github.com/kantmichel/giraf/compare/v1.39.1...v1.39.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* **sidebar:** read the collapse cookie so the choice survives a reload ([5c11822](https://github.com/kantmichel/giraf/commit/5c11822bf8f60e6ecdcf951878f15fd3478d4818))
+
 ## [1.39.1](https://github.com/kantmichel/giraf/compare/v1.39.0...v1.39.1) (2026-09-22)
 
 
