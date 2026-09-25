@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 import { formatDay } from "@/lib/format-date"
 const entries = [
   {
+    date: "2026-09-25",
+    version: "1.39.2",
+    title: "Sidebar Remembers Being Collapsed",
+    description:
+      "Collapsing the sidebar wrote a cookie that nothing ever read back, so it sprang open again on every reload. The layout now reads that cookie before rendering, which also means the server sends the same markup the browser is about to hydrate.",
+  },
+  {
     date: "2026-09-22",
     version: "1.39.1",
     title: "Proper Tooltips on the Issues Table",

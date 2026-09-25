@@ -12,7 +12,15 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useIssues } from "@/hooks/use-issues";
 import type { NormalizedIssue } from "@/types/github";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  defaultSidebarOpen = true,
+}: {
+  children: React.ReactNode;
+  /** Read from the sidebar cookie by the layout, so a collapsed sidebar
+   *  survives a reload and the server renders what the client expects. */
+  defaultSidebarOpen?: boolean;
+}) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [paletteIssue, setPaletteIssue] = useState<NormalizedIssue | null>(null);
@@ -33,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   });
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultSidebarOpen}>
       <AppSidebar />
       <SidebarInset>
         <TopBar onOpenCommandPalette={() => setCommandOpen(true)} />
