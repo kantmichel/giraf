@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.40.0](https://github.com/kantmichel/giraf/compare/v1.39.2...v1.40.0) (2026-09-25)
+
+
+### Features
+
+* **filters:** avatar toggles for assignee, icon-only columns button ([bb35593](https://github.com/kantmichel/giraf/commit/bb3559309f1ac8c6eda26338bedd4b757a5b1e12))
+* **issues:** tidy the filter bar and lead with WSJF ([2bfb62a](https://github.com/kantmichel/giraf/commit/2bfb62a85102eda52e5e2c3ea58998a2e73de9b2))
+* **mentions:** dismissable bell entries and a full mentions archive ([e61cb7d](https://github.com/kantmichel/giraf/commit/e61cb7d5983c0117412b942f6cffd81ebdc69c50))
+* **notifications:** surface GitHub @-mentions in the bell ([a869c74](https://github.com/kantmichel/giraf/commit/a869c74340efcedbeea36e6671cb15587ff45df0))
+
 ## [1.39.2](https://github.com/kantmichel/giraf/compare/v1.39.1...v1.39.2) (2026-09-25)
 
 
