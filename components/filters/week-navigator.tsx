@@ -20,29 +20,29 @@ export function WeekNavigator({ weekOffset, onWeekOffsetChange }: WeekNavigatorP
     const endYear = end.getFullYear();
     const label =
       startYear !== endYear
-        ? `${format(start, "MMM d, yyyy")} - ${format(end, "MMM d, yyyy")}`
-        : `${format(start, "MMM d")} - ${format(end, "MMM d, yyyy")}`;
+        ? `${format(start, "d MMM yyyy")} – ${format(end, "d MMM yyyy")}`
+        : `${format(start, "d MMM")} – ${format(end, "d MMM")}`;
 
     return { label };
   }, [weekOffset]);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="size-6"
         onClick={() => onWeekOffsetChange(weekOffset - 1)}
       >
         <ChevronLeft className="size-4" />
       </Button>
-      <span className="min-w-[170px] text-center text-xs font-medium text-muted-foreground">
+      <span className="whitespace-nowrap text-center text-xs font-medium tabular-nums text-muted-foreground">
         {label}
       </span>
       <Button
         variant="ghost"
         size="icon"
-        className="size-7"
+        className="size-6"
         disabled={weekOffset >= 0}
         onClick={() => onWeekOffsetChange(weekOffset + 1)}
       >

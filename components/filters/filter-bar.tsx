@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { FilterMultiSelect } from "./filter-multi-select";
-import { FilterSearch } from "./filter-search";
 import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
 import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
@@ -272,10 +271,6 @@ export function FilterBar({
       {filters.state === "closed" && weekOffset !== undefined && onWeekOffsetChange && (
         <WeekNavigator weekOffset={weekOffset} onWeekOffsetChange={onWeekOffsetChange} />
       )}
-      <FilterSearch
-        value={filters.search}
-        onChange={(search) => onFilterChange({ search })}
-      />
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={onClear}>
           <X className="mr-1 size-3" />
@@ -303,10 +298,6 @@ export function FilterBar({
               </Badge>
             )}
           </Button>
-          <FilterSearch
-            value={filters.search}
-            onChange={(search) => onFilterChange({ search })}
-          />
         </div>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="bottom" className="max-h-[70vh]">

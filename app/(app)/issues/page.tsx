@@ -94,7 +94,14 @@ function IssuesContent() {
   return (
     <>
       <div className="space-y-4">
-        <MetricsMiniRow issues={issues} allIssues={allIssues} />
+        {/* The view switcher belongs with the page-level controls, not the
+            filters. It sits outside MetricsMiniRow because that returns null
+            when no metrics are selected, which would take the switcher with it. */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <MetricsMiniRow issues={issues} allIssues={allIssues} />
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <FilterBar

@@ -5,6 +5,13 @@ import { formatDay } from "@/lib/format-date"
 const entries = [
   {
     date: "2026-09-25",
+    version: "1.40.0",
+    title: "Mentions & a Tidier Filter Bar",
+    description:
+      "The bell now shows where you've been @-tagged, each with a copy-link and a dismiss, and a new Mentions page keeps the full history — so dismissing tidies the bell without ever losing something. The filter bar got lighter too: avatar toggles for assignee, the view switcher moved up to the metrics row, the search box dropped in favour of ⌘K, and open issues now sort by WSJF first.",
+  },
+  {
+    date: "2026-09-25",
     version: "1.39.2",
     title: "Sidebar Remembers Being Collapsed",
     description:

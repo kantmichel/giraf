@@ -135,13 +135,15 @@ export function IssueTable({
   visibleColumns,
 }: IssueTableProps) {
   const isVisible = (id: TableColumnId) => visibleColumns?.[id] !== false;
-  const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "createdAt");
+  // Open issues lead with WSJF so the board opens on what to do next; closed
+  // ones lead with when they closed, which is the only ordering that reads.
+  const [sortColumn, setSortColumn] = useState<SortColumn>(showClosedColumn ? "closedAt" : "wsjf");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const updateIssue = useUpdateIssue();
 
   // Reset sort when switching between open/closed views
   useEffect(() => {
-    setSortColumn(showClosedColumn ? "closedAt" : "createdAt");
+    setSortColumn(showClosedColumn ? "closedAt" : "wsjf");
     setSortDirection("desc");
   }, [showClosedColumn]);
   const { enabledSet: claudeEnabledRepos } = useClaudeEnabledRepos();
