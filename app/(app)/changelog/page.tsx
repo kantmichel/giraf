@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 import { formatDay } from "@/lib/format-date"
 const entries = [
   {
+    date: "2026-09-26",
+    version: "1.40.1",
+    title: "⌘K Issues Get a Shareable URL",
+    description:
+      "Opening an issue from the command palette now updates the URL the same way clicking a row does. There were quietly two detail drawers — the page's URL-driven one and a local-state copy living in the app shell — and ⌘K used the copy, so it never produced a link. The duplicate is gone, and filters you already had applied are kept.",
+  },
+  {
     date: "2026-09-25",
     version: "1.40.0",
     title: "Mentions & a Tidier Filter Bar",
