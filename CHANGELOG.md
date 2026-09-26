@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.1](https://github.com/kantmichel/giraf/compare/v1.40.0...v1.40.1) (2026-09-26)
+
+
+### Bug Fixes
+
+* **issues:** one detail drawer, driven by the URL ([d587e8e](https://github.com/kantmichel/giraf/commit/d587e8e472f6b634b3f3248658f5debf8a27b192))
+
 ## [1.40.0](https://github.com/kantmichel/giraf/compare/v1.39.2...v1.40.0) (2026-09-25)
 
 
