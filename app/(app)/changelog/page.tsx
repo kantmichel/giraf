@@ -5,6 +5,13 @@ import { formatDay } from "@/lib/format-date"
 const entries = [
   {
     date: "2026-09-27",
+    version: "1.41.1",
+    title: "One Version Number, Builds That Don't Race",
+    description:
+      "The sidebar and footer now read the version from the same place, and the browser no longer downloads the app's whole package.json just to show it. Opening a fresh database from several processes at once is safe — migrations take a lock first and the switch to WAL waits its turn — and `next build` gives every worker its own in-memory database, so a local build stops failing on SQLite and never touches your dev data.",
+  },
+  {
+    date: "2026-09-27",
     version: "1.41.0",
     title: "A Kanban That Fits the Screen",
     description:
