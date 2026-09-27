@@ -22,7 +22,7 @@ import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import { cn } from "@/lib/utils";
 
 function IssuesContent() {
-  const { data: prefs } = usePreferences();
+  const { data: prefs, isLoading: prefsLoading } = usePreferences();
   const updatePrefs = useUpdatePreferences();
   const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, openIssueRef, setOpenIssueRef } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
@@ -169,9 +169,11 @@ function IssuesContent() {
         ) : (
           <KanbanBoard
             issues={issues}
-            isLoading={loading}
+            // Held until preferences arrive too: a sort changed before then
+            // would be saved over every column that had not loaded yet.
+            isLoading={loading || prefsLoading}
             onIssueClick={openIssue}
-            initialSorts={prefs?.kanban_sort ?? undefined}
+            sorts={prefs?.kanban_sort ?? null}
             onSortsChange={(sorts) => updatePrefs.mutate({ kanban_sort: sorts })}
           />
         )}

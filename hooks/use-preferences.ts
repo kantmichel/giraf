@@ -30,8 +30,10 @@ export function usePreferences() {
 export function useUpdatePreferences() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (prefs: Partial<UserPreferences>) => {
+  // Optimistic: the cache is what every view reads (the kanban's column sorts
+  // included), so it takes the change at once and rolls back if the save fails.
+  return useMutation<UserPreferences, Error, Partial<UserPreferences>, { previous?: UserPreferences }>({
+    mutationFn: async (prefs) => {
       const res = await fetch("/api/settings/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,11 +42,22 @@ export function useUpdatePreferences() {
       if (!res.ok) throw new Error("Failed to save preferences");
       return res.json();
     },
+    onMutate: async (prefs) => {
+      await queryClient.cancelQueries({ queryKey: ["preferences"] });
+      const previous = queryClient.getQueryData<UserPreferences>(["preferences"]);
+      if (previous) {
+        queryClient.setQueryData<UserPreferences>(["preferences"], { ...previous, ...prefs });
+      }
+      return { previous };
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(["preferences"], data);
       toast.success("Preferences saved");
     },
-    onError: () => {
+    onError: (_error, _prefs, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["preferences"], context.previous);
+      }
       toast.error("Failed to save preferences");
     },
   });

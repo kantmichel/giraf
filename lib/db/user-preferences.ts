@@ -1,15 +1,8 @@
 import { db } from "./index";
-import type { SortField, SortDirection } from "@/components/kanban/kanban-board";
+import type { KanbanSorts } from "@/lib/kanban";
 import type { FilterConfig } from "@/types/github";
 
-export interface KanbanColumnSort {
-  field: SortField;
-  direction: SortDirection;
-}
-
-export interface KanbanSortPrefs {
-  [columnId: string]: KanbanColumnSort;
-}
+export type KanbanSortPrefs = KanbanSorts;
 
 export type TableColumnPrefs = Record<string, boolean>;
 

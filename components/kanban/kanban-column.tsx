@@ -15,7 +15,14 @@ import {
 import { KanbanCard } from "./kanban-card";
 import { cn } from "@/lib/utils";
 import type { ScoredIssue } from "@/lib/wsjf";
-import type { ColumnSort, SortField, SortDirection } from "./kanban-board";
+import {
+  SORT_FIELDS,
+  TIME_FIELD,
+  sortLabel,
+  type ColumnSort,
+  type SortDirection,
+  type SortField,
+} from "@/lib/kanban";
 
 interface KanbanColumnProps {
   id: string;
@@ -26,30 +33,6 @@ interface KanbanColumnProps {
   onCollapse?: () => void;
   sort: ColumnSort;
   onSortChange: (sort: ColumnSort) => void;
-  timeField?: string;
-}
-
-const SORT_LABELS: Record<SortField, string> = {
-  priority: "Priority",
-  repo: "Repo",
-  effort: "Effort",
-  wsjf: "WSJF",
-  time: "Time",
-  age: "Age",
-};
-
-const SORT_FIELDS = Object.keys(SORT_LABELS) as SortField[];
-
-// "Time" means a different date per column; name the one it actually sorts by.
-const TIME_LABELS: Record<string, string> = {
-  createdAt: "Created",
-  updatedAt: "Updated",
-  closedAt: "Closed",
-};
-
-function sortLabel(field: SortField, timeField?: string): string {
-  if (field === "time" && timeField) return TIME_LABELS[timeField] ?? SORT_LABELS.time;
-  return SORT_LABELS[field];
 }
 
 export function KanbanColumn({
@@ -61,9 +44,9 @@ export function KanbanColumn({
   onCollapse,
   sort,
   onSortChange,
-  timeField,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id });
+  const timeField = TIME_FIELD[id];
   const DirectionIcon = sort.direction === "desc" ? ArrowDownNarrowWide : ArrowUpNarrowWide;
 
   return (
@@ -87,7 +70,7 @@ export function KanbanColumn({
                 aria-label={`Sort ${title}`}
               >
                 <DirectionIcon className="size-3.5" />
-                {sortLabel(sort.field, timeField)}
+                {sortLabel(sort.field, id)}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -100,7 +83,7 @@ export function KanbanColumn({
               >
                 {SORT_FIELDS.map((field) => (
                   <DropdownMenuRadioItem key={field} value={field}>
-                    {sortLabel(field, timeField)}
+                    {sortLabel(field, id)}
                   </DropdownMenuRadioItem>
                 ))}
               </DropdownMenuRadioGroup>

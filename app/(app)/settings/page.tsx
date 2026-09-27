@@ -25,7 +25,7 @@ import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useClaudeEnabledRepos, useToggleClaudeRepo } from "@/hooks/use-claude-repos";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import type { ViewType } from "@/components/filters/view-switcher";
-import type { SortField, SortDirection, ColumnSort } from "@/components/kanban/kanban-board";
+import { KANBAN_COLUMNS, SORT_FIELDS, columnSort, sortLabel, type ColumnSort, type SortField } from "@/lib/kanban";
 import type { NormalizedUser, FilterConfig } from "@/types/github";
 
 interface Budget {
@@ -435,32 +435,15 @@ const viewOptions: { value: ViewType; label: string; icon: typeof List }[] = [
   { value: "kanban", label: "Kanban", icon: Columns3 },
 ];
 
-const KANBAN_COLUMNS = [
-  { id: "to do", label: "To Do" },
-  { id: "doing", label: "Doing" },
-  { id: "in review", label: "In Review" },
-  { id: "done", label: "Done" },
-];
-
-const SORT_OPTIONS: { value: SortField; label: string }[] = [
-  { value: "priority", label: "Priority" },
-  { value: "repo", label: "Repo" },
-  { value: "effort", label: "Effort" },
-  { value: "wsjf", label: "WSJF" },
-  { value: "time", label: "Time" },
-];
-
-const DEFAULT_COLUMN_SORT: ColumnSort = { field: "priority", direction: "desc" };
-
 function PreferredViewSettings() {
   const { data: prefs, isLoading } = usePreferences();
   const updatePrefs = useUpdatePreferences();
 
   const selectedView = prefs?.preferred_view ?? "list";
-  const kanbanSort = prefs?.kanban_sort ?? {};
+  const kanbanSort = prefs?.kanban_sort ?? null;
 
   function getColumnSort(columnId: string): ColumnSort {
-    return kanbanSort[columnId] || DEFAULT_COLUMN_SORT;
+    return columnSort(kanbanSort, columnId);
   }
 
   function updateColumnSort(columnId: string, update: Partial<ColumnSort>) {
@@ -522,13 +505,13 @@ function PreferredViewSettings() {
                               if (v) updateColumnSort(col.id, { field: v as SortField });
                             }}
                           >
-                            {SORT_OPTIONS.map((opt) => (
+                            {SORT_FIELDS.map((field) => (
                               <ToggleGroupItem
-                                key={opt.value}
-                                value={opt.value}
+                                key={field}
+                                value={field}
                                 className="h-7 px-2 text-xs"
                               >
-                                {opt.label}
+                                {sortLabel(field, col.id)}
                               </ToggleGroupItem>
                             ))}
                           </ToggleGroup>
