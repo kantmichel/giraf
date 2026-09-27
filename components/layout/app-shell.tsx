@@ -52,11 +52,15 @@ export function AppShell({
   });
 
   return (
-    <SidebarProvider defaultOpen={defaultSidebarOpen}>
+    // The shell is exactly one screen: top bar and footer stay put and pages
+    // scroll inside the content area, never the window. <main> needs min-w-0 —
+    // as a flex item it otherwise refuses to be narrower than its widest child,
+    // and a wide board drags the whole page, top bar included, off-screen.
+    <SidebarProvider defaultOpen={defaultSidebarOpen} className="h-svh">
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <TopBar onOpenCommandPalette={() => setCommandOpen(true)} />
-        <div className="min-w-0 flex-1 overflow-auto p-4">
+        <div className="min-h-0 flex-1 overflow-auto p-4">
           {children}
         </div>
         <FooterBar />

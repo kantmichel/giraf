@@ -19,6 +19,7 @@ import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
+import { cn } from "@/lib/utils";
 
 function IssuesContent() {
   const { data: prefs } = usePreferences();
@@ -93,7 +94,10 @@ function IssuesContent() {
 
   return (
     <>
-      <div className="space-y-4">
+      {/* Kanban takes exactly the remaining height so the board scrolls
+          sideways and each column scrolls on its own; list and table grow
+          with their content and the shell's content area scrolls instead. */}
+      <div className={cn("flex flex-col gap-4", view === "kanban" && "h-full")}>
         {/* The view switcher belongs with the page-level controls, not the
             filters. It sits outside MetricsMiniRow because that returns null
             when no metrics are selected, which would take the switcher with it. */}
