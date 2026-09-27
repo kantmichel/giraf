@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.41.1](https://github.com/kantmichel/giraf/compare/v1.41.0...v1.41.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* **db:** make a fresh database safe to open from several processes ([8da6b96](https://github.com/kantmichel/giraf/commit/8da6b96a09cb552fade8ac57c9640f92724067f1))
+* **layout:** read the version on the server, keep package.json out of the browser ([3f637ee](https://github.com/kantmichel/giraf/commit/3f637eed5040e8615ef83209f52b8dc0db14a388))
+
 ## [1.41.0](https://github.com/kantmichel/giraf/compare/v1.40.1...v1.41.0) (2026-09-27)
 
 
