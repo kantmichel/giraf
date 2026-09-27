@@ -24,6 +24,11 @@ export interface KanbanDragData {
   display: KanbanCardDisplay;
 }
 
+/** The card's drag id. Only ever a drag source — never a status. */
+export function kanbanCardId(issue: ScoredIssue): string {
+  return `${issue.repo.fullName}:${issue.number}`;
+}
+
 const PRIORITY_BORDER_COLORS: Record<string, string> = {
   critical: "#b6020540",
   high: "#d93f0b40",
@@ -50,7 +55,7 @@ export function KanbanCard({ issue, onClick, ...display }: KanbanCardProps) {
   // there is nothing to reorder — and a sortable card is also a drop target:
   // dropping onto one wrote its "owner/repo:number" id to GitHub as a status.
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `${issue.repo.fullName}:${issue.number}`,
+    id: kanbanCardId(issue),
     data,
   });
 

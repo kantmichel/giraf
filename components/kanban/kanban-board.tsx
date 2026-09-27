@@ -11,7 +11,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { KanbanColumn, KanbanColumnRail } from "./kanban-column";
-import { KanbanCardPreview, type KanbanDragData } from "./kanban-card";
+import { KanbanCardPreview, kanbanCardId, type KanbanDragData } from "./kanban-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { STATUS_LABELS } from "@/lib/constants";
@@ -31,6 +31,19 @@ const COLUMNS = [
 
 // The only valid drop targets. A drop anywhere else is ignored, never written.
 const COLUMN_IDS = new Set<string>([...COLUMNS.map((c) => c.id), "unset"]);
+
+/** The column an issue sits in. Anything without a known status is Unset. */
+function columnIdOf(issue: ScoredIssue): string {
+  return issue.status && COLUMN_IDS.has(issue.status) ? issue.status : "unset";
+}
+
+/** A dropped card shown in its new column before the cache says so. */
+interface PendingMove {
+  cardId: string;
+  columnId: string;
+  /** The issues it was made against — it applies only while they are current. */
+  issues: ScoredIssue[];
+}
 
 const DEFAULT_SORT: ColumnSort = { field: "priority", direction: "desc" };
 
@@ -121,6 +134,12 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
   // so the board opens on the columns you actually move work through.
   const [unsetCollapsed, setUnsetCollapsed] = useState(true);
   const [columnSorts, setColumnSorts] = useState<Record<string, ColumnSort>>(initialSorts ?? {});
+  // The optimistic cache update lands a few ticks after the drop (it awaits
+  // query cancellation first), and the drop animation flies the card to
+  // wherever it sits by then — its old column. Moving it in the same render as
+  // the drop lets it land in its new slot. Keyed to the issues it was made
+  // against, it lapses by itself once the cache catches up or rolls back.
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
 
   const getSort = useCallback((columnId: string): ColumnSort => {
     return columnSorts[columnId] || DEFAULT_SORT;
@@ -141,13 +160,11 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
     }
     groups["unset"] = [];
 
+    const move = pendingMove?.issues === issues ? pendingMove : null;
     for (const issue of issues) {
-      const status = issue.status;
-      if (status && groups[status]) {
-        groups[status].push(issue);
-      } else {
-        groups["unset"].push(issue);
-      }
+      const columnId =
+        move && move.cardId === kanbanCardId(issue) ? move.columnId : columnIdOf(issue);
+      groups[columnId].push(issue);
     }
 
     for (const key of Object.keys(groups)) {
@@ -156,7 +173,7 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
     }
 
     return groups;
-  }, [issues, columnSorts]);
+  }, [issues, columnSorts, pendingMove]);
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveDrag(null);
@@ -167,10 +184,9 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
     if (!COLUMN_IDS.has(targetStatus)) return;
     const issue = active.data.current?.issue as ScoredIssue | undefined;
     if (!issue) return;
+    if (columnIdOf(issue) === targetStatus) return;
 
-    // Don't update if same column
-    if (issue.status === targetStatus) return;
-    if (!issue.status && targetStatus === "unset") return;
+    setPendingMove({ cardId: kanbanCardId(issue), columnId: targetStatus, issues });
 
     // Build new labels
     const otherLabels = issue.labels
