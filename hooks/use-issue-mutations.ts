@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import type { NormalizedIssue } from "@/types/github";
 import { extractClaudeState } from "@/lib/claude-workflow";
 import { labelFields } from "@/lib/issue-labels";
+import { useOpenIssue } from "@/hooks/use-open-issue";
+import { toastIssueUpdated, toastIssueUpdateFailed } from "@/components/issues/issue-toast";
 
 interface UpdateIssueParams {
   owner: string;
@@ -104,6 +106,7 @@ interface MutationContext {
 
 export function useUpdateIssue() {
   const queryClient = useQueryClient();
+  const openIssue = useOpenIssue();
 
   return useMutation<NormalizedIssue, Error, UpdateIssueParams, MutationContext>({
     mutationFn: async ({ owner, repo, number, updates }) => {
@@ -147,7 +150,7 @@ export function useUpdateIssue() {
 
       return { previousIssues, previousTriage };
     },
-    onError: (_error, _params, context) => {
+    onError: (error, { repo, number }, context) => {
       // Rollback all caches
       if (context?.previousIssues) {
         for (const [keyStr, data] of context.previousIssues) {
@@ -157,7 +160,7 @@ export function useUpdateIssue() {
       if (context?.previousTriage) {
         queryClient.setQueryData(["triage"], context.previousTriage);
       }
-      toast.error("Failed to update issue");
+      toastIssueUpdateFailed({ repo: { name: repo }, number }, error.message, openIssue);
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["issues"] });
@@ -180,7 +183,7 @@ export function useUpdateIssue() {
           }
         );
       } else {
-        toast.success("Issue updated");
+        toastIssueUpdated({ repo: { name: repo }, number }, data?.title, openIssue);
       }
     },
   });

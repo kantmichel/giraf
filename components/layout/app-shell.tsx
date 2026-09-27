@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { TopBar } from "./top-bar";
@@ -10,7 +9,7 @@ import { CommandPalette } from "@/components/command/command-palette";
 import { ShortcutHelp } from "@/components/command/shortcut-help";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useIssues } from "@/hooks/use-issues";
-import type { NormalizedIssue } from "@/types/github";
+import { useOpenIssue } from "@/hooks/use-open-issue";
 
 export function AppShell({
   children,
@@ -23,28 +22,11 @@ export function AppShell({
 }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // The palette feeds the issues page's URL rather than opening a drawer of its
   // own — one drawer, one source of truth, and the link is always shareable.
+  const openIssue = useOpenIssue();
   const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
-
-  const openIssue = useCallback(
-    (issue: NormalizedIssue) => {
-      // Already on the issues page: keep the filters the user is looking at.
-      // Coming from elsewhere: start clean, since those params mean nothing there.
-      const params =
-        pathname === "/issues"
-          ? new URLSearchParams(searchParams.toString())
-          : new URLSearchParams();
-      params.set("repo", issue.repo.name);
-      params.set("issue", String(issue.number));
-      router.push(`/issues?${params.toString()}`);
-    },
-    [router, pathname, searchParams]
-  );
 
   useKeyboardShortcuts({
     onOpenCommandPalette: useCallback(() => setCommandOpen((o) => !o), []),
