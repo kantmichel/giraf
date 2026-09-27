@@ -36,9 +36,7 @@ const PRIORITY_BORDER_COLORS: Record<string, string> = {
   low: "#0e8a1640",
 };
 
-// shrink-0: the column list is a scrolling flex column, and overflow-hidden
-// would otherwise let it squash cards instead of scrolling them.
-const CARD_CLASS = "shrink-0 overflow-hidden rounded-md border bg-card p-3 text-left shadow-sm";
+const CARD_CLASS = "overflow-hidden rounded-md border bg-card p-3 text-left shadow-sm";
 
 function priorityBorder(issue: ScoredIssue) {
   return issue.priority ? { borderColor: PRIORITY_BORDER_COLORS[issue.priority] } : undefined;
@@ -71,22 +69,37 @@ export function KanbanCard({ issue, onClick, ...display }: KanbanCardProps) {
           onClick();
         }
       }}
-      style={priorityBorder(issue)}
+      // shrink-0: the column list is a scrolling flex column, and the card's
+      // overflow-hidden would otherwise let it squash cards instead of scrolling.
       className={cn(
-        CARD_CLASS,
-        "cursor-grab transition-shadow outline-none hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring active:cursor-grabbing",
+        "group shrink-0 cursor-grab outline-none active:cursor-grabbing",
         isDragging && "opacity-40"
       )}
     >
-      <KanbanCardBody issue={issue} {...display} />
+      {/* Only this inner card tilts. Rotating the element that owns the hover
+          would swing its edges out from under a pointer resting near them,
+          and the tilt would flicker on and off. */}
+      <div
+        style={priorityBorder(issue)}
+        className={cn(
+          CARD_CLASS,
+          "transition duration-150 group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-ring motion-safe:group-hover:rotate-1"
+        )}
+      >
+        <KanbanCardBody issue={issue} {...display} />
+      </div>
     </div>
   );
 }
 
-/** The card as it follows the pointer during a drag: same body, no drag wiring. */
+/** The card as it follows the pointer during a drag: same body, no drag wiring.
+ *  Tilted like a hovered card, so picking one up doesn't snap it straight. */
 export function KanbanCardPreview({ issue, display }: KanbanDragData) {
   return (
-    <div style={priorityBorder(issue)} className={cn(CARD_CLASS, "cursor-grabbing shadow-lg")}>
+    <div
+      style={priorityBorder(issue)}
+      className={cn(CARD_CLASS, "cursor-grabbing shadow-lg motion-safe:rotate-1")}
+    >
       <KanbanCardBody issue={issue} {...display} />
     </div>
   );
