@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.41.0](https://github.com/kantmichel/giraf/compare/v1.40.1...v1.41.0) (2026-09-27)
+
+
+### Features
+
+* **kanban:** one-row column headers, Unset folded by default ([dc5d93a](https://github.com/kantmichel/giraf/commit/dc5d93ac3107ea9a75a5ae92db4322bab26e58df))
+* **kanban:** rank every column by WSJF, read sorts from preferences ([4d4f6c8](https://github.com/kantmichel/giraf/commit/4d4f6c8d8b4d44bd1018c5e58ddc64e4040d5aeb))
+* **kanban:** tilt cards slightly on hover ([97facd3](https://github.com/kantmichel/giraf/commit/97facd3891d0c4b827412a6b50d023dd70777ca1))
+* **toast:** name the issue in update toasts and open it on click ([1810486](https://github.com/kantmichel/giraf/commit/1810486800097d6abf369abf90a7b6c399d1eedb))
+
+
+### Bug Fixes
+
+* **kanban:** cards are never drop targets; rebuild the card to fit ([8af2976](https://github.com/kantmichel/giraf/commit/8af29769755ad4b1302d09c84b0cc6217bd72e46))
+* **kanban:** land a dropped card in its new column ([965d02a](https://github.com/kantmichel/giraf/commit/965d02aba9cb08f06aa35f02f09bb39ed7f50eb9))
+* **labels:** parse labels in one place, so moved cards stop scoring NaN ([22d6957](https://github.com/kantmichel/giraf/commit/22d6957c258764ee322e3b5ad7916e2343ee6023))
+* **layout:** keep the app one screen wide and one screen tall ([f08becc](https://github.com/kantmichel/giraf/commit/f08becc332fb4bc872bbf4f629cf9c51a193762a))
+
 ## [1.40.1](https://github.com/kantmichel/giraf/compare/v1.40.0...v1.40.1) (2026-09-26)
 
 
