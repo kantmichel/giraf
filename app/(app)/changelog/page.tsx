@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 import { formatDay } from "@/lib/format-date"
 const entries = [
   {
+    date: "2026-09-27",
+    version: "1.41.0",
+    title: "A Kanban That Fits the Screen",
+    description:
+      "The kanban no longer drags the whole page sideways: the top bar stays put, the board scrolls on its own and each column scrolls under its header. Sorting moved into a small menu per column, every column now ranks by WSJF, Unset starts folded, and cards were rebuilt to fit — drag the whole card, it tilts on hover and lands in its new column. Dropping a card onto another card no longer writes a junk `status:` label, a moved card no longer scores NaN, and update toasts now name the issue and open it on click.",
+  },
+  {
     date: "2026-09-26",
     version: "1.40.1",
     title: "⌘K Issues Get a Shareable URL",
