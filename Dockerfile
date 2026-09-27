@@ -16,12 +16,8 @@ RUN bun install --frozen-lockfile
 
 FROM bun AS builder
 WORKDIR /app
-# Next collects page data with a worker per core, and every worker imports the
-# db module; pointed at a file they race to create and migrate it (SQLITE_BUSY).
-# Nothing is read from the database at build time, so give each worker its own
-# throwaway in-memory one.
-ENV NEXT_TELEMETRY_DISABLED=1 \
-    DATABASE_PATH=:memory:
+# Build workers get an in-memory database from lib/db/index.ts itself.
+ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN bun run build

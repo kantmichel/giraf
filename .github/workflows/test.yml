@@ -18,9 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NEXT_TELEMETRY_DISABLED: 1
-      # See the note in the Dockerfile: build workers race over a file-backed
-      # database, and the build reads nothing from it.
-      DATABASE_PATH: ":memory:"
     steps:
       - name: Checkout sources
         uses: actions/checkout@v7

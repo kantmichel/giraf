@@ -406,16 +406,24 @@ const migrations: Migration[] = [
 ];
 
 export function runMigrations(db: Database.Database): void {
-  const currentVersion = db.pragma("user_version", { simple: true }) as number;
-  const pending = migrations.filter((m) => m.version > currentVersion);
+  const pendingAfter = (version: number) => migrations.filter((m) => m.version > version);
+  const currentVersion = () => db.pragma("user_version", { simple: true }) as number;
 
-  if (pending.length === 0) return;
+  // The common case: already up to date, so no lock is taken.
+  if (pendingAfter(currentVersion()).length === 0) return;
 
-  for (const migration of pending) {
-    const run = db.transaction(() => {
+  // Several processes can open a fresh database at the same moment. The
+  // version used to be read before any lock, so each set out to run every
+  // migration and all but one died on "table already exists" or "duplicate
+  // column" (11 processes on one fresh file: 3 of 5 runs failed).
+  // BEGIN IMMEDIATE takes the write lock before the version is read: one
+  // process migrates, the rest wait on busy_timeout and find nothing left.
+  // The pending list is still taken in array order, as before; the only change
+  // is that it commits as a whole, so a failure leaves the previous version.
+  db.transaction(() => {
+    for (const migration of pendingAfter(currentVersion())) {
       migration.up(db);
       db.pragma(`user_version = ${migration.version}`);
-    });
-    run();
-  }
+    }
+  }).immediate();
 }
