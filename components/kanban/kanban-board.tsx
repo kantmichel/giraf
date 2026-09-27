@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from "@dnd-kit/core";
-import { KanbanColumn } from "./kanban-column";
+import { KanbanColumn, KanbanColumnRail } from "./kanban-column";
 import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
 import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -102,32 +102,22 @@ interface KanbanBoardProps {
 export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onSortsChange }: KanbanBoardProps) {
   const updateIssue = useUpdateIssue();
   const [activeIssue, setActiveIssue] = useState<ScoredIssue | null>(null);
-  const [unsetCollapsed, setUnsetCollapsed] = useState(false);
+  // Unset issues are waiting for triage, not work in progress: start folded
+  // so the board opens on the columns you actually move work through.
+  const [unsetCollapsed, setUnsetCollapsed] = useState(true);
   const [columnSorts, setColumnSorts] = useState<Record<string, ColumnSort>>(initialSorts ?? {});
 
   const getSort = useCallback((columnId: string): ColumnSort => {
     return columnSorts[columnId] || DEFAULT_SORT;
   }, [columnSorts]);
 
-  const handleSortChange = useCallback((columnId: string, field: SortField) => {
-    setColumnSorts((prev) => {
-      const current = prev[columnId] || DEFAULT_SORT;
-      const next = current.field === field
-        ? { ...prev, [columnId]: { field, direction: current.direction === "desc" ? "asc" as const : "desc" as const } }
-        : { ...prev, [columnId]: { field, direction: "desc" as const } };
-      onSortsChange?.(next);
-      return next;
-    });
-  }, [onSortsChange]);
-
-  const handleDirectionToggle = useCallback((columnId: string) => {
-    setColumnSorts((prev) => {
-      const current = prev[columnId] || DEFAULT_SORT;
-      const next = { ...prev, [columnId]: { ...current, direction: current.direction === "desc" ? "asc" as const : "desc" as const } };
-      onSortsChange?.(next);
-      return next;
-    });
-  }, [onSortsChange]);
+  // Saved outside the state updater: React may run an updater twice, and a
+  // network write inside one would then fire twice.
+  function setSort(columnId: string, sort: ColumnSort) {
+    const next = { ...columnSorts, [columnId]: sort };
+    setColumnSorts(next);
+    onSortsChange?.(next);
+  }
 
   const grouped = useMemo(() => {
     const groups: Record<string, ScoredIssue[]> = {};
@@ -186,9 +176,9 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
 
   if (isLoading) {
     return (
-      <div className="flex gap-4">
+      <div className="flex min-h-0 flex-1 gap-3">
         {COLUMNS.map((col) => (
-          <div key={col.id} className="flex-1 space-y-2">
+          <div key={col.id} className="max-w-sm min-w-64 flex-1 space-y-2">
             <Skeleton className="h-6 w-24" />
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -208,17 +198,16 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
       }}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-4">
+      <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-4">
         {hasUnset && (
           unsetCollapsed ? (
-            <button
-              className="flex h-fit shrink-0 items-center gap-1.5 rounded-lg border bg-muted/30 px-2 py-3 text-xs text-muted-foreground hover:bg-muted/50"
-              style={{ writingMode: "vertical-lr" }}
-              onClick={() => setUnsetCollapsed(false)}
-            >
-              <div className="size-2 rounded-full" style={{ backgroundColor: "#666666" }} />
-              Unset ({grouped["unset"].length})
-            </button>
+            <KanbanColumnRail
+              id="unset"
+              title="Unset"
+              color="666666"
+              count={grouped["unset"].length}
+              onExpand={() => setUnsetCollapsed(false)}
+            />
           ) : (
             <KanbanColumn
               id="unset"
@@ -227,10 +216,8 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
               issues={grouped["unset"]}
               onIssueClick={onIssueClick}
               onCollapse={() => setUnsetCollapsed(true)}
-              sortField={getSort("unset").field}
-              sortDirection={getSort("unset").direction}
-              onSortChange={(field) => handleSortChange("unset", field)}
-              onDirectionToggle={() => handleDirectionToggle("unset")}
+              sort={getSort("unset")}
+              onSortChange={(sort) => setSort("unset", sort)}
               timeField={TIME_FIELD_MAP["unset"]}
             />
           )
@@ -243,10 +230,8 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
             color={col.color}
             issues={grouped[col.id]}
             onIssueClick={onIssueClick}
-            sortField={getSort(col.id).field}
-            sortDirection={getSort(col.id).direction}
-            onSortChange={(field) => handleSortChange(col.id, field)}
-            onDirectionToggle={() => handleDirectionToggle(col.id)}
+            sort={getSort(col.id)}
+            onSortChange={(sort) => setSort(col.id, sort)}
             timeField={TIME_FIELD_MAP[col.id]}
           />
         ))}
