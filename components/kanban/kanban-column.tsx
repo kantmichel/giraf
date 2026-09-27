@@ -1,7 +1,6 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { PanelLeftClose, ArrowDownNarrowWide, ArrowUpNarrowWide } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +64,6 @@ export function KanbanColumn({
   timeField,
 }: KanbanColumnProps) {
   const { isOver, setNodeRef } = useDroppable({ id });
-  const issueIds = issues.map((i) => `${i.repo.fullName}:${i.number}`);
   const DirectionIcon = sort.direction === "desc" ? ArrowDownNarrowWide : ArrowUpNarrowWide;
 
   return (
@@ -138,29 +136,27 @@ export function KanbanColumn({
             : "border-transparent bg-muted/30"
         )}
       >
-        <SortableContext items={issueIds} strategy={verticalListSortingStrategy}>
-          {issues.length === 0 ? (
-            <p
-              className={cn(
-                "py-8 text-center text-xs text-muted-foreground",
-                isOver && "text-primary"
-              )}
-            >
-              {isOver ? "Drop here" : "No issues"}
-            </p>
-          ) : (
-            issues.map((issue) => (
-              <KanbanCard
-                key={issue.id}
-                issue={issue}
-                onClick={() => onIssueClick(issue)}
-                showTime={sort.field === "time"}
-                timeField={timeField}
-                emphasizeWsjf={sort.field === "wsjf"}
-              />
-            ))
-          )}
-        </SortableContext>
+        {issues.length === 0 ? (
+          <p
+            className={cn(
+              "py-8 text-center text-xs text-muted-foreground",
+              isOver && "text-primary"
+            )}
+          >
+            {isOver ? "Drop here" : "No issues"}
+          </p>
+        ) : (
+          issues.map((issue) => (
+            <KanbanCard
+              key={issue.id}
+              issue={issue}
+              onClick={() => onIssueClick(issue)}
+              showTime={sort.field === "time"}
+              timeField={timeField}
+              emphasizeWsjf={sort.field === "wsjf"}
+            />
+          ))
+        )}
       </div>
     </div>
   );

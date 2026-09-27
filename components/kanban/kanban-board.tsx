@@ -1,10 +1,17 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { DndContext, DragEndEvent, DragOverlay, pointerWithin } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { KanbanColumn, KanbanColumnRail } from "./kanban-column";
-import { IssuePriorityBadge } from "@/components/issues/issue-priority-badge";
-import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
+import { KanbanCardPreview, type KanbanDragData } from "./kanban-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { STATUS_LABELS } from "@/lib/constants";
@@ -21,6 +28,9 @@ const COLUMNS = [
   { id: "in review", label: "In Review", color: STATUS_LABELS[2].color },
   { id: "done", label: "Done", color: STATUS_LABELS[3].color },
 ];
+
+// The only valid drop targets. A drop anywhere else is ignored, never written.
+const COLUMN_IDS = new Set<string>([...COLUMNS.map((c) => c.id), "unset"]);
 
 const DEFAULT_SORT: ColumnSort = { field: "priority", direction: "desc" };
 
@@ -101,7 +111,12 @@ interface KanbanBoardProps {
 
 export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onSortsChange }: KanbanBoardProps) {
   const updateIssue = useUpdateIssue();
-  const [activeIssue, setActiveIssue] = useState<ScoredIssue | null>(null);
+  const [activeDrag, setActiveDrag] = useState<KanbanDragData | null>(null);
+  // The whole card is the handle, so a drag only starts after a deliberate
+  // 6px move — a plain click still opens the issue.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  );
   // Unset issues are waiting for triage, not work in progress: start folded
   // so the board opens on the columns you actually move work through.
   const [unsetCollapsed, setUnsetCollapsed] = useState(true);
@@ -144,11 +159,12 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
   }, [issues, columnSorts]);
 
   function handleDragEnd(event: DragEndEvent) {
-    setActiveIssue(null);
+    setActiveDrag(null);
     const { active, over } = event;
     if (!over) return;
 
-    const targetStatus = over.id as string;
+    const targetStatus = String(over.id);
+    if (!COLUMN_IDS.has(targetStatus)) return;
     const issue = active.data.current?.issue as ScoredIssue | undefined;
     if (!issue) return;
 
@@ -192,10 +208,17 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
 
   return (
     <DndContext
+      sensors={sensors}
       collisionDetection={pointerWithin}
-      onDragStart={(event) => {
-        setActiveIssue(event.active.data.current?.issue || null);
+      accessibility={{
+        screenReaderInstructions: {
+          draggable: "Press Enter to open this issue. Drag it to another column to change its status.",
+        },
       }}
+      onDragStart={(event) => {
+        setActiveDrag((event.active.data.current as KanbanDragData | undefined) ?? null);
+      }}
+      onDragCancel={() => setActiveDrag(null)}
       onDragEnd={handleDragEnd}
     >
       <div className="flex min-h-0 flex-1 gap-3 overflow-x-auto pb-4">
@@ -237,16 +260,7 @@ export function KanbanBoard({ issues, isLoading, onIssueClick, initialSorts, onS
         ))}
       </div>
       <DragOverlay>
-        {activeIssue && (
-          <div className="w-[250px] rounded-md border bg-card p-3 shadow-lg">
-            <p className="line-clamp-2 text-sm font-medium">{activeIssue.title}</p>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="text-[11px] text-muted-foreground">#{activeIssue.number}</span>
-              <IssueRepoBadge repo={activeIssue.repo.fullName} />
-              <IssuePriorityBadge priority={activeIssue.priority} />
-            </div>
-          </div>
-        )}
+        {activeDrag && <KanbanCardPreview {...activeDrag} />}
       </DragOverlay>
     </DndContext>
   );
