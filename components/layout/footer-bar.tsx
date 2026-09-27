@@ -1,7 +1,6 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import pkg from "../../package.json";
 import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { useRateLimit } from "@/hooks/use-rate-limit";
@@ -10,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
-export function FooterBar() {
+export function FooterBar({ version }: { version: string }) {
   const { data: rateLimit, dataUpdatedAt } = useRateLimit();
   const queryClient = useQueryClient();
   const isFetching = useIsFetching();
@@ -77,7 +76,7 @@ export function FooterBar() {
           {" | "}
           <a href="https://flipstream.io?utm_source=giraf&utm_medium=open-source&utm_campaign=footer" target="_blank" className="hover:underline">Flipstream</a>
         </span>
-        <span>Giraf v{pkg.version}</span>
+        <span>Giraf v{version}</span>
       </div>
     </footer>
   );

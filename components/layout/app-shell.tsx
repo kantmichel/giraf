@@ -14,8 +14,11 @@ import { useOpenIssue } from "@/hooks/use-open-issue";
 export function AppShell({
   children,
   defaultSidebarOpen = true,
+  version,
 }: {
   children: React.ReactNode;
+  /** From package.json, read by the server layout. */
+  version: string;
   /** Read from the sidebar cookie by the layout, so a collapsed sidebar
    *  survives a reload and the server renders what the client expects. */
   defaultSidebarOpen?: boolean;
@@ -39,13 +42,13 @@ export function AppShell({
     // as a flex item it otherwise refuses to be narrower than its widest child,
     // and a wide board drags the whole page, top bar included, off-screen.
     <SidebarProvider defaultOpen={defaultSidebarOpen} className="h-svh">
-      <AppSidebar />
+      <AppSidebar version={version} />
       <SidebarInset className="min-w-0">
         <TopBar onOpenCommandPalette={() => setCommandOpen(true)} />
         <div className="min-h-0 flex-1 overflow-auto p-4">
           {children}
         </div>
-        <FooterBar />
+        <FooterBar version={version} />
       </SidebarInset>
       <CommandPalette
         open={commandOpen}

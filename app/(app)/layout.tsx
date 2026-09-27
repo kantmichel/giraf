@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 import { SIDEBAR_COOKIE_NAME } from "@/components/ui/sidebar";
+// package.json is the single source of truth for the version — release-please
+// bumps it on every release. Imported here, on the server, only the version
+// string reaches the browser, and a dev server picks up a bump on reload.
+import pkg from "@/package.json";
 
 export default async function AppLayout({
   children,
@@ -19,6 +23,8 @@ export default async function AppLayout({
   const sidebarState = (await cookies()).get(SIDEBAR_COOKIE_NAME)?.value;
 
   return (
-    <AppShell defaultSidebarOpen={sidebarState !== "false"}>{children}</AppShell>
+    <AppShell defaultSidebarOpen={sidebarState !== "false"} version={pkg.version}>
+      {children}
+    </AppShell>
   );
 }
