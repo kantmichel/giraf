@@ -4,64 +4,7 @@ import { handleGitHubError } from "./errors";
 import { listOpenPulls } from "./pulls";
 import { listBlockedBy } from "./dependencies";
 import { extractClaudeState } from "@/lib/claude-workflow";
-
-const STATUS_PREFIX = "status: ";
-const PRIORITY_PREFIX = "priority: ";
-const EFFORT_PREFIX = "effort: ";
-const IMPACT_PREFIX = "impact: ";
-const DUE_PREFIX = "due: ";
-
-type StatusValue = "to do" | "doing" | "in review" | "done";
-type PriorityValue = "critical" | "high" | "medium" | "low";
-type EffortValue = "low" | "medium" | "high";
-
-function extractStatus(labels: NormalizedLabel[]): StatusValue | null {
-  const statusLabel = labels.find((l) =>
-    l.name.toLowerCase().startsWith(STATUS_PREFIX)
-  );
-  if (!statusLabel) return null;
-  return statusLabel.name.toLowerCase().replace(STATUS_PREFIX, "") as StatusValue;
-}
-
-function extractPriority(labels: NormalizedLabel[]): PriorityValue | null {
-  const priorityLabel = labels.find((l) =>
-    l.name.toLowerCase().startsWith(PRIORITY_PREFIX)
-  );
-  if (!priorityLabel) return null;
-  return priorityLabel.name.toLowerCase().replace(PRIORITY_PREFIX, "") as PriorityValue;
-}
-
-function extractEffort(labels: NormalizedLabel[]): EffortValue | null {
-  const effortLabel = labels.find((l) =>
-    l.name.toLowerCase().startsWith(EFFORT_PREFIX)
-  );
-  if (!effortLabel) return null;
-  return effortLabel.name.toLowerCase().replace(EFFORT_PREFIX, "") as EffortValue;
-}
-
-/**
- * Due date from a `due: YYYY-MM-DD` label. Anything that isn't a real calendar
- * date is ignored rather than guessed at, so a typo shows as "no due date"
- * instead of silently scheduling work on the wrong day.
- */
-function extractDueDate(labels: NormalizedLabel[]): string | null {
-  const label = labels.find((l) =>
-    l.name.toLowerCase().startsWith(DUE_PREFIX)
-  );
-  if (!label) return null;
-  const raw = label.name.toLowerCase().replace(DUE_PREFIX, "").trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
-  const parsed = new Date(`${raw}T00:00:00Z`);
-  if (isNaN(parsed.getTime())) return null;
-  // Rejects things like 2026-02-31, which Date would roll forward.
-  return parsed.toISOString().slice(0, 10) === raw ? raw : null;
-}
-
-function extractImpacts(labels: NormalizedLabel[]): string[] {
-  return labels
-    .filter((l) => l.name.toLowerCase().startsWith(IMPACT_PREFIX))
-    .map((l) => l.name.toLowerCase().replace(IMPACT_PREFIX, ""));
-}
+import { STATUS_PREFIX, labelFields, labelStatus } from "@/lib/issue-labels";
 
 function normalizeLabels(
   labels: { id?: number; name?: string; color?: string; description?: string | null }[]
@@ -100,11 +43,7 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
     state: issue.state as "open" | "closed",
     htmlUrl: issue.html_url,
     repo: { owner, name: repo, fullName: `${owner}/${repo}` },
-    status: extractStatus(labels),
-    priority: extractPriority(labels),
-    effort: extractEffort(labels),
-    impacts: extractImpacts(labels),
-    dueDate: extractDueDate(labels),
+    ...labelFields(labels.map((l) => l.name)),
     claudeState: extractClaudeState(labels),
     assignees: normalizeAssignees(issue.assignees),
     labels,
@@ -339,7 +278,7 @@ export function syncClaudeStatusLabels(
     ];
 
     // Patch in-memory so the response is already correct
-    issue.status = targetStatus.replace("status: ", "") as StatusValue;
+    issue.status = labelStatus([targetStatus]);
     issue.labels = newLabels;
 
     // Fire-and-forget GitHub update

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { NormalizedIssue } from "@/types/github";
 import { extractClaudeState } from "@/lib/claude-workflow";
+import { labelFields } from "@/lib/issue-labels";
 
 interface UpdateIssueParams {
   owner: string;
@@ -39,24 +40,12 @@ function applyUpdateToIssue(
       description: null,
     }));
 
-    const statusLabel = updates.labels.find((l) => l.startsWith("status: "));
-    const priorityLabel = updates.labels.find((l) => l.startsWith("priority: "));
-    const effortLabel = updates.labels.find((l) => l.startsWith("effort: "));
-    const impactLabels = updates.labels.filter((l) => l.startsWith("impact: "));
-
     updated = {
       ...updated,
       labels: newLabels,
-      status: statusLabel
-        ? (statusLabel.replace("status: ", "") as NormalizedIssue["status"])
-        : null,
-      priority: priorityLabel
-        ? (priorityLabel.replace("priority: ", "") as NormalizedIssue["priority"])
-        : null,
-      effort: effortLabel
-        ? (effortLabel.replace("effort: ", "") as NormalizedIssue["effort"])
-        : null,
-      impacts: impactLabels.map((l) => l.replace("impact: ", "")),
+      // Same parser as the server, so the optimistic copy can't disagree with
+      // what the next fetch returns.
+      ...labelFields(updates.labels),
       claudeState: extractClaudeState(newLabels),
     };
   }

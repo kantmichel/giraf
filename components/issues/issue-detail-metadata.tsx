@@ -12,6 +12,7 @@ import { IssueLabelsEditor } from "./issue-labels-editor";
 import { IssueAiStatus } from "./issue-ai-status";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
 import { useClaudeEnabledRepos } from "@/hooks/use-claude-repos";
+import { labelFields } from "@/lib/issue-labels";
 import type { NormalizedIssue } from "@/types/github";
 
 interface IssueDetailMetadataProps {
@@ -53,16 +54,13 @@ export function IssueDetailMetadata({ issue }: IssueDetailMetadataProps) {
     });
   }
 
-  // Derive status/priority from local labels (always fresh)
-  const currentStatus = localLabels
-    .find((l) => l.startsWith("status: "))
-    ?.replace("status: ", "") ?? null;
-  const currentPriority = localLabels
-    .find((l) => l.startsWith("priority: "))
-    ?.replace("priority: ", "") ?? null;
-  const currentEffort = localLabels
-    .find((l) => l.startsWith("effort: "))
-    ?.replace("effort: ", "") ?? null;
+  // Derived from local labels (always fresh), through the same parser as the
+  // server so `effort: Low` reads as "low" and a stray status reads as unset.
+  const {
+    status: currentStatus,
+    priority: currentPriority,
+    effort: currentEffort,
+  } = labelFields(localLabels);
 
   return (
     <div className="grid grid-cols-[100px_1fr] gap-y-3 text-sm">
