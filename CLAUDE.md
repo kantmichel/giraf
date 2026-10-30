@@ -70,3 +70,27 @@ migration list claims.
 There is no test suite, and CI runs lint, typecheck and build only. A change to
 logic is not verified by those passing. Exercise the real code path against real
 data — a short script calling the function directly — and read the output.
+
+## Running it locally
+
+The instance on http://localhost:3000 runs the production build, not the dev
+server: `bun run build && bun run start`, in the "Gira" tab of the Herdr
+"Servers" workspace. Do not put `bun dev` back in its place. Measured on
+30 Oct 2026, the dev server held 2.1 GiB and grew by about 0.5 GiB a day; the
+production server started at about 70 MiB.
+
+There is no hot reload, so a change is not live until the server restarts:
+Ctrl-C in that pane, then `bun run build && bun run start` again (about 10 s).
+`next build` deletes `.next` (all but `cache`, `dev` and `lock`) from under the
+running server, so every build — including one run only to verify a change — is
+followed by that restart.
+
+When UI work really needs hot reload, run `bun run dev -p 3002` beside it and
+stop it when done. Dev output lives in `.next/dev`, which a build leaves alone,
+and both servers can share `data/gira.db`: it is in WAL mode and nothing runs
+on a server-side timer.
+
+`next start` warns that it "does not work with output: standalone". It works;
+the warning is expected. Do not run `node .next/standalone/server.js` without
+`DATABASE_PATH`: the build copies a snapshot of `data/gira.db` into
+`.next/standalone/data/`, and the server would write to that stale copy.
