@@ -6,6 +6,7 @@ import { startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
 import { UNSET_FILTER_VALUE } from "@/lib/constants";
 import { matchesAgeBuckets } from "@/lib/issue-age";
 import { attachEffectiveWsjf } from "@/lib/wsjf";
+import { workKind, featureKey } from "@/lib/work-kind";
 import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue, FilterConfig } from "@/types/github";
 
@@ -160,6 +161,17 @@ export function useIssues(
     if (filters.labels.length > 0) {
       issues = issues.filter((i) =>
         i.labels.some((l) => filters.labels.includes(l.name))
+      );
+    }
+    if (filters.type.length > 0) {
+      issues = issues.filter((i) => filters.type.includes(workKind(i)));
+    }
+    if (filters.feature.length > 0) {
+      const includeUnset = filters.feature.includes(UNSET_FILTER_VALUE);
+      const values = filters.feature.filter((v) => v !== UNSET_FILTER_VALUE);
+      issues = issues.filter((i) =>
+        (includeUnset && i.features.length === 0) ||
+        i.features.some((f) => values.includes(featureKey(f)))
       );
     }
     if (filters.search) {

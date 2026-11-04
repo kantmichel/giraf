@@ -29,7 +29,7 @@ export function AppShell({
   // The palette feeds the issues page's URL rather than opening a drawer of its
   // own — one drawer, one source of truth, and the link is always shareable.
   const openIssue = useOpenIssue();
-  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], search: "" });
+  const { allIssues } = useIssues({ state: "open", repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], type: [], feature: [], search: "" });
 
   useKeyboardShortcuts({
     onOpenCommandPalette: useCallback(() => setCommandOpen((o) => !o), []),

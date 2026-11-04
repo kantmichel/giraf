@@ -52,6 +52,10 @@ export function normalizeIssue(issue: any, owner: string, repo: string): Normali
       : null,
     linkedPrs: [],
     blockedBy: [],
+    // The REST issue already carries its type, so this costs no extra call.
+    issueType: issue.type?.name ?? null,
+    // Filled in by attachFeatures once the org's Projects are read.
+    features: [],
     version: null,
     createdBy: {
       id: issue.user?.id || 0,

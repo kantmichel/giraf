@@ -20,6 +20,12 @@ export interface NormalizedIssue {
   linkedPrs: NormalizedLinkedPr[];
   /** Issues that must land first, from GitHub's native "blocked by". */
   blockedBy: IssueRef[];
+  /** GitHub's native issue type ("Feature", "Bug", …), null when unset.
+   *  `lib/work-kind.ts` turns it into feature work or maintenance. */
+  issueType: string | null;
+  /** Open org Projects the issue sits in. A Project is a feature. Empty when
+   *  it is in none, or when the Projects could not be read. */
+  features: FeatureRef[];
   version: string | null;
   createdBy: NormalizedUser;
   createdAt: string;
@@ -51,6 +57,17 @@ export interface IssueRef {
   /** Gira status from the issue's `status: ` label, null when unset. */
   status: "to do" | "doing" | "in review" | "done" | null;
   htmlUrl: string;
+}
+
+/** An org Project an issue belongs to. In this workspace a Project is a feature. */
+export interface FeatureRef {
+  owner: string;
+  number: number;
+  title: string;
+  url: string;
+  /** The issue's place in the Project's own order, from 0. The order is the
+   *  order the feature's tickets get worked on. */
+  position: number;
 }
 
 export interface NormalizedLinkedPr {
@@ -179,5 +196,9 @@ export interface FilterConfig {
   hasPr: boolean;
   state: "open" | "closed" | "all";
   milestone: string[];
+  /** "feature" and/or "maintenance", see `lib/work-kind.ts`. */
+  type: string[];
+  /** Feature keys (`owner/number` of the Project), or UNSET_FILTER_VALUE. */
+  feature: string[];
   search: string;
 }

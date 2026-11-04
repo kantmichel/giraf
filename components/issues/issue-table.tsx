@@ -19,6 +19,7 @@ import { IssueEffortEditor } from "./issue-effort-editor";
 import { IssueAssigneesEditor } from "./issue-assignees-editor";
 import { IssueLabelsEditor } from "./issue-labels-editor";
 import { IssueRepoBadge } from "./issue-repo-badge";
+import { IssueFeatureBadge } from "./issue-feature-badge";
 import { IssueAiStatus } from "./issue-ai-status";
 import { RelativeTime } from "@/components/shared/relative-time";
 import { useUpdateIssue } from "@/hooks/use-issue-mutations";
@@ -33,6 +34,7 @@ type SortColumn =
   | "status"
   | "title"
   | "repo"
+  | "feature"
   | "priority"
   | "effort"
   | "wsjf"
@@ -54,6 +56,13 @@ function compareValues(a: ScoredIssue, b: ScoredIssue, column: SortColumn, direc
     case "status": return ((a.status ? STATUS_RANK[a.status] ?? 99 : 99) - (b.status ? STATUS_RANK[b.status] ?? 99 : 99)) * dir;
     case "title": return a.title.localeCompare(b.title) * dir;
     case "repo": return a.repo.fullName.localeCompare(b.repo.fullName) * dir;
+    case "feature": {
+      // Issues in no feature sort last either way; within one, the Project's own order.
+      const fa = a.features[0];
+      const fb = b.features[0];
+      if (!fa || !fb) return (fa ? -1 : 0) + (fb ? 1 : 0);
+      return (fa.title.localeCompare(fb.title) || fa.position - fb.position) * dir;
+    }
     case "priority": return ((a.priority ? PRIORITY_RANK[a.priority] ?? 99 : 99) - (b.priority ? PRIORITY_RANK[b.priority] ?? 99 : 99)) * dir;
     case "effort": return ((a.effort ? EFFORT_RANK[a.effort] ?? 99 : 99) - (b.effort ? EFFORT_RANK[b.effort] ?? 99 : 99)) * dir;
     case "wsjf": {
@@ -93,6 +102,7 @@ function issueKey(issue: NormalizedIssue): string {
 export const TABLE_COLUMN_DEFS = [
   { id: "status", label: "Status" },
   { id: "repo", label: "Repo" },
+  { id: "feature", label: "Feature" },
   { id: "priority", label: "Priority" },
   { id: "effort", label: "Effort" },
   { id: "wsjf", label: "WSJF" },
@@ -245,6 +255,7 @@ export function IssueTable({
             {isVisible("status") && <SortableHead column="status" className="w-24">Status</SortableHead>}
             <SortableHead column="title" className="min-w-[200px]">Title</SortableHead>
             {isVisible("repo") && <SortableHead column="repo" className="w-32">Repo</SortableHead>}
+            {isVisible("feature") && <SortableHead column="feature" className="w-36">Feature</SortableHead>}
             {isVisible("priority") && <SortableHead column="priority" className="w-24">Priority</SortableHead>}
             {isVisible("effort") && <SortableHead column="effort" className="w-24">Effort</SortableHead>}
             {isVisible("wsjf") && <SortableHead column="wsjf" className="w-20">WSJF</SortableHead>}
@@ -348,6 +359,11 @@ export function IssueTable({
                   {isVisible("repo") && (
                     <TableCell>
                       <IssueRepoBadge repo={issue.repo.fullName} />
+                    </TableCell>
+                  )}
+                  {isVisible("feature") && (
+                    <TableCell>
+                      <IssueFeatureBadge issue={issue} className="max-w-full" />
                     </TableCell>
                   )}
                   {isVisible("priority") && (

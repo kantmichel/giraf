@@ -8,7 +8,7 @@ import type { ViewType } from "@/components/filters/view-switcher";
 /** Ordering of the issue list by date — created date, or closed date on the closed view. */
 export type IssueSortDir = "newest" | "oldest";
 
-const FILTER_PARAMS = ["repos", "status", "priority", "effort", "age", "ai", "version", "hasPr", "assignees", "labels", "milestone", "q", "state", "_cleared"];
+const FILTER_PARAMS = ["repos", "status", "priority", "effort", "age", "ai", "version", "hasPr", "assignees", "labels", "milestone", "type", "feature", "q", "state", "_cleared"];
 
 function hasAnyFilterParams(sp: URLSearchParams): boolean {
   return FILTER_PARAMS.some((p) => sp.has(p));
@@ -27,6 +27,8 @@ const DEFAULT_FILTERS: FilterConfig = {
   hasPr: false,
   state: "open",
   milestone: [],
+  type: [],
+  feature: [],
   search: "",
 };
 
@@ -54,6 +56,8 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       hasPr: searchParams.get("hasPr") === "1",
       state: (searchParams.get("state") as FilterConfig["state"]) || "open",
       milestone: parseArray(searchParams.get("milestone")),
+      type: parseArray(searchParams.get("type")),
+      feature: parseArray(searchParams.get("feature")),
       search: searchParams.get("q") || "",
     }),
     [searchParams]
@@ -99,6 +103,8 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       if (next.assignees.length) params.set("assignees", next.assignees.join(","));
       if (next.labels.length) params.set("labels", next.labels.join(","));
       if (next.milestone.length) params.set("milestone", next.milestone.join(","));
+      if (next.type.length) params.set("type", next.type.join(","));
+      if (next.feature.length) params.set("feature", next.feature.join(","));
       if (next.search) params.set("q", next.search);
 
       // Preserve weekOffset when staying on closed, reset when switching away
@@ -187,6 +193,8 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       filters.assignees.length > 0 ||
       filters.labels.length > 0 ||
       filters.milestone.length > 0 ||
+      filters.type.length > 0 ||
+      filters.feature.length > 0 ||
       filters.search !== "" ||
       filters.state !== "open",
     [filters]

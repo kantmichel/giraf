@@ -69,7 +69,13 @@ export function getCachedClosedIssuesInRange(
   const out: NormalizedIssue[] = [];
   for (const row of rows) {
     try {
-      out.push(JSON.parse(row.issue_json) as NormalizedIssue);
+      const issue = JSON.parse(row.issue_json) as NormalizedIssue;
+      // Rows cached before issue types and features existed carry neither.
+      // An unknown type reads as maintenance; features are re-attached on
+      // every request, so they are never taken from the cache anyway.
+      issue.issueType ??= null;
+      issue.features ??= [];
+      out.push(issue);
     } catch {
       // Skip corrupted rows
     }

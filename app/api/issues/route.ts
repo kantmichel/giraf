@@ -6,6 +6,7 @@ import { getWorkspaceForUser } from "@/lib/db/workspace-helpers";
 import { getTrackedRepos } from "@/lib/db/tracked-repos";
 import { listRepoIssues, syncClosedStatusLabels, syncClaudeStatusLabels } from "@/lib/github/issues";
 import { listRepoReleases, enrichIssuesWithVersions } from "@/lib/github/releases";
+import { listFeatureProjects, attachFeatures } from "@/lib/github/projects";
 import { detectClosedNotifications } from "@/lib/detect-closed-notifications";
 import { fetchClosedIssuesWithCache } from "@/lib/agents/cached-closed-issues";
 import type { NormalizedIssue } from "@/types/github";
@@ -73,6 +74,15 @@ export async function GET(request: Request) {
     );
     const allReleases = releaseResults.flatMap((r) => r.status === "fulfilled" ? r.value : []);
     enrichIssuesWithVersions(issues, allReleases);
+
+    // Features are each org's open Projects. listFeatureProjects never throws,
+    // so a token without the `project` scope still gets the full board, only
+    // without features.
+    const owners = Array.from(new Set(trackedRepos.map((r) => r.owner)));
+    const featureProjects = (
+      await Promise.all(owners.map((owner) => listFeatureProjects(octokit, owner)))
+    ).flat();
+    attachFeatures(issues, featureProjects);
 
     // Auto-fix closed issues missing "status: done" label (fire-and-forget)
     syncClosedStatusLabels(octokit, issues);

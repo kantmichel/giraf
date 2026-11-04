@@ -14,7 +14,10 @@ export const authOptions: NextAuthOptions = {
       issuer: "https://github.com/login/oauth",
       authorization: {
         params: {
-          scope: "read:user repo read:org",
+          // read:project lets the board read org Projects as features. A
+          // session signed in before it was added keeps working, only
+          // without features, until that person signs in again.
+          scope: "read:user repo read:org read:project",
         },
       },
     }),

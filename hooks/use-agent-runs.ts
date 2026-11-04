@@ -32,6 +32,8 @@ const EMPTY_FILTERS_OPEN: FilterConfig = {
   hasPr: false,
   state: "open",
   milestone: [],
+  type: [],
+  feature: [],
   search: "",
 };
 

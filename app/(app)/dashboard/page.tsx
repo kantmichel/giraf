@@ -23,6 +23,8 @@ const defaultFilters: FilterConfig = {
   hasPr: false,
   state: "open",
   milestone: [],
+  type: [],
+  feature: [],
   search: "",
 };
 

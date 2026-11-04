@@ -19,6 +19,7 @@ import { FilterMultiSelect } from "./filter-multi-select";
 import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
 import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
+import { WORK_KIND_OPTIONS, featureKey } from "@/lib/work-kind";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -93,6 +94,21 @@ export function FilterBar({
     unsetOption,
   ];
 
+  // Every feature some loaded issue sits in, in title order, plus "none" so
+  // tickets outside any feature can be found too.
+  const featureOptions = useMemo(() => {
+    const byKey = new Map<string, string>();
+    for (const issue of allIssues) {
+      for (const f of issue.features) byKey.set(featureKey(f), f.title);
+    }
+    return [
+      ...Array.from(byKey, ([value, label]) => ({ value, label })).sort((a, b) =>
+        a.label.localeCompare(b.label)
+      ),
+      { value: UNSET_FILTER_VALUE, label: "no feature" },
+    ];
+  }, [allIssues]);
+
   const assigneeOptions = useMemo(() => {
     const seen = new Set<string>();
     const options: { value: string; label: string; avatarUrl: string }[] = [];
@@ -143,6 +159,8 @@ export function FilterBar({
     filters.ai.length +
     filters.version.length +
     filters.assignees.length +
+    filters.type.length +
+    filters.feature.length +
     (filters.hasPr ? 1 : 0) +
     (filters.search ? 1 : 0) +
     (filters.state !== "open" ? 1 : 0);
@@ -154,6 +172,18 @@ export function FilterBar({
         options={repoOptions}
         selected={filters.repos}
         onSelectionChange={(repos) => onFilterChange({ repos })}
+      />
+      <FilterMultiSelect
+        title="Type"
+        options={WORK_KIND_OPTIONS}
+        selected={filters.type}
+        onSelectionChange={(type) => onFilterChange({ type })}
+      />
+      <FilterMultiSelect
+        title="Feature"
+        options={featureOptions}
+        selected={filters.feature}
+        onSelectionChange={(feature) => onFilterChange({ feature })}
       />
       <FilterMultiSelect
         title="Status"
