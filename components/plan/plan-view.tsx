@@ -29,12 +29,13 @@ import {
   newMonthPlan,
   parsePlanExport,
   planInputs,
+  type LaneKind,
   type MonthPlan,
   type PlanExport,
 } from "@/lib/month-plan";
 import type { FilterConfig } from "@/types/github";
 import { PlanFeatures } from "./plan-features";
-import { PlanLanes, type LaneId } from "./plan-lanes";
+import { PlanLanes } from "./plan-lanes";
 import { PlanTable } from "./plan-table";
 
 const NO_FILTERS: Omit<FilterConfig, "state"> = {
@@ -173,7 +174,7 @@ export function PlanView() {
     [draft, personPlans, month, currentMonth, open, closed]
   );
 
-  const [lane, setLane] = useState<LaneId>("feature");
+  const [lane, setLane] = useState<LaneKind>("feature");
 
   // --- agreeing ---------------------------------------------------------------
   // Agreeing saves what fits right now as the month's list. Updating does the
@@ -372,7 +373,7 @@ export function PlanView() {
                   <span className="inline-flex items-center gap-1.5">
                     <CheckCircle2 className="size-4 text-emerald-600" />
                     Agreed {formatInstantWithTime(draft.agreed.at)}: {draft.agreed.tickets.length} tickets.
-                    The bars count only these.
+                    Feature and maintenance count only these; ad hoc counts as it comes.
                   </span>
                 ) : forecast.past ? (
                   <span className="text-muted-foreground">No list was agreed for {monthLabel}.</span>

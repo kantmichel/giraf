@@ -36,11 +36,15 @@ export interface MonthPlan {
   updatedAt: string;
 }
 
-export type LaneKind = "feature" | "maintenance";
+export type LaneKind = "feature" | "maintenance" | "adhoc";
+
+const LANE_KINDS: readonly LaneKind[] = ["feature", "maintenance", "adhoc"];
 
 export interface Agreement {
   at: string;
-  /** In the order they were agreed, which is the order they get worked. */
+  /** In the order they were agreed, which is the order they get worked.
+   *  Ad hoc tickets are recorded too, as what was known when agreeing, but
+   *  that lane never waits for an agreement (see adhocLane). */
   tickets: { key: string; lane: LaneKind }[];
   /** The plan's inputs when it was agreed, to tell when they changed since. */
   inputs: string;
@@ -130,7 +134,7 @@ function parseAgreement(raw: unknown): Agreement | null {
     (t): t is Agreement["tickets"][number] =>
       !!t &&
       typeof (t as Record<string, unknown>).key === "string" &&
-      ((t as Record<string, unknown>).lane === "feature" || (t as Record<string, unknown>).lane === "maintenance")
+      LANE_KINDS.includes((t as Record<string, unknown>).lane as LaneKind)
   );
   return { at: r.at, tickets, inputs: typeof r.inputs === "string" ? r.inputs : "" };
 }
@@ -221,6 +225,9 @@ export interface PlanRow {
   fits: boolean;
   /** The planned feature this row belongs to, feature lane only. */
   feature: FeatureRef | null;
+  /** Ad hoc lane only: counted, but not in the month's agreement, so it came
+   *  in (or became ad hoc work) after the month was agreed. */
+  afterAgreement: boolean;
 }
 
 export interface LaneForecast {
@@ -243,6 +250,7 @@ export interface MonthForecast {
   budget: PlanBudget;
   feature: LaneForecast;
   maintenance: LaneForecast;
+  adhoc: LaneForecast;
   /** Open tickets in this month's features assigned to someone else, or no one. */
   notAssigned: number;
   /** Agreed tickets that are no longer among the loaded issues (moved, deleted). */
@@ -289,7 +297,7 @@ interface Tally {
 const newTally = (): Tally => ({ rows: [], cumulative: 0, doneHours: 0, inProgressHours: 0, toDoHours: 0, unsized: 0 });
 
 /** Add a row that is in the month: agreed, or above the line. */
-function addIn(t: Tally, issue: ScoredIssue, plan: MonthPlan, withFeature: boolean): void {
+function addIn(t: Tally, issue: ScoredIssue, plan: MonthPlan, withFeature: boolean, afterAgreement = false): void {
   const hours = hoursFor(issue, plan);
   const state = rowState(issue);
   if (hours === null) t.unsized++;
@@ -297,7 +305,7 @@ function addIn(t: Tally, issue: ScoredIssue, plan: MonthPlan, withFeature: boole
   if (state === "done") t.doneHours += hours ?? 0;
   else if (state === "in progress") t.inProgressHours += hours ?? 0;
   else t.toDoHours += hours ?? 0;
-  t.rows.push({ issue, hours, state, cumulative: t.cumulative, fits: true, feature: withFeature ? plannedFeature(issue, plan) : null });
+  t.rows.push({ issue, hours, state, cumulative: t.cumulative, fits: true, feature: withFeature ? plannedFeature(issue, plan) : null, afterAgreement });
 }
 
 /**
@@ -318,7 +326,7 @@ function liveLane(budget: number, keep: ScoredIssue[], open: ScoredIssue[], plan
     const feature = withFeature ? plannedFeature(issue, plan) : null;
     if (hours === null) {
       t.unsized++;
-      unsizedRows.push({ issue, hours, state: rowState(issue), cumulative: t.cumulative, fits: false, feature });
+      unsizedRows.push({ issue, hours, state: rowState(issue), cumulative: t.cumulative, fits: false, feature, afterAgreement: false });
       continue;
     }
     // A hundredth of an hour of slack, so 0.1 + 0.2 style sums fit exactly.
@@ -326,7 +334,7 @@ function liveLane(budget: number, keep: ScoredIssue[], open: ScoredIssue[], plan
       addIn(t, issue, plan, withFeature);
     } else {
       overflowHours += hours;
-      below.push({ issue, hours, state: rowState(issue), cumulative: t.cumulative + overflowHours, fits: false, feature });
+      below.push({ issue, hours, state: rowState(issue), cumulative: t.cumulative + overflowHours, fits: false, feature, afterAgreement: false });
     }
   }
   return { budget, agreed: false, rows: [...t.rows, ...below, ...unsizedRows], doneHours: t.doneHours, inProgressHours: t.inProgressHours, toDoHours: t.toDoHours, overflowHours, unsized: t.unsized };
@@ -340,7 +348,7 @@ function agreedLane(budget: number, agreed: ScoredIssue[], rest: ScoredIssue[], 
   const restRows: PlanRow[] = rest.map((issue) => {
     const hours = hoursFor(issue, plan);
     after += hours ?? 0;
-    return { issue, hours, state: rowState(issue), cumulative: after, fits: false, feature: withFeature ? plannedFeature(issue, plan) : null };
+    return { issue, hours, state: rowState(issue), cumulative: after, fits: false, feature: withFeature ? plannedFeature(issue, plan) : null, afterAgreement: false };
   });
   return {
     budget,
@@ -384,21 +392,91 @@ function candidates(plan: MonthPlan, open: ScoredIssue[], taken: Set<string>) {
     );
   });
 
-  // Maintenance lane: everything that is not feature work, top down by WSJF.
+  // Maintenance lane: everything that is neither feature nor ad hoc work, top
+  // down by WSJF.
   const maintenance = openMine
-    .filter((i) => !inPlannedFeature(i) && workKind(i) !== "feature")
+    .filter((i) => !inPlannedFeature(i) && workKind(i) === "maintenance")
     .sort((a, b) => inProgressFirst(a, b) || byWsjf(a, b));
 
   const notAssigned = open.filter((i) => inPlannedFeature(i) && !mine(i) && i.state === "open").length;
   return { feature, maintenance, notAssigned };
 }
 
+const STATE_RANK: Record<RowState, number> = { done: 0, "in progress": 1, "to do": 2 };
+
+/**
+ * The ad hoc lane: unplanned work a customer or support asks for during the
+ * month. Unlike the other lanes it has no line and doesn't wait for the
+ * agreement, because the work arrives during the month and the reserve exists
+ * to take it: what is agreed is the reserve, not the tickets. Tickets that
+ * came in after the agreement still count, marked, so the month shows how
+ * much pushed in; hours past the reserve are overflow. What the tickets leave
+ * of the reserve is for support that never gets a ticket.
+ *
+ * A ticket counts in a month when it was agreed for it, closed in it, or —
+ * in the current month only — is open now: open ad hoc work belongs to now,
+ * so a later month's lane starts empty. Closing in the month is enough here,
+ * unlike in maintenance, because the Ad hoc type and the assignee are set by
+ * hand for work someone asked this person to do.
+ */
+function adhocLane(
+  budget: number,
+  plan: MonthPlan,
+  agreement: Agreement | null,
+  agreed: ScoredIssue[],
+  candidates: ScoredIssue[],
+  includeOpen: boolean,
+  byKey: Map<string, ScoredIssue>,
+  taken: Set<string>
+): LaneForecast {
+  const mine = (i: ScoredIssue) => i.assignees.some((a) => a.login === plan.person);
+  const counts = (i: ScoredIssue) => {
+    if (workKind(i) !== "adhoc" || !mine(i) || plannedFeature(i, plan) !== null || taken.has(issueKey(i))) return false;
+    if (i.state === "open") return includeOpen;
+    return !!i.closedAt && monthOf(i.closedAt) === plan.month;
+  };
+
+  const issues = new Map<string, ScoredIssue>();
+  for (const i of agreed) issues.set(issueKey(i), i);
+  for (const i of candidates) {
+    // The latest copy, so a ticket closed and reopened counts as it is now.
+    const current = byKey.get(issueKey(i)) ?? i;
+    if (!issues.has(issueKey(current)) && counts(current)) issues.set(issueKey(current), current);
+  }
+
+  const agreedKeys = new Set(agreed.map(issueKey));
+  const sorted = Array.from(issues.values()).sort(
+    (a, b) =>
+      Number(!a.effort) - Number(!b.effort) ||
+      STATE_RANK[rowState(a)] - STATE_RANK[rowState(b)] ||
+      byWsjf(a, b)
+  );
+
+  const t = newTally();
+  for (const issue of sorted) {
+    taken.add(issueKey(issue));
+    addIn(t, issue, plan, false, !!agreement && !agreedKeys.has(issueKey(issue)));
+  }
+  return {
+    budget,
+    agreed: !!agreement,
+    rows: t.rows,
+    doneHours: t.doneHours,
+    inProgressHours: t.inProgressHours,
+    toDoHours: t.toDoHours,
+    overflowHours: Math.max(0, t.cumulative - budget),
+    unsized: t.unsized,
+  };
+}
+
 function forecastOne(
   plan: MonthPlan,
   open: ScoredIssue[],
+  closed: ScoredIssue[],
   byKey: Map<string, ScoredIssue>,
   taken: Set<string>,
-  live: boolean
+  live: boolean,
+  isCurrentMonth: boolean
 ): MonthForecast {
   const budget = planBudget(plan);
   const agreement = plan.agreed;
@@ -442,15 +520,18 @@ function forecastOne(
     notAssigned = c.notAssigned;
   }
 
-  return { budget, feature, maintenance, notAssigned, missing, past: false };
+  const adhoc = adhocLane(budget.adhoc, plan, agreement, agreedIn("adhoc"), [...closed, ...open], isCurrentMonth, byKey, taken);
+
+  return { budget, feature, maintenance, adhoc, notAssigned, missing, past: false };
 }
 
 /**
  * The forecast for one month.
  *
  * A month that is agreed shows its agreed tickets; one that isn't is a live
- * forecast of open work. Closed tickets only ever count as an agreed ticket
- * going to done, never because they happened to close in the month.
+ * forecast of open work. In the feature and maintenance lanes, closed tickets
+ * only ever count as an agreed ticket going to done, never because they
+ * happened to close in the month. Ad hoc work is the exception (adhocLane).
  *
  * A later month starts where the months before it end: the current month
  * takes its tickets first, then each planned month after it, so December
@@ -479,22 +560,22 @@ export function forecastMonth(input: {
   if (month < currentMonth) {
     // A past month is its agreement, done or not. Nothing open is forecast
     // into it, and without an agreement there is nothing to show.
-    const past = forecastOne({ ...target, agreed: target.agreed ?? { at: "", tickets: [], inputs: "" } }, [], byKey, new Set(), false);
+    const past = forecastOne({ ...target, agreed: target.agreed ?? { at: "", tickets: [], inputs: "" } }, [], closed, byKey, new Set(), false, false);
     return { ...past, past: true };
   }
 
   const taken = new Set<string>();
   for (let m = currentMonth; m < month; m = addMonths(m, 1)) {
     const plan = planFor(m);
-    if (plan) forecastOne(plan, open, byKey, taken, false);
+    if (plan) forecastOne(plan, open, closed, byKey, taken, false, m === currentMonth);
   }
-  return forecastOne(target, open, byKey, taken, live);
+  return forecastOne(target, open, closed, byKey, taken, live, month === currentMonth);
 }
 
 /** The agreement for a plan: what fits in its live forecast, lane by lane. */
 export function agreementFrom(plan: MonthPlan, liveForecast: MonthForecast): Agreement {
   const tickets: Agreement["tickets"] = [];
-  for (const lane of ["feature", "maintenance"] as const) {
+  for (const lane of LANE_KINDS) {
     for (const row of liveForecast[lane].rows) {
       if (row.fits) tickets.push({ key: issueKey(row.issue), lane });
     }

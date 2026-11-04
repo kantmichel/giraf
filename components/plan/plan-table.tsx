@@ -12,9 +12,8 @@ import { IssueRepoBadge } from "@/components/issues/issue-repo-badge";
 import { IssueStatusBadge } from "@/components/issues/issue-status-badge";
 import { useOpenIssue } from "@/hooks/use-open-issue";
 import { formatWsjf } from "@/lib/wsjf";
-import { formatHours, type LaneForecast, type PlanRow } from "@/lib/month-plan";
+import { formatHours, type LaneForecast, type LaneKind, type PlanRow } from "@/lib/month-plan";
 import { cn } from "@/lib/utils";
-import type { LaneId } from "./plan-lanes";
 
 function Divider({ colSpan, children, tone }: { colSpan: number; children: React.ReactNode; tone: "line" | "warn" | "muted" }) {
   return (
@@ -41,7 +40,7 @@ function Divider({ colSpan, children, tone }: { colSpan: number; children: React
  * month's hours run out. Above the line is the month; below it waits for the
  * next one. A row opens the issue's drawer on the issues page.
  */
-export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; laneId: LaneId; monthLabel: string }) {
+export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; laneId: LaneKind; monthLabel: string }) {
   const openIssue = useOpenIssue();
   const colSpan = 7;
   // Done maintenance is one summary row, so the table starts with what is
@@ -62,7 +61,9 @@ export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; la
       <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
         {laneId === "feature"
           ? "No tickets yet: add a feature above, or assign its tickets in GitHub."
-          : "No maintenance tickets assigned."}
+          : laneId === "adhoc"
+            ? `No ad hoc work in ${monthLabel}. A ticket of type Ad hoc assigned in GitHub lands here; the reserve also covers support without a ticket.`
+            : "No maintenance tickets assigned."}
       </div>
     );
   }
@@ -78,6 +79,11 @@ export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; la
         <div className="flex min-w-0 items-center gap-1.5">
           {row.state === "done" && <Check className="size-3.5 shrink-0 text-emerald-600" />}
           <span className="line-clamp-1 font-medium">{row.issue.title}</span>
+          {row.afterAgreement && (
+            <span className="shrink-0 rounded border border-amber-500/50 px-1 text-[10px] font-medium text-amber-600">
+              after agreement
+            </span>
+          )}
           <a
             href={row.issue.htmlUrl}
             target="_blank"

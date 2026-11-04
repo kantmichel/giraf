@@ -1,7 +1,5 @@
 import { cn } from "@/lib/utils";
-import { formatHours, type LaneForecast, type MonthForecast } from "@/lib/month-plan";
-
-export type LaneId = "feature" | "maintenance";
+import { formatHours, type LaneForecast, type LaneKind, type MonthForecast } from "@/lib/month-plan";
 
 const SEGMENTS = [
   { key: "doneHours", label: "done", className: "bg-emerald-500" },
@@ -27,15 +25,21 @@ function LaneBar({ lane }: { lane: LaneForecast }) {
 
 function LaneCard({
   title,
+  tag,
   lane,
   selected,
   onSelect,
+  freeLabel,
+  overflow,
   detail,
 }: {
   title: string;
+  tag: string;
   lane: LaneForecast;
   selected: boolean;
   onSelect: () => void;
+  freeLabel: string;
+  overflow: string;
   detail?: string;
 }) {
   const used = lane.doneHours + lane.inProgressHours + lane.toDoHours;
@@ -52,9 +56,7 @@ function LaneCard({
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-medium">
           {title}
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            {lane.agreed ? "agreed" : "forecast"}
-          </span>
+          <span className="ml-2 text-xs font-normal text-muted-foreground">{tag}</span>
         </span>
         <span className="text-sm tabular-nums text-muted-foreground">{formatHours(lane.budget)}</span>
       </div>
@@ -66,15 +68,9 @@ function LaneCard({
             {formatHours(lane[s.key])} {s.label}
           </span>
         ))}
-        <span>{formatHours(free)} free</span>
+        <span>{formatHours(free)} {freeLabel}</span>
       </div>
-      {lane.overflowHours > 0 && (
-        <span className="text-xs font-medium text-destructive">
-          {lane.agreed
-            ? `The agreed work is ${formatHours(lane.overflowHours)} over these hours`
-            : `${formatHours(lane.overflowHours)} doesn't fit this month`}
-        </span>
-      )}
+      {lane.overflowHours > 0 && <span className="text-xs font-medium text-destructive">{overflow}</span>}
       {lane.unsized > 0 && (
         <span className="text-xs text-amber-600">
           {lane.unsized} ticket{lane.unsized === 1 ? "" : "s"} without an effort label, not counted
@@ -95,42 +91,60 @@ function featureBreakdown(lane: LaneForecast): string {
   return Array.from(byTitle, ([title, hours]) => `${title} ${formatHours(hours)}`).join(" · ");
 }
 
+function plannedOverflow(lane: LaneForecast): string {
+  return lane.agreed
+    ? `The agreed work is ${formatHours(lane.overflowHours)} over these hours`
+    : `${formatHours(lane.overflowHours)} doesn't fit this month`;
+}
+
+function adhocDetail(lane: LaneForecast): string {
+  const late = lane.rows.filter((r) => r.afterAgreement).length;
+  if (late > 0) return `${late} came in after the agreement`;
+  return lane.rows.length === 0 ? "Tickets of type Ad hoc land here" : "Tickets of type Ad hoc";
+}
+
 export function PlanLanes({
   forecast,
   selected,
   onSelect,
 }: {
   forecast: MonthForecast;
-  selected: LaneId;
-  onSelect: (lane: LaneId) => void;
+  selected: LaneKind;
+  onSelect: (lane: LaneKind) => void;
 }) {
+  const plannedTag = (lane: LaneForecast) => (lane.agreed ? "agreed" : "forecast");
   return (
-    <div className="grid gap-3 md:grid-cols-[2fr_2fr_1fr]">
+    <div className="grid gap-3 md:grid-cols-[2fr_2fr_1.5fr]">
       <LaneCard
         title="Feature"
+        tag={plannedTag(forecast.feature)}
         lane={forecast.feature}
         selected={selected === "feature"}
         onSelect={() => onSelect("feature")}
+        freeLabel="free"
+        overflow={plannedOverflow(forecast.feature)}
         detail={featureBreakdown(forecast.feature) || undefined}
       />
       <LaneCard
         title="Maintenance"
+        tag={plannedTag(forecast.maintenance)}
         lane={forecast.maintenance}
         selected={selected === "maintenance"}
         onSelect={() => onSelect("maintenance")}
+        freeLabel="free"
+        overflow={plannedOverflow(forecast.maintenance)}
         detail="Top down by WSJF"
       />
-      <div className="flex flex-col gap-2 rounded-lg border border-dashed p-4">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="font-medium">Ad hoc</span>
-          <span className="text-sm tabular-nums text-muted-foreground">
-            {formatHours(forecast.budget.adhoc)}
-          </span>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          Kept free for support and questions. Not tracked, so no tickets needed.
-        </span>
-      </div>
+      <LaneCard
+        title="Ad hoc"
+        tag="reserve"
+        lane={forecast.adhoc}
+        selected={selected === "adhoc"}
+        onSelect={() => onSelect("adhoc")}
+        freeLabel="left for support"
+        overflow={`${formatHours(forecast.adhoc.overflowHours)} over the reserve`}
+        detail={adhocDetail(forecast.adhoc)}
+      />
     </div>
   );
 }
