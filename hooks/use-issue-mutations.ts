@@ -100,6 +100,11 @@ function updateIssueInList(
   );
 }
 
+/** What the update route answers: the issue, and a promotion it caused. */
+type UpdateResult = NormalizedIssue & {
+  promotion?: { promotedIssue: { number: number; htmlUrl: string }; fromPriority: string; toPriority: string } | null;
+};
+
 interface TriageCache {
   issues: NormalizedIssue[];
   count: number;
@@ -168,12 +173,31 @@ export function useUpdateIssue() {
       }
       toastIssueUpdateFailed({ repo: { name: repo }, number }, error.message, openIssue);
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["issues"] });
-      queryClient.invalidateQueries({ queryKey: ["triage"] });
+    onSettled: (data, error, params) => {
+      // Reloading the lists lists every tracked repo again, so only when the
+      // copy in place can't be right: a failed save, a close or reopen (the
+      // issue moves between the open and closed lists), or a promotion (it
+      // changed another issue). Any other edit is in place already (onSuccess).
+      const promoted = !!(data as UpdateResult | undefined)?.promotion;
+      if (error || params.updates.state !== undefined || promoted) {
+        queryClient.invalidateQueries({ queryKey: ["issues"] });
+        queryClient.invalidateQueries({ queryKey: ["triage"] });
+      }
     },
-    onSuccess: (data: any, { owner, repo, number }) => {
+    onSuccess: (result, { owner, repo, number }) => {
+      const data = result as UpdateResult;
       queryClient.invalidateQueries({ queryKey: ["issue", owner, repo, number] });
+
+      // GitHub's copy in place of the optimistic one. It comes without what
+      // the list's server adds (features, release version), so those stay.
+      const same = (i: NormalizedIssue) => i.repo.owner === owner && i.repo.name === repo && i.number === number;
+      const merge = (i: NormalizedIssue): NormalizedIssue =>
+        same(i) ? { ...i, ...data, features: i.features, version: i.version } : i;
+      for (const [key, list] of queryClient.getQueriesData<IssuesResponse>({ queryKey: ["issues"] })) {
+        if (list) queryClient.setQueryData<IssuesResponse>(key, { ...list, issues: list.issues.map(merge) });
+      }
+      const triage = queryClient.getQueryData<TriageCache>(["triage"]);
+      if (triage) queryClient.setQueryData<TriageCache>(["triage"], { ...triage, issues: triage.issues.map(merge) });
 
       if (data?.promotion) {
         const p = data.promotion;
