@@ -403,6 +403,26 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 16,
+    description: "Month plans: a person's hours, split and features for a month",
+    up: (db) => {
+      // The plan is a JSON document rather than columns: lib/month-plan.ts
+      // reads it with defaults for anything missing, so a field added later
+      // needs no migration. It holds hours, which GitHub should not, so it
+      // lives here and travels between instances as an exported file.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS month_plans (
+          workspace_id TEXT NOT NULL,
+          person TEXT NOT NULL,
+          month TEXT NOT NULL,
+          plan_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (workspace_id, person, month)
+        );
+      `);
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

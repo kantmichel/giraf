@@ -42,6 +42,17 @@ export function formatDay(dayIso: string): string {
   });
 }
 
+/** `2026-11` → "November 2026". A calendar month, so pinned to UTC like a day. */
+export function formatMonth(monthIso: string): string {
+  const d = asUtcDate(`${monthIso}-01`);
+  if (!d) return monthIso;
+  return d.toLocaleDateString(LOCALE, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 /** `2026-10-09` → "09/10", for tight columns where the year is noise. */
 export function formatDayNumeric(dayIso: string): string {
   const d = asUtcDate(dayIso);

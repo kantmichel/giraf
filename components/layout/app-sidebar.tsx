@@ -7,6 +7,7 @@ import {
   AtSign,
   BarChart3,
   Bot,
+  CalendarRange,
   Inbox,
   LayoutList,
   ListTodo,
@@ -151,6 +152,18 @@ export function AppSidebar({
                   <Link href="/dashboard">
                     <BarChart3 />
                     <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/plan"}
+                  tooltip="Plan"
+                >
+                  <Link href="/plan">
+                    <CalendarRange />
+                    <span>Plan</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
