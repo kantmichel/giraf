@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.42.0](https://github.com/kantmichel/giraf/compare/v1.41.1...v1.42.0) (2026-11-04)
+
+
+### Features
+
+* **issues:** read GitHub issue types and org Projects as features ([7fbef8e](https://github.com/kantmichel/giraf/commit/7fbef8ee31faddf7bb7894db68c3b9bfa3b96371))
+* **plan:** plan a person's month, and measure it against what was agreed ([23bf714](https://github.com/kantmichel/giraf/commit/23bf7143485d93ba365e87b08b5098cfa8df3c4f))
+
 ## [1.41.1](https://github.com/kantmichel/giraf/compare/v1.41.0...v1.41.1) (2026-09-27)
 
 
