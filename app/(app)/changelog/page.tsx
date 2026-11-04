@@ -4,6 +4,13 @@ import { Separator } from "@/components/ui/separator"
 import { formatDay } from "@/lib/format-date"
 const entries = [
   {
+    date: "2026-11-04",
+    version: "1.42.0",
+    title: "Plan a Month, Features Apart From Maintenance",
+    description:
+      "Issues now carry GitHub's own issue type, and every open org Project counts as a feature, so the board can filter Feature against Maintenance and shows each ticket's feature in a new column. The new Plan page plans one person's month: regular plus investment hours, a feature / maintenance / ad hoc split, hours per effort label, and the month's features in order. Its bars show how full the month is, and a strict line marks where each lane's hours run out. Agree a month and the bars then count only the agreed tickets as they move to in progress and done. Any month can be planned ahead, and plans travel between instances as an exported file. Sign in again once, so Gira may read Projects.",
+  },
+  {
     date: "2026-09-27",
     version: "1.41.1",
     title: "One Version Number, Builds That Don't Race",
