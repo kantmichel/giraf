@@ -423,6 +423,54 @@ const migrations: Migration[] = [
       `);
     },
   },
+  {
+    version: 17,
+    description: "A month's features and focus are shared by everyone planned in it",
+    up: (db) => {
+      // Features and focus used to sit in each person's plan, so planning a
+      // Project for two people meant keeping two lists in step. They move to
+      // one row per month. Each month gets the features of all its plans, in
+      // order, the plan with the most first; and the first focus written.
+      // Self-contained on purpose: a migration must not change once applied,
+      // so it doesn't call lib/month-plan.ts.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS plan_months (
+          workspace_id TEXT NOT NULL,
+          month TEXT NOT NULL,
+          month_json TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY (workspace_id, month)
+        );
+      `);
+      const rows = db
+        .prepare("SELECT workspace_id, month, plan_json, updated_at FROM month_plans")
+        .all() as { workspace_id: string; month: string; plan_json: string; updated_at: string }[];
+      const merged = new Map<string, { workspaceId: string; month: string; lists: string[][]; focus: string; updatedAt: string }>();
+      for (const row of rows) {
+        let plan: { features?: unknown; focus?: unknown };
+        try {
+          plan = JSON.parse(row.plan_json);
+        } catch {
+          continue;
+        }
+        const key = `${row.workspace_id}|${row.month}`;
+        const entry = merged.get(key) ?? { workspaceId: row.workspace_id, month: row.month, lists: [], focus: "", updatedAt: row.updated_at };
+        if (Array.isArray(plan.features)) entry.lists.push(plan.features.filter((f): f is string => typeof f === "string"));
+        if (!entry.focus && typeof plan.focus === "string") entry.focus = plan.focus;
+        if (row.updated_at > entry.updatedAt) entry.updatedAt = row.updated_at;
+        merged.set(key, entry);
+      }
+      const insert = db.prepare(
+        "INSERT OR IGNORE INTO plan_months (workspace_id, month, month_json, updated_at) VALUES (?, ?, ?, ?)"
+      );
+      for (const e of merged.values()) {
+        const features = Array.from(new Set(e.lists.sort((a, b) => b.length - a.length).flat()));
+        const month = { month: e.month, features, focus: e.focus, updatedAt: e.updatedAt };
+        insert.run(e.workspaceId, e.month, JSON.stringify(month), e.updatedAt);
+      }
+      db.exec("UPDATE month_plans SET plan_json = json_remove(plan_json, '$.features', '$.focus')");
+    },
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

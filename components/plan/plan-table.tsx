@@ -40,7 +40,20 @@ function Divider({ colSpan, children, tone }: { colSpan: number; children: React
  * month's hours run out. Above the line is the month; below it waits for the
  * next one. A row opens the issue's drawer on the issues page.
  */
-export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; laneId: LaneKind; monthLabel: string }) {
+export function PlanTable({
+  lane,
+  laneId,
+  monthLabel,
+  person,
+  earlier = 0,
+}: {
+  lane: LaneForecast;
+  laneId: LaneKind;
+  monthLabel: string;
+  person: string;
+  /** The person's tickets in the month's features that earlier months take. */
+  earlier?: number;
+}) {
   const openIssue = useOpenIssue();
   const colSpan = 7;
   // Done maintenance is one summary row, so the table starts with what is
@@ -60,7 +73,9 @@ export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; la
     return (
       <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
         {laneId === "feature"
-          ? "No tickets yet: add a feature above, or assign its tickets in GitHub."
+          ? earlier > 0
+            ? `Nothing of these features is left for ${person} in ${monthLabel}: earlier months take all ${earlier} of their tickets in them.`
+            : "No tickets yet: add a feature above, or assign its tickets in GitHub."
           : laneId === "adhoc"
             ? `No ad hoc work in ${monthLabel}. A ticket of type Ad hoc assigned in GitHub lands here; the reserve also covers support without a ticket.`
             : "No maintenance tickets assigned."}
@@ -99,7 +114,9 @@ export function PlanTable({ lane, laneId, monthLabel }: { lane: LaneForecast; la
           <IssueRepoBadge repo={row.issue.repo.fullName} />#{row.issue.number}
         </div>
       </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
+      {/* Cells don't wrap, so a long feature name is cut at the column's
+          edge instead of running into Effort; the full name is on hover. */}
+      <TableCell className="truncate text-sm text-muted-foreground" title={laneId === "feature" ? row.feature?.title : undefined}>
         {laneId === "feature" ? (row.feature?.title ?? "") : formatWsjf(row.issue.wsjf.score)}
       </TableCell>
       <TableCell className="text-sm">{row.issue.effort ?? "not set"}</TableCell>

@@ -17,6 +17,8 @@ interface UpdateIssueParams {
     state?: "open" | "closed";
     labels?: string[];
     assignees?: string[];
+    /** GitHub's issue type by name, e.g. "Epic". */
+    type?: string;
   };
 }
 
@@ -74,6 +76,10 @@ function applyUpdateToIssue(
 
   if (updates.title) {
     updated.title = updates.title;
+  }
+
+  if (updates.type !== undefined) {
+    updated.issueType = updates.type;
   }
 
   return updated;

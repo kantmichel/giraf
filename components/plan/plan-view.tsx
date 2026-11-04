@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Download, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight, Download, FolderKanban, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIssues } from "@/hooks/use-issues";
@@ -14,8 +15,10 @@ import {
   useFeatureProjects,
   useImportMonthPlans,
   useMonthPlans,
-  useSaveMonthPlan,
+  useSavePlans,
+  type PlansChange,
 } from "@/hooks/use-month-plans";
+import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { formatInstantWithTime, formatMonth } from "@/lib/format-date";
 import {
   PLAN_EXPORT_KIND,
@@ -26,16 +29,24 @@ import {
   formatHours,
   isMonth,
   monthOf,
-  newMonthPlan,
+  newPlanMonth,
   parsePlanExport,
   planInputs,
+  planMonthFor,
+  teamOf,
+  withFeature,
   type LaneKind,
   type MonthPlan,
   type PlanExport,
+  type PlanMonth,
 } from "@/lib/month-plan";
+import { forecastPlans, projectsToFinish, summarizeProject, type PlanContext } from "@/lib/project-plan";
+import { cn } from "@/lib/utils";
 import type { FilterConfig } from "@/types/github";
 import { PlanFeatures } from "./plan-features";
+import { PlanFinish, TicketLinks } from "./plan-finish";
 import { PlanLanes } from "./plan-lanes";
+import { PlanProjects } from "./plan-projects";
 import { PlanTable } from "./plan-table";
 
 const NO_FILTERS: Omit<FilterConfig, "state"> = {
@@ -82,6 +93,13 @@ function NumberBox({
   );
 }
 
+/** Replace the entries of `list` that `same` matches with `next`. */
+function withChanged<T>(list: T[], next: T[], same: (a: T, b: T) => boolean): T[] {
+  return [...list.filter((x) => !next.some((n) => same(x, n))), ...next];
+}
+const samePlan = (a: MonthPlan, b: MonthPlan) => a.person === b.person && a.month === b.month;
+const sameMonth = (a: PlanMonth, b: PlanMonth) => a.month === b.month;
+
 export function PlanView() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,13 +110,19 @@ export function PlanView() {
   const month = isMonth(monthParam) ? monthParam : currentMonth;
 
   const plansQuery = useMonthPlans();
-  const allPlans = useMemo(() => plansQuery.data?.plans ?? [], [plansQuery.data?.plans]);
+  const storedPlans = useMemo(() => plansQuery.data?.plans ?? [], [plansQuery.data?.plans]);
+  const storedMonths = useMemo(() => plansQuery.data?.months ?? [], [plansQuery.data?.months]);
   const projectsQuery = useFeatureProjects();
-  const projects = projectsQuery.data?.projects ?? [];
+  const projects = useMemo(() => projectsQuery.data?.projects ?? [], [projectsQuery.data?.projects]);
+  const trackedQuery = useTrackedRepos();
+  const trackedRepos = useMemo(
+    () => new Set((trackedQuery.data ?? []).map((r) => `${r.owner}/${r.repo}`)),
+    [trackedQuery.data]
+  );
 
   // The person defaults to whoever was planned most recently, since the page
   // is mostly used to plan someone else's month.
-  const lastPlanned = [...allPlans].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.person;
+  const lastPlanned = [...storedPlans].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]?.person;
   const person = searchParams.get("person") || lastPlanned || session?.user?.githubUsername || "";
 
   const { allIssues: open, isLoading: openLoading } = useIssues(OPEN);
@@ -121,25 +145,41 @@ export function PlanView() {
   );
 
   // --- editing -------------------------------------------------------------
-  // Edits go to a local copy of the plan, saved shortly after the last change.
-  // The local copy wins over the cache for as long as it is for this person
-  // and month, so a reply to an earlier save can't undo what was typed since.
-  // Importing or deleting drops it, so the stored plan shows again.
-  const savePlan = useSaveMonthPlan();
-  const { mutate: save } = savePlan; // stable across renders
+  // Edits go to local copies — the person's plan and the shared month — saved
+  // together shortly after the last change. A local copy wins over the cache
+  // for as long as it is for what's on screen, so a reply to an earlier save
+  // can't undo what was typed since. Importing or deleting drops them.
+  const savePlans = useSavePlans();
+  const { mutate: save } = savePlans; // stable across renders
   const deletePlan = useDeleteMonthPlan();
   const planKey = `${person}|${month}`;
-  const stored = allPlans.find((p) => p.person === person && p.month === month) ?? null;
-  const [local, setLocal] = useState<{ key: string; plan: MonthPlan } | null>(null);
-  const draft = local && local.key === planKey ? local.plan : stored;
-  const pending = useRef<{ timer: ReturnType<typeof setTimeout>; plan: MonthPlan } | null>(null);
+  const [localPlan, setLocalPlan] = useState<{ key: string; plan: MonthPlan } | null>(null);
+  const [localMonth, setLocalMonth] = useState<PlanMonth | null>(null);
+  const stored = storedPlans.find((p) => p.person === person && p.month === month) ?? null;
+  const draft = localPlan && localPlan.key === planKey ? localPlan.plan : stored;
+  const draftMonth =
+    (localMonth && localMonth.month === month ? localMonth : storedMonths.find((m) => m.month === month)) ?? null;
+  const features = useMemo(() => draftMonth?.features ?? [], [draftMonth]);
+
+  const pending = useRef<{ timer: ReturnType<typeof setTimeout>; plans: MonthPlan[]; months: PlanMonth[] } | null>(null);
 
   const flush = useCallback(() => {
     if (!pending.current) return;
     clearTimeout(pending.current.timer);
-    save(pending.current.plan);
+    const { plans, months } = pending.current;
     pending.current = null;
+    save({ plans, months });
   }, [save]);
+
+  /** Save a change now, together with whatever is waiting, as one save: two
+   *  saves in a row could have the first one's reply undo the second. */
+  const saveNow = (change: PlansChange) => {
+    const plans = withChanged(pending.current?.plans ?? [], change.plans ?? [], samePlan);
+    const months = withChanged(pending.current?.months ?? [], change.months ?? [], sameMonth);
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = null;
+    if (plans.length || months.length) save({ plans, months });
+  };
 
   const discardPending = () => {
     if (pending.current) clearTimeout(pending.current.timer);
@@ -149,52 +189,81 @@ export function PlanView() {
   // Switching month or person, or leaving the page, saves what is waiting.
   useEffect(() => () => flush(), [flush, planKey]);
 
+  const queue = (change: PlansChange) => {
+    const plans = withChanged(pending.current?.plans ?? [], change.plans ?? [], samePlan);
+    const months = withChanged(pending.current?.months ?? [], change.months ?? [], sameMonth);
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = { plans, months, timer: setTimeout(flush, SAVE_DELAY_MS) };
+  };
+
   const edit = (update: Partial<MonthPlan>) => {
     if (!draft) return;
     const next = { ...draft, ...update };
-    setLocal({ key: planKey, plan: next });
-    if (pending.current) clearTimeout(pending.current.timer);
-    pending.current = {
-      plan: next,
-      timer: setTimeout(() => {
-        const plan = pending.current?.plan;
-        pending.current = null;
-        if (plan) save(plan);
-      }, SAVE_DELAY_MS),
-    };
+    setLocalPlan({ key: planKey, plan: next });
+    queue({ plans: [next] });
   };
 
-  const personPlans = useMemo(() => {
-    const mine = allPlans.filter((p) => p.person === person && !(draft && p.month === draft.month));
-    return draft && draft.person === person ? [...mine, draft] : mine;
-  }, [allPlans, person, draft]);
+  const editMonth = (update: Partial<Omit<PlanMonth, "month">>) => {
+    const next = { ...(draftMonth ?? newPlanMonth(month)), ...update };
+    setLocalMonth(next);
+    queue({ months: [next] });
+  };
+
+  // Everything as it stands, local edits included: what forecasts and the
+  // Projects overview read.
+  const allPlans = useMemo(() => (draft ? withChanged(storedPlans, [draft], samePlan) : storedPlans), [storedPlans, draft]);
+  const allMonths = useMemo(
+    () => (draftMonth ? withChanged(storedMonths, [draftMonth], sameMonth) : storedMonths),
+    [storedMonths, draftMonth]
+  );
+  const personPlans = useMemo(() => allPlans.filter((p) => p.person === person), [allPlans, person]);
 
   const forecast = useMemo(
-    () => (draft ? forecastMonth({ plans: personPlans, month, currentMonth, open, closed }) : null),
-    [draft, personPlans, month, currentMonth, open, closed]
+    () => (draft ? forecastMonth({ plans: personPlans, months: allMonths, month, currentMonth, open, closed }) : null),
+    [draft, personPlans, allMonths, month, currentMonth, open, closed]
   );
 
   const [lane, setLane] = useState<LaneKind>("feature");
+  const [projectsOpen, setProjectsOpen] = useState(false);
+
+  /** Plan a month for everyone at once: the month, and a plan for each
+   *  person in the team who has none there yet (plus `extra`). */
+  const planMonth = (m: string, extra: string[] = []) => {
+    const created = planMonthFor(m, allPlans, allMonths, extra);
+    saveNow({ plans: created.plans, months: created.month ? [created.month] : [] });
+  };
+
+  /** Change a month's features from the Projects overview or the "Finish
+   *  first" banner, planning the month for everyone if it isn't yet. Saved
+   *  at once. */
+  const changeFeatures = (m: string, change: (month: PlanMonth) => string[]) => {
+    const created = planMonthFor(m, allPlans, allMonths);
+    const base = created.month ?? allMonths.find((x) => x.month === m)!;
+    setLocalMonth(null);
+    saveNow({ plans: created.plans, months: [{ ...base, features: change(base) }] });
+  };
+  const addFeature = (key: string, m: string) => changeFeatures(m, (base) => withFeature(base, key, allMonths));
 
   // --- agreeing ---------------------------------------------------------------
-  // Agreeing saves what fits right now as the month's list. Updating does the
-  // same, keeping agreed tickets that are already done.
+  // Agreeing saves what fits right now as the person's list for the month.
+  // Updating does the same, keeping agreed tickets that are already done.
   const agree = () => {
     if (!draft) return;
-    const live = forecastMonth({ plans: personPlans, month, currentMonth, open, closed, live: true });
+    const live = forecastMonth({ plans: personPlans, months: allMonths, month, currentMonth, open, closed, live: true });
     if (!live) return;
-    edit({ agreed: agreementFrom(draft, live) });
+    edit({ agreed: agreementFrom(draft, features, live) });
     flush();
   };
-  const agreedChanged = !!draft?.agreed && draft.agreed.inputs !== planInputs(draft);
+  const agreedChanged = !!draft?.agreed && draft.agreed.inputs !== planInputs(draft, features);
 
   // --- people ----------------------------------------------------------------
   const people = useMemo(() => {
-    const set = new Set<string>(allPlans.map((p) => p.person));
+    const set = new Set<string>(storedPlans.map((p) => p.person));
     for (const issue of open) for (const a of issue.assignees) set.add(a.login);
     if (person) set.add(person);
     return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [allPlans, open, person]);
+  }, [storedPlans, open, person]);
+  const team = teamOf(allPlans);
 
   // --- export and import ---------------------------------------------------
   const fileInput = useRef<HTMLInputElement>(null);
@@ -205,14 +274,14 @@ export function PlanView() {
     const file: PlanExport = {
       kind: PLAN_EXPORT_KIND,
       version: PLAN_EXPORT_VERSION,
-      person,
       exportedAt: new Date().toISOString(),
-      plans: [...personPlans].sort((a, b) => a.month.localeCompare(b.month)),
+      plans: [...allPlans].sort((a, b) => a.month.localeCompare(b.month) || a.person.localeCompare(b.person)),
+      months: [...allMonths].sort((a, b) => a.month.localeCompare(b.month)),
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(file, null, 2)], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `gira-plans-${person}.json`;
+    a.download = "gira-plans.json";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -228,18 +297,19 @@ export function PlanView() {
       parsed = null;
     }
     if (!parsed) {
-      alert("This file is not a Gira plan export.");
+      alert("This file is not a Gira plan export, or it comes from an older Gira: ask for a new export.");
       return;
     }
+    const who = teamOf(parsed.plans).join(", ") || "nobody";
     const ok = confirm(
-      `Replace all of ${parsed.person}'s plans here with the ${parsed.plans.length} in this file?`
+      `Replace all plans here with the ${parsed.plans.length} in this file (${who}, over ${parsed.months.length} months)?`
     );
     if (!ok) return;
     discardPending();
     importPlans.mutate(parsed, {
       onSuccess: () => {
-        setLocal(null);
-        setParams({ person: parsed!.person });
+        setLocalPlan(null);
+        setLocalMonth(null);
       },
     });
   };
@@ -250,6 +320,28 @@ export function PlanView() {
     [...personPlans].filter((p) => p.month < month).sort((a, b) => b.month.localeCompare(a.month))[0] ?? null;
   const splitTotal = draft ? draft.split.feature + draft.split.maintenance + draft.split.adhoc : 100;
   const projectErrors = projectsQuery.data?.errors ?? [];
+  const plannedHere = new Set(allPlans.filter((p) => p.month === month).map((p) => p.person));
+  const toPlan = Array.from(new Set([...team, person].filter(Boolean))).filter((p) => !plannedHere.has(p));
+  const projectCtx: PlanContext = useMemo(
+    () => ({ plans: allPlans, months: allMonths, currentMonth, open, closed }),
+    [allPlans, allMonths, currentMonth, open, closed]
+  );
+  // Every Project's summary, once the issues are in: its size for picking it,
+  // and what is left of it for the "Finish first" banner.
+  const summaries = useMemo(
+    () => (openLoading ? [] : projects.map((p) => summarizeProject(p, projectCtx, trackedRepos))),
+    [openLoading, projects, projectCtx, trackedRepos]
+  );
+  const projectSizes = useMemo(
+    () => new Map(summaries.map((s) => [s.key, { hours: s.hours, months: s.months }])),
+    [summaries]
+  );
+  // Projects started before this month with work left after their last month.
+  const toFinish = useMemo(() => {
+    if (month < currentMonth) return [];
+    const started = summaries.filter((s) => s.months.length > 0 && !s.months.includes(month));
+    return started.length ? projectsToFinish(month, started, projectCtx, forecastPlans(projectCtx)) : [];
+  }, [month, currentMonth, summaries, projectCtx]);
 
   return (
     <div className="space-y-5">
@@ -266,6 +358,20 @@ export function PlanView() {
           </SelectContent>
         </Select>
         <div className="flex items-center gap-1">
+          {/* Always takes its space, and sits left of the arrows: when it
+              appeared on leaving this month, everything right-aligned shifted
+              and a second click on "next" landed on it. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("h-8 text-xs", month === currentMonth && "invisible")}
+            onClick={() => setParams({ month: currentMonth })}
+            disabled={month === currentMonth}
+            aria-hidden={month === currentMonth}
+            tabIndex={month === currentMonth ? -1 : undefined}
+          >
+            This month
+          </Button>
           <Button variant="outline" size="icon" className="size-8" onClick={() => setParams({ month: addMonths(month, -1) })} aria-label="Previous month">
             <ChevronLeft className="size-4" />
           </Button>
@@ -273,13 +379,11 @@ export function PlanView() {
           <Button variant="outline" size="icon" className="size-8" onClick={() => setParams({ month: addMonths(month, 1) })} aria-label="Next month">
             <ChevronRight className="size-4" />
           </Button>
-          {month !== currentMonth && (
-            <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setParams({ month: currentMonth })}>
-              This month
-            </Button>
-          )}
         </div>
-        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={exportPlans} disabled={personPlans.length === 0}>
+        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => setProjectsOpen(true)}>
+          <FolderKanban className="size-3.5" /> Projects
+        </Button>
+        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={exportPlans} disabled={allPlans.length === 0}>
           <Download className="size-3.5" /> Export
         </Button>
         <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={() => fileInput.current?.click()}>
@@ -297,6 +401,22 @@ export function PlanView() {
         </div>
       )}
 
+      <PlanFinish month={month} items={toFinish} ctx={projectCtx} onFinish={(key) => addFeature(key, month)} />
+
+      <PlanProjects
+        open={projectsOpen}
+        onOpenChange={setProjectsOpen}
+        projects={projects}
+        trackedRepos={trackedRepos}
+        ctx={projectCtx}
+        onPlan={addFeature}
+        onUnplan={(key, m) => changeFeatures(m, (base) => base.features.filter((k) => k !== key))}
+        onOpenMonth={(m) => {
+          setProjectsOpen(false);
+          setParams({ month: m });
+        }}
+      />
+
       {plansQuery.isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : !draft ? (
@@ -305,19 +425,36 @@ export function PlanView() {
             No plan for {person || "anyone"} in {monthLabel} yet.
             {previousPlan && ` It starts with the hours and split of ${formatMonth(previousPlan.month)}.`}
           </p>
-          <Button size="sm" disabled={!person} onClick={() => savePlan.mutate(newMonthPlan(person, month, previousPlan))}>
+          <Button size="sm" disabled={!person} onClick={() => planMonth(month, [person])}>
             Plan {monthLabel}
+            {toPlan.length > 1 && ` for ${toPlan.join(" and ")}`}
           </Button>
         </div>
       ) : (
         <>
           <div className="space-y-4 rounded-lg border p-4">
             <Input
-              value={draft.focus}
-              onChange={(e) => edit({ focus: e.target.value })}
+              value={draftMonth?.focus ?? ""}
+              onChange={(e) => editMonth({ focus: e.target.value })}
               placeholder={`Focus for ${monthLabel}, in one sentence`}
               className="h-9 text-base font-medium"
             />
+            <div className="space-y-1">
+              <PlanFeatures
+                month={month}
+                selected={features}
+                projects={projects}
+                sizes={projectSizes}
+                onChange={(next) => editMonth({ features: next })}
+                onAdd={(key) => editMonth({ features: withFeature(draftMonth ?? newPlanMonth(month), key, allMonths) })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Focus and features are {monthLabel}&apos;s, for everyone planned in it
+                {team.length > 1 ? ` (${team.join(", ")})` : ""}: each person&apos;s feature lane fills with the tickets assigned to them.
+              </p>
+            </div>
+            <Separator />
+            <p className="text-xs font-medium text-muted-foreground">{person}&apos;s month</p>
             <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
               <div className="flex items-end gap-2">
                 <NumberBox label="Hours" value={draft.regularHours} onChange={(regularHours) => edit({ regularHours })} />
@@ -342,10 +479,9 @@ export function PlanView() {
                 <NumberBox label="High" value={draft.effortHours.high} suffix="h" onChange={(high) => edit({ effortHours: { ...draft.effortHours, high } })} />
               </div>
             </div>
-            <PlanFeatures selected={draft.features} projects={projects} onChange={(features) => edit({ features })} />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {savePlan.isPending
+                {savePlans.isPending
                   ? "Saving…"
                   : `Plan of ${formatInstantWithTime(stored?.updatedAt ?? draft.updatedAt)}`}
               </span>
@@ -353,13 +489,13 @@ export function PlanView() {
                 type="button"
                 className="inline-flex items-center gap-1 hover:text-destructive"
                 onClick={() => {
-                  if (!confirm(`Delete ${person}'s plan for ${monthLabel}?`)) return;
+                  if (!confirm(`Delete ${person}'s plan for ${monthLabel}? The month's features stay for the others.`)) return;
                   discardPending();
-                  setLocal(null);
+                  setLocalPlan(null);
                   deletePlan.mutate({ person, month });
                 }}
               >
-                <Trash2 className="size-3" /> Delete plan
+                <Trash2 className="size-3" /> Delete {person}&apos;s plan
               </button>
             </div>
           </div>
@@ -423,12 +559,14 @@ export function PlanView() {
               {!(forecast.past && !draft.agreed) && (
                 <>
                   <PlanLanes forecast={forecast} selected={lane} onSelect={setLane} />
-                  {forecast.notAssigned > 0 && lane === "feature" && !forecast.past && (
+                  <PlanTable lane={forecast[lane]} laneId={lane} monthLabel={monthLabel} person={person} earlier={forecast.earlier} />
+                  {forecast.unassigned.length > 0 && lane === "feature" && !forecast.past && (
                     <p className="text-xs text-amber-600">
-                      {forecast.notAssigned} open ticket{forecast.notAssigned === 1 ? " is" : "s are"} in these features but not assigned to {person}, so not counted.
+                      No assignee, so in no one&apos;s month:{" "}
+                      <TicketLinks issues={forecast.unassigned.map((issue) => ({ issue, note: issue.effort ?? undefined }))} />.
+                      Assign {forecast.unassigned.length === 1 ? "it" : "them"} in GitHub to plan {forecast.unassigned.length === 1 ? "it" : "them"}.
                     </p>
                   )}
-                  <PlanTable lane={forecast[lane]} laneId={lane} monthLabel={monthLabel} />
                 </>
               )}
             </>

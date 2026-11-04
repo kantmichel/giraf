@@ -53,6 +53,17 @@ export function formatMonth(monthIso: string): string {
   });
 }
 
+/** `2026-11` → "Nov", or "Nov 2026" with the year: for tight lists of months. */
+export function formatMonthShort(monthIso: string, withYear = false): string {
+  const d = asUtcDate(`${monthIso}-01`);
+  if (!d) return monthIso;
+  return d.toLocaleDateString(LOCALE, {
+    month: "short",
+    ...(withYear ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  });
+}
+
 /** `2026-10-09` → "09/10", for tight columns where the year is noise. */
 export function formatDayNumeric(dayIso: string): string {
   const d = asUtcDate(dayIso);

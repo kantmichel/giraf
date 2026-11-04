@@ -1,5 +1,6 @@
 import type { Octokit } from "@octokit/rest";
 import type { FeatureRef, NormalizedIssue } from "@/types/github";
+import { EPIC_ISSUE_TYPE } from "@/lib/work-kind";
 
 /**
  * An open org Project, read as a feature: its tickets, in the Project's own
@@ -11,14 +12,32 @@ export interface FeatureProject {
   number: number;
   title: string;
   url: string;
-  /** Issues in the Project, in its order. Draft items and PRs are left out. */
-  items: { owner: string; repo: string; number: number }[];
+  /** Issues in the Project, in its order. Draft items and PRs are left out.
+   *  The epic, if it has one, is among them. */
+  items: ProjectItem[];
+  /** The item of type Epic: the Project's context, not work. The first one
+   *  when someone typed several. */
+  epic: ProjectItem | null;
+}
+
+export interface ProjectItem {
+  owner: string;
+  repo: string;
+  number: number;
+  /** GitHub's issue type, for the epic. */
+  type: string | null;
+  closed: boolean;
+  /** The parent issue, `owner/repo#number`: suggests the epic where none is typed. */
+  parent: string | null;
 }
 
 interface ItemNode {
   content: {
     __typename: string;
     number?: number;
+    state?: string;
+    issueType?: { name: string } | null;
+    parent?: { number: number; repository: { name: string; owner: { login: string } } } | null;
     repository?: { name: string; owner: { login: string } };
   } | null;
 }
@@ -49,9 +68,12 @@ interface ItemsQueryResult {
 }
 
 // Shallow on purpose (see "Watch the cost of GraphQL queries" in CLAUDE.md):
-// per item only the issue's number and repo, nothing nested under it. Titles,
-// labels and status are already on the issues the board loaded. Measured on
-// flipstream-io with 7 Projects: cost 1.
+// per item the issue's number, repo, state, type and parent, all single
+// objects, no connection under it. Titles, labels and status are already on
+// the issues the board loaded. Measured on flipstream-io with 18 Projects,
+// type and parent included: cost 1.
+const ISSUE_FIELDS = "number state issueType { name } parent { number repository { name owner { login } } } repository { name owner { login } }";
+
 const PROJECTS_QUERY = `
   query($owner: String!, $cursor: String) {
     organization(login: $owner) {
@@ -68,7 +90,7 @@ const PROJECTS_QUERY = `
             nodes {
               content {
                 __typename
-                ... on Issue { number repository { name owner { login } } }
+                ... on Issue { ${ISSUE_FIELDS} }
               }
             }
           }
@@ -88,7 +110,7 @@ const MORE_ITEMS_QUERY = `
           nodes {
             content {
               __typename
-              ... on Issue { number repository { name owner { login } } }
+              ... on Issue { ${ISSUE_FIELDS} }
             }
           }
         }
@@ -108,7 +130,14 @@ function issueItems(nodes: ItemNode[]): FeatureProject["items"] {
   for (const node of nodes) {
     const c = node.content;
     if (c?.__typename !== "Issue" || c.number === undefined || !c.repository) continue;
-    items.push({ owner: c.repository.owner.login, repo: c.repository.name, number: c.number });
+    items.push({
+      owner: c.repository.owner.login,
+      repo: c.repository.name,
+      number: c.number,
+      type: c.issueType?.name ?? null,
+      closed: c.state === "CLOSED",
+      parent: c.parent ? `${c.parent.repository.owner.login}/${c.parent.repository.name}#${c.parent.number}` : null,
+    });
   }
   return items;
 }
@@ -150,7 +179,8 @@ export async function fetchFeatureProjects(
         items.push(...issueItems(more.node.items.nodes));
         itemCursor = more.node.items.pageInfo.hasNextPage ? more.node.items.pageInfo.endCursor : null;
       }
-      projects.push({ owner, number: p.number, title: p.title, url: p.url, items });
+      const epic = items.find((i) => i.type === EPIC_ISSUE_TYPE) ?? null;
+      projects.push({ owner, number: p.number, title: p.title, url: p.url, items, epic });
     }
     cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
   } while (cursor);

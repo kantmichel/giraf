@@ -2,13 +2,23 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { MonthPlan } from "@/lib/month-plan";
+import type { MonthPlan, PlanMonth } from "@/lib/month-plan";
 import type { FeatureProject } from "@/lib/github/projects";
 
 const PLANS_KEY = ["month-plans"];
 
+export interface PlansData {
+  plans: MonthPlan[];
+  months: PlanMonth[];
+}
+
+export interface PlansChange {
+  plans?: MonthPlan[];
+  months?: PlanMonth[];
+}
+
 export function useMonthPlans() {
-  return useQuery<{ plans: MonthPlan[] }>({
+  return useQuery<PlansData>({
     queryKey: PLANS_KEY,
     queryFn: async () => {
       const res = await fetch("/api/plans");
@@ -19,42 +29,44 @@ export function useMonthPlans() {
   });
 }
 
-function upsert(plans: MonthPlan[], plan: MonthPlan): MonthPlan[] {
-  const rest = plans.filter((p) => !(p.person === plan.person && p.month === plan.month));
-  return [...rest, plan].sort((a, b) => a.month.localeCompare(b.month));
+function upsert(data: PlansData | undefined, change: PlansChange): PlansData {
+  const plans = (data?.plans ?? []).filter(
+    (p) => !change.plans?.some((c) => c.person === p.person && c.month === p.month)
+  );
+  const months = (data?.months ?? []).filter((m) => !change.months?.some((c) => c.month === m.month));
+  return {
+    plans: [...plans, ...(change.plans ?? [])].sort((a, b) => a.month.localeCompare(b.month)),
+    months: [...months, ...(change.months ?? [])].sort((a, b) => a.month.localeCompare(b.month)),
+  };
 }
 
 /**
- * Optimistic, because the page saves as you type: the forecast reads the
- * cache, so the bars move at once and only roll back if the save fails.
+ * Saves plans and months together. Optimistic, because the page saves as you
+ * type: the forecast reads the cache, so the bars move at once and only roll
+ * back if the save fails.
  */
-export function useSaveMonthPlan() {
+export function useSavePlans() {
   const queryClient = useQueryClient();
-  return useMutation<{ plan: MonthPlan }, Error, MonthPlan, { previous?: { plans: MonthPlan[] } }>({
-    mutationFn: async (plan) => {
+  return useMutation<Required<PlansChange>, Error, PlansChange, { previous?: PlansData }>({
+    mutationFn: async (change) => {
       const res = await fetch("/api/plans", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(plan),
+        body: JSON.stringify({ plans: change.plans ?? [], months: change.months ?? [] }),
       });
       if (!res.ok) throw new Error("Failed to save the plan");
       return res.json();
     },
-    onMutate: async (plan) => {
+    onMutate: async (change) => {
       await queryClient.cancelQueries({ queryKey: PLANS_KEY });
-      const previous = queryClient.getQueryData<{ plans: MonthPlan[] }>(PLANS_KEY);
-      queryClient.setQueryData<{ plans: MonthPlan[] }>(PLANS_KEY, {
-        plans: upsert(previous?.plans ?? [], plan),
-      });
+      const previous = queryClient.getQueryData<PlansData>(PLANS_KEY);
+      queryClient.setQueryData<PlansData>(PLANS_KEY, upsert(previous, change));
       return { previous };
     },
-    onSuccess: ({ plan }) => {
-      const current = queryClient.getQueryData<{ plans: MonthPlan[] }>(PLANS_KEY);
-      queryClient.setQueryData<{ plans: MonthPlan[] }>(PLANS_KEY, {
-        plans: upsert(current?.plans ?? [], plan),
-      });
+    onSuccess: (saved) => {
+      queryClient.setQueryData<PlansData>(PLANS_KEY, upsert(queryClient.getQueryData<PlansData>(PLANS_KEY), saved));
     },
-    onError: (_error, _plan, context) => {
+    onError: (_error, _change, context) => {
       if (context?.previous) queryClient.setQueryData(PLANS_KEY, context.previous);
       toast.error("The plan wasn't saved");
     },
@@ -77,7 +89,7 @@ export function useDeleteMonthPlan() {
 
 export function useImportMonthPlans() {
   const queryClient = useQueryClient();
-  return useMutation<{ person: string; imported: number }, Error, unknown>({
+  return useMutation<{ plans: number; months: number }, Error, unknown>({
     mutationFn: async (file) => {
       const res = await fetch("/api/plans/import", {
         method: "POST",
@@ -88,9 +100,9 @@ export function useImportMonthPlans() {
       if (!res.ok) throw new Error(body.error ?? "Import failed");
       return body;
     },
-    onSuccess: ({ person, imported }) => {
+    onSuccess: ({ plans, months }) => {
       queryClient.invalidateQueries({ queryKey: PLANS_KEY });
-      toast.success(`Imported ${imported} plan${imported === 1 ? "" : "s"} for ${person}`);
+      toast.success(`Imported ${plans} plan${plans === 1 ? "" : "s"} over ${months} month${months === 1 ? "" : "s"}`);
     },
     onError: (error) => toast.error(error.message),
   });

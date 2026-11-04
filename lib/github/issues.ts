@@ -183,6 +183,8 @@ export async function updateIssue(
     state?: "open" | "closed";
     labels?: string[];
     assignees?: string[];
+    /** GitHub's issue type by name, e.g. "Epic". */
+    type?: string;
   }
 ): Promise<NormalizedIssue> {
   try {
