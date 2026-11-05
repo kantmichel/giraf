@@ -28,7 +28,7 @@ function IssuesContent() {
   const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, openIssueRef, setOpenIssueRef } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
   const monthWork = useMonthWork(filters.thisMonth);
-  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir, monthWork: monthWork.keys });
+  const { issues, allIssues, facets, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir, monthWork: monthWork.keys, facets: true });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Column visibility — null means "follow saved prefs". Toggles populate the
@@ -122,6 +122,7 @@ function IssuesContent() {
               weekOffset={weekOffset}
               onWeekOffsetChange={setWeekOffset}
               monthWork={monthWork}
+              facets={facets}
             />
           </div>
           {view === "list" && (

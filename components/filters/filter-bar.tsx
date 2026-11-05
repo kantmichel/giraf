@@ -20,9 +20,9 @@ import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
 import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
 import { WORK_KIND_OPTIONS, featureKey } from "@/lib/work-kind";
-import { issueKey } from "@/lib/month-plan";
 import { formatMonth } from "@/lib/format-date";
 import type { MonthWork } from "@/hooks/use-month-plans";
+import type { FacetCounts } from "@/lib/issue-filters";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -37,6 +37,9 @@ interface FilterBarProps {
   onWeekOffsetChange?: (offset: number) => void;
   /** For the "This month" switch; without it the switch isn't shown. */
   monthWork?: MonthWork;
+  /** Counts under the other filters, so each dropdown offers only what the
+   *  list would then show (facetCounts). Without them, every option shows. */
+  facets?: FacetCounts | null;
 }
 
 /** Above this many assignees a segmented control stops fitting the filter bar,
@@ -53,6 +56,7 @@ export function FilterBar({
   weekOffset,
   onWeekOffsetChange,
   monthWork,
+  facets,
 }: FilterBarProps) {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -101,13 +105,11 @@ export function FilterBar({
   ];
 
   // Every feature some loaded issue sits in, in title order, plus "none" so
-  // tickets outside any feature can be found too. With "This month" on, only
-  // the features of this month's work, so the list is the month's Projects.
-  const monthKeys = filters.thisMonth ? monthWork?.keys ?? null : null;
+  // tickets outside any feature can be found too. Which of them have tickets
+  // under the other filters is the counts' job (facets).
   const featureOptions = useMemo(() => {
     const byKey = new Map<string, string>();
     for (const issue of allIssues) {
-      if (monthKeys && !monthKeys.has(issueKey(issue))) continue;
       for (const f of issue.features) byKey.set(featureKey(f), f.title);
     }
     return [
@@ -116,7 +118,7 @@ export function FilterBar({
       ),
       { value: UNSET_FILTER_VALUE, label: "no feature" },
     ];
-  }, [allIssues, monthKeys]);
+  }, [allIssues]);
 
   const monthName = monthWork ? formatMonth(monthWork.month) : "";
   const monthHint = !monthWork
@@ -212,48 +214,56 @@ export function FilterBar({
       )}
       <FilterMultiSelect
         title="Repo"
+        counts={facets?.repos}
         options={repoOptions}
         selected={filters.repos}
         onSelectionChange={(repos) => onFilterChange({ repos })}
       />
       <FilterMultiSelect
         title="Type"
+        counts={facets?.type}
         options={WORK_KIND_OPTIONS}
         selected={filters.type}
         onSelectionChange={(type) => onFilterChange({ type })}
       />
       <FilterMultiSelect
         title="Feature"
+        counts={facets?.feature}
         options={featureOptions}
         selected={filters.feature}
         onSelectionChange={(feature) => onFilterChange({ feature })}
       />
       <FilterMultiSelect
         title="Status"
+        counts={facets?.status}
         options={statusOptions}
         selected={filters.status}
         onSelectionChange={(status) => onFilterChange({ status })}
       />
       <FilterMultiSelect
         title="Priority"
+        counts={facets?.priority}
         options={priorityOptions}
         selected={filters.priority}
         onSelectionChange={(priority) => onFilterChange({ priority })}
       />
       <FilterMultiSelect
         title="Effort"
+        counts={facets?.effort}
         options={effortOptions}
         selected={filters.effort}
         onSelectionChange={(effort) => onFilterChange({ effort })}
       />
       <FilterMultiSelect
         title="Age"
+        counts={facets?.age}
         options={AGE_FILTER_OPTIONS}
         selected={filters.age}
         onSelectionChange={(age) => onFilterChange({ age })}
       />
       <FilterMultiSelect
         title="AI"
+        counts={facets?.ai}
         options={aiOptions}
         selected={filters.ai}
         onSelectionChange={(ai) => onFilterChange({ ai })}
@@ -261,6 +271,7 @@ export function FilterBar({
       {versionData.flat.length > 0 && (
         <FilterMultiSelect
           title="Version"
+        counts={facets?.version}
           options={versionData.flat}
           groups={versionData.groups.length > 1 ? versionData.groups : undefined}
           selected={filters.version}
@@ -300,6 +311,7 @@ export function FilterBar({
               <TooltipContent side="bottom">
                 <span className="text-xs">
                   {a.label}
+                  {facets ? ` · ${facets.assignees.get(a.value) ?? 0}` : ""}
                 </span>
               </TooltipContent>
             </Tooltip>
@@ -316,6 +328,7 @@ export function FilterBar({
       ) : (
         <FilterMultiSelect
           title="Assignee"
+        counts={facets?.assignees}
           options={assigneeOptions}
           selected={filters.assignees}
           onSelectionChange={(assignees) => onFilterChange({ assignees })}

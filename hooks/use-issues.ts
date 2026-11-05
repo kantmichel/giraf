@@ -3,11 +3,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from "date-fns";
-import { UNSET_FILTER_VALUE } from "@/lib/constants";
-import { matchesAgeBuckets } from "@/lib/issue-age";
 import { attachEffectiveWsjf } from "@/lib/wsjf";
-import { workKind, featureKey } from "@/lib/work-kind";
-import { issueKey } from "@/lib/month-plan";
+import { filterIssues, facetCounts, type FilterContext } from "@/lib/issue-filters";
 import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue, FilterConfig } from "@/types/github";
 
@@ -40,6 +37,8 @@ interface UseIssuesOptions {
    * filter waits and nothing is narrowed.
    */
   monthWork?: Set<string> | null;
+  /** Also count every dropdown's options under the other filters (facetCounts). */
+  facets?: boolean;
 }
 
 export function useIssues(
@@ -98,100 +97,20 @@ export function useIssues(
     [query.data?.issues]
   );
 
+  // When viewing closed issues on the weekly /issues page, narrow to the
+  // selected week. When a caller overrides via `closedSince`, skip this week
+  // filter so the full historical window is available.
+  const filterCtx: FilterContext = useMemo(
+    () => ({
+      closedWeek: filters.state === "closed" && !closedSinceIso ? { start: weekStart, end: weekEnd } : null,
+      monthWork,
+    }),
+    [filters.state, closedSinceIso, weekStart, weekEnd, monthWork]
+  );
+
   const filteredIssues = useMemo(() => {
     if (!query.data?.issues) return [];
-    let issues = scoredIssues;
-
-    // When viewing closed issues on the weekly /issues page, narrow to the
-    // selected week. When a caller overrides via `closedSince`, skip this
-    // week filter so the full historical window is available.
-    if (filters.state === "closed" && !closedSinceIso) {
-      issues = issues.filter((i) => {
-        if (!i.closedAt) return false;
-        const closedDate = new Date(i.closedAt);
-        return closedDate >= weekStart && closedDate <= weekEnd;
-      });
-    }
-
-    if (filters.repos.length > 0) {
-      issues = issues.filter((i) => filters.repos.includes(i.repo.fullName));
-    }
-    if (filters.status.length > 0) {
-      const includeUnset = filters.status.includes(UNSET_FILTER_VALUE);
-      const values = filters.status.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && !i.status) || (i.status && values.includes(i.status))
-      );
-    }
-    if (filters.priority.length > 0) {
-      const includeUnset = filters.priority.includes(UNSET_FILTER_VALUE);
-      const values = filters.priority.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && !i.priority) || (i.priority && values.includes(i.priority))
-      );
-    }
-    if (filters.effort.length > 0) {
-      const includeUnset = filters.effort.includes(UNSET_FILTER_VALUE);
-      const values = filters.effort.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && !i.effort) || (i.effort && values.includes(i.effort))
-      );
-    }
-    if (filters.age.length > 0) {
-      const now = new Date();
-      issues = issues.filter((i) => matchesAgeBuckets(i.createdAt, filters.age, now));
-    }
-    if (filters.assignees.length > 0) {
-      // Someone asked to review a linked PR is on the hook for the issue just
-      // as much as its assignee, so this filter matches either role.
-      issues = issues.filter(
-        (i) =>
-          i.assignees.some((a) => filters.assignees.includes(a.login)) ||
-          i.linkedPrs.some((pr) =>
-            pr.reviewers.some((r) => filters.assignees.includes(r.login))
-          )
-      );
-    }
-    if (filters.ai.length > 0) {
-      const includeUnset = filters.ai.includes(UNSET_FILTER_VALUE);
-      const values = filters.ai.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && !i.claudeState) || (i.claudeState && values.includes(i.claudeState))
-      );
-    }
-    if (filters.version.length > 0) {
-      const includeUnset = filters.version.includes(UNSET_FILTER_VALUE);
-      const values = filters.version.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && !i.version) || (i.version && values.includes(i.version))
-      );
-    }
-    if (filters.hasPr) {
-      issues = issues.filter((i) => i.linkedPrs.length > 0);
-    }
-    if (filters.labels.length > 0) {
-      issues = issues.filter((i) =>
-        i.labels.some((l) => filters.labels.includes(l.name))
-      );
-    }
-    if (filters.type.length > 0) {
-      issues = issues.filter((i) => filters.type.includes(workKind(i)));
-    }
-    if (filters.feature.length > 0) {
-      const includeUnset = filters.feature.includes(UNSET_FILTER_VALUE);
-      const values = filters.feature.filter((v) => v !== UNSET_FILTER_VALUE);
-      issues = issues.filter((i) =>
-        (includeUnset && i.features.length === 0) ||
-        i.features.some((f) => values.includes(featureKey(f)))
-      );
-    }
-    if (filters.thisMonth && monthWork) {
-      issues = issues.filter((i) => monthWork.has(issueKey(i)));
-    }
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      issues = issues.filter((i) => i.title.toLowerCase().includes(q));
-    }
+    let issues = filterIssues(scoredIssues, filters, filterCtx);
 
     // Sort closed issues by closedAt, open issues by createdAt — newest first
     // unless the caller asked for the oldest (most stale) first.
@@ -209,12 +128,19 @@ export function useIssues(
     }
 
     return issues;
-  }, [query.data?.issues, scoredIssues, filters, weekStart, weekEnd, sortDir, monthWork]);
+  }, [query.data?.issues, scoredIssues, filters, filterCtx, sortDir]);
+
+  // Only for a caller with a filter bar: the counts behind its dropdowns.
+  const facets = useMemo(
+    () => (options.facets && query.data?.issues ? facetCounts(scoredIssues, filters, filterCtx) : null),
+    [options.facets, query.data?.issues, scoredIssues, filters, filterCtx]
+  );
 
   return {
     ...query,
     issues: filteredIssues,
     allIssues: scoredIssues,
+    facets,
     errors: query.data?.errors ?? [],
     totalRepos: query.data?.totalRepos ?? 0,
     fetchedRepos: query.data?.fetchedRepos ?? 0,

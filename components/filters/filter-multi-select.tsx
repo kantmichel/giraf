@@ -25,7 +25,15 @@ interface FilterMultiSelectProps {
   selected: string[];
   onSelectionChange: (selected: string[]) => void;
   groups?: { label: string; options: { value: string; label: string }[] }[];
+  /**
+   * How many issues each value has under the other filters (facetCounts).
+   * When given, a value with none is left out, unless it is selected (so it
+   * can still be unticked), and each option shows its count.
+   */
+  counts?: Map<string, number>;
 }
+
+type Option = { value: string; label: string };
 
 export function FilterMultiSelect({
   title,
@@ -33,8 +41,13 @@ export function FilterMultiSelect({
   selected,
   onSelectionChange,
   groups,
+  counts,
 }: FilterMultiSelectProps) {
   const [open, setOpen] = useState(false);
+
+  const shown = (list: Option[]) =>
+    counts ? list.filter((o) => (counts.get(o.value) ?? 0) > 0 || selected.includes(o.value)) : list;
+  const shownGroups = groups?.map((g) => ({ ...g, options: shown(g.options) })).filter((g) => g.options.length > 0);
 
   function handleToggle(value: string) {
     if (selected.includes(value)) {
@@ -43,6 +56,29 @@ export function FilterMultiSelect({
       onSelectionChange([...selected, value]);
     }
   }
+
+  const item = (option: Option) => {
+    const isSelected = selected.includes(option.value);
+    return (
+      // Searched by its label only, not the count beside it.
+      <CommandItem key={option.value} value={option.value} keywords={[option.label]} onSelect={() => handleToggle(option.value)}>
+        <div
+          className={cn(
+            "mr-2 flex size-4 items-center justify-center rounded-sm border",
+            isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
+          )}
+        >
+          {isSelected && <Check className="size-3" />}
+        </div>
+        <span className="min-w-0 flex-1 truncate text-sm">{option.label}</span>
+        {counts && (
+          <span className="ml-2 shrink-0 text-xs tabular-nums text-muted-foreground">
+            {counts.get(option.value) ?? 0}
+          </span>
+        )}
+      </CommandItem>
+    );
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -62,53 +98,15 @@ export function FilterMultiSelect({
           <CommandInput placeholder={`Filter ${title.toLowerCase()}...`} />
           <CommandList>
             <CommandEmpty>No results.</CommandEmpty>
-            {groups
-              ? groups.map((group) => (
+            {shownGroups
+              ? shownGroups.map((group) => (
                   <CommandGroup key={group.label} heading={group.label}>
-                    {group.options.map((option) => (
-                      <CommandItem
-                        key={option.value}
-                        onSelect={() => handleToggle(option.value)}
-                      >
-                        <div
-                          className={cn(
-                            "mr-2 flex size-4 items-center justify-center rounded-sm border",
-                            selected.includes(option.value)
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-muted-foreground/30"
-                          )}
-                        >
-                          {selected.includes(option.value) && (
-                            <Check className="size-3" />
-                          )}
-                        </div>
-                        <span className="text-sm">{option.label}</span>
-                      </CommandItem>
-                    ))}
+                    {group.options.map(item)}
                   </CommandGroup>
                 ))
               : (
                 <CommandGroup>
-                  {options.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      onSelect={() => handleToggle(option.value)}
-                    >
-                      <div
-                        className={cn(
-                          "mr-2 flex size-4 items-center justify-center rounded-sm border",
-                          selected.includes(option.value)
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "border-muted-foreground/30"
-                        )}
-                      >
-                        {selected.includes(option.value) && (
-                          <Check className="size-3" />
-                        )}
-                      </div>
-                      <span className="text-sm">{option.label}</span>
-                    </CommandItem>
-                  ))}
+                  {shown(options).map(item)}
                 </CommandGroup>
               )}
           </CommandList>
