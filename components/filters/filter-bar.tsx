@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X, SlidersHorizontal, GitPullRequest } from "lucide-react";
+import { X, SlidersHorizontal, GitPullRequest, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Toggle } from "@/components/ui/toggle";
@@ -20,6 +20,9 @@ import { WeekNavigator } from "./week-navigator";
 import { STATUS_LABELS, PRIORITY_LABELS, EFFORT_LABELS, AI_STATE_LABELS, UNSET_FILTER_VALUE } from "@/lib/constants";
 import { AGE_FILTER_OPTIONS } from "@/lib/issue-age";
 import { WORK_KIND_OPTIONS, featureKey } from "@/lib/work-kind";
+import { issueKey } from "@/lib/month-plan";
+import { formatMonth } from "@/lib/format-date";
+import type { MonthWork } from "@/hooks/use-month-plans";
 import type { FilterConfig, NormalizedIssue } from "@/types/github";
 import type { TrackedRepoRow } from "@/types/github";
 
@@ -32,6 +35,8 @@ interface FilterBarProps {
   allIssues: NormalizedIssue[];
   weekOffset?: number;
   onWeekOffsetChange?: (offset: number) => void;
+  /** For the "This month" switch; without it the switch isn't shown. */
+  monthWork?: MonthWork;
 }
 
 /** Above this many assignees a segmented control stops fitting the filter bar,
@@ -47,6 +52,7 @@ export function FilterBar({
   allIssues,
   weekOffset,
   onWeekOffsetChange,
+  monthWork,
 }: FilterBarProps) {
   const isMobile = useIsMobile();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -95,10 +101,13 @@ export function FilterBar({
   ];
 
   // Every feature some loaded issue sits in, in title order, plus "none" so
-  // tickets outside any feature can be found too.
+  // tickets outside any feature can be found too. With "This month" on, only
+  // the features of this month's work, so the list is the month's Projects.
+  const monthKeys = filters.thisMonth ? monthWork?.keys ?? null : null;
   const featureOptions = useMemo(() => {
     const byKey = new Map<string, string>();
     for (const issue of allIssues) {
+      if (monthKeys && !monthKeys.has(issueKey(issue))) continue;
       for (const f of issue.features) byKey.set(featureKey(f), f.title);
     }
     return [
@@ -107,7 +116,16 @@ export function FilterBar({
       ),
       { value: UNSET_FILTER_VALUE, label: "no feature" },
     ];
-  }, [allIssues]);
+  }, [allIssues, monthKeys]);
+
+  const monthName = monthWork ? formatMonth(monthWork.month) : "";
+  const monthHint = !monthWork
+    ? ""
+    : monthWork.failed
+      ? "The plans didn't load, so this filter can't narrow anything."
+      : !monthWork.planned
+        ? `Nobody has a plan for ${monthName} yet.`
+        : `Only the work in ${monthName}'s plan: each person's agreed tickets, or what fits their hours while the month isn't agreed. Feature, maintenance and ad hoc; narrow it with Type and the people.`;
 
   const assigneeOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -161,12 +179,37 @@ export function FilterBar({
     filters.assignees.length +
     filters.type.length +
     filters.feature.length +
+    (filters.thisMonth ? 1 : 0) +
     (filters.hasPr ? 1 : 0) +
     (filters.search ? 1 : 0) +
     (filters.state !== "open" ? 1 : 0);
 
   const filterControls = (
     <>
+      {monthWork && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {/* A span, because a disabled button gets no hover and so no
+                tooltip saying why it is disabled. */}
+            <span>
+              <Toggle
+                size="sm"
+                pressed={filters.thisMonth}
+                onPressedChange={(pressed) => onFilterChange({ thisMonth: pressed })}
+                // Never stuck on: it can always be switched off.
+                disabled={!filters.thisMonth && (!monthWork.planned || monthWork.failed)}
+                className="h-8 gap-1 border px-2 text-xs data-[state=on]:bg-accent"
+              >
+                <CalendarCheck className="size-3.5" />
+                This month
+              </Toggle>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs">
+            <span className="text-xs">{monthHint}</span>
+          </TooltipContent>
+        </Tooltip>
+      )}
       <FilterMultiSelect
         title="Repo"
         options={repoOptions}
@@ -255,7 +298,9 @@ export function FilterBar({
                 </Toggle>
               </TooltipTrigger>
               <TooltipContent side="bottom">
-                <span className="text-xs">{a.label}</span>
+                <span className="text-xs">
+                  {a.label}
+                </span>
               </TooltipContent>
             </Tooltip>
           ))}

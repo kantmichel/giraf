@@ -34,6 +34,7 @@ const EMPTY_FILTERS_OPEN: FilterConfig = {
   milestone: [],
   type: [],
   feature: [],
+  thisMonth: false,
   search: "",
 };
 

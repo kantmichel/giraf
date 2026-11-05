@@ -233,6 +233,26 @@ export function forecastPlans(ctx: PlanContext, liveMonth?: string): PlanForecas
   return { months, team, get: (person, month) => byKey.get(`${person} ${month}`) ?? null };
 }
 
+/**
+ * The tickets in someone's plan for a month, as issue keys: what the board's
+ * "this month" filter shows. The month view's own rows that are in the month
+ * (agreed once agreed, else inside the hours), in all three lanes, for
+ * everyone with a plan, so the board and the Plan page never disagree.
+ * Below the line, unsized and epics are out, as they are in the month.
+ */
+export function workInMonth(ctx: PlanContext, month: string): Set<string> {
+  const keys = new Set<string>();
+  for (const person of teamOf(ctx.plans)) {
+    const plans = ctx.plans.filter((p) => p.person === person);
+    const f = forecastMonth({ plans, months: ctx.months, month, currentMonth: ctx.currentMonth, open: ctx.open, closed: ctx.closed });
+    if (!f) continue;
+    for (const lane of [f.feature, f.maintenance, f.adhoc]) {
+      for (const row of lane.rows) if (row.fits) keys.add(issueKey(row.issue));
+    }
+  }
+  return keys;
+}
+
 // ---------------------------------------------------------------------------
 // Where a Project lands.
 

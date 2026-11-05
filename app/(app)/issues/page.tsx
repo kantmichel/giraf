@@ -18,6 +18,7 @@ import { MetricsMiniRow } from "@/components/metrics/metrics-mini-row";
 import { useIssues } from "@/hooks/use-issues";
 import { useTrackedRepos } from "@/hooks/use-tracked-repos";
 import { useFilterState } from "@/hooks/use-filter-state";
+import { useMonthWork } from "@/hooks/use-month-plans";
 import { usePreferences, useUpdatePreferences } from "@/hooks/use-preferences";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +27,8 @@ function IssuesContent() {
   const updatePrefs = useUpdatePreferences();
   const { filters, setFilters, clearFilters, hasActiveFilters, view, setView, weekOffset, setWeekOffset, sortDir, setSortDir, openIssueRef, setOpenIssueRef } = useFilterState(prefs?.preferred_view, prefs?.default_filters);
   const { data: trackedRepos, isLoading: reposLoading } = useTrackedRepos();
-  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir });
+  const monthWork = useMonthWork(filters.thisMonth);
+  const { issues, allIssues, isLoading: issuesLoading, isError, refetch } = useIssues(filters, weekOffset, { sortDir, monthWork: monthWork.keys });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Column visibility — null means "follow saved prefs". Toggles populate the
@@ -90,7 +92,9 @@ function IssuesContent() {
     );
   }
 
-  const loading = issuesLoading || reposLoading;
+  // While this month's plan loads, the list waits rather than showing
+  // everything and then shrinking.
+  const loading = issuesLoading || reposLoading || (filters.thisMonth && monthWork.isLoading);
 
   return (
     <>
@@ -117,6 +121,7 @@ function IssuesContent() {
               allIssues={allIssues}
               weekOffset={weekOffset}
               onWeekOffsetChange={setWeekOffset}
+              monthWork={monthWork}
             />
           </div>
           {view === "list" && (

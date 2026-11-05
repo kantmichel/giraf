@@ -25,6 +25,7 @@ const defaultFilters: FilterConfig = {
   milestone: [],
   type: [],
   feature: [],
+  thisMonth: false,
   search: "",
 };
 

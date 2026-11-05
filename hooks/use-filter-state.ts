@@ -8,13 +8,13 @@ import type { ViewType } from "@/components/filters/view-switcher";
 /** Ordering of the issue list by date — created date, or closed date on the closed view. */
 export type IssueSortDir = "newest" | "oldest";
 
-const FILTER_PARAMS = ["repos", "status", "priority", "effort", "age", "ai", "version", "hasPr", "assignees", "labels", "milestone", "type", "feature", "q", "state", "_cleared"];
+const FILTER_PARAMS = ["repos", "status", "priority", "effort", "age", "ai", "version", "hasPr", "assignees", "labels", "milestone", "type", "feature", "month", "q", "state", "_cleared"];
 
 function hasAnyFilterParams(sp: URLSearchParams): boolean {
   return FILTER_PARAMS.some((p) => sp.has(p));
 }
 
-const DEFAULT_FILTERS: FilterConfig = {
+export const DEFAULT_FILTERS: FilterConfig = {
   repos: [],
   assignees: [],
   labels: [],
@@ -29,6 +29,7 @@ const DEFAULT_FILTERS: FilterConfig = {
   milestone: [],
   type: [],
   feature: [],
+  thisMonth: false,
   search: "",
 };
 
@@ -58,6 +59,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       milestone: parseArray(searchParams.get("milestone")),
       type: parseArray(searchParams.get("type")),
       feature: parseArray(searchParams.get("feature")),
+      thisMonth: searchParams.get("month") === "1",
       search: searchParams.get("q") || "",
     }),
     [searchParams]
@@ -105,6 +107,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       if (next.milestone.length) params.set("milestone", next.milestone.join(","));
       if (next.type.length) params.set("type", next.type.join(","));
       if (next.feature.length) params.set("feature", next.feature.join(","));
+      if (next.thisMonth) params.set("month", "1");
       if (next.search) params.set("q", next.search);
 
       // Preserve weekOffset when staying on closed, reset when switching away
@@ -195,6 +198,7 @@ export function useFilterState(defaultView: ViewType = "list", defaultFilters?: 
       filters.milestone.length > 0 ||
       filters.type.length > 0 ||
       filters.feature.length > 0 ||
+      filters.thisMonth ||
       filters.search !== "" ||
       filters.state !== "open",
     [filters]

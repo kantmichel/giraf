@@ -67,7 +67,7 @@ export function CommandPalette({ open, onOpenChange, onIssueSelect, issues: issu
   const navItems = useNavItems();
   const { resolvedTheme, setTheme } = useTheme();
   const [issueState, setIssueState] = useState<"open" | "closed" | "all">("open");
-  const { allIssues } = useIssues({ state: issueState, repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], type: [], feature: [], search: "" });
+  const { allIssues } = useIssues({ state: issueState, repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [], version: [], hasPr: false, milestone: [], type: [], feature: [], thisMonth: false, search: "" });
   const issues = issueState === "open" && issuesProp ? issuesProp : allIssues;
 
   const navigate = useCallback(

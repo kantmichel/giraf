@@ -7,6 +7,7 @@ import { UNSET_FILTER_VALUE } from "@/lib/constants";
 import { matchesAgeBuckets } from "@/lib/issue-age";
 import { attachEffectiveWsjf } from "@/lib/wsjf";
 import { workKind, featureKey } from "@/lib/work-kind";
+import { issueKey } from "@/lib/month-plan";
 import type { IssueSortDir } from "@/hooks/use-filter-state";
 import type { NormalizedIssue, FilterConfig } from "@/types/github";
 
@@ -31,6 +32,14 @@ interface UseIssuesOptions {
    * recent first. Applies to closedAt on the closed view, createdAt otherwise.
    */
   sortDir?: IssueSortDir;
+  /** Leave the query idle, e.g. for data only a filter that is off needs. */
+  enabled?: boolean;
+  /**
+   * The issue keys in this month's plans (useMonthWork). With the
+   * `thisMonth` filter on, only these are kept; while they load (null), the
+   * filter waits and nothing is narrowed.
+   */
+  monthWork?: Set<string> | null;
 }
 
 export function useIssues(
@@ -49,6 +58,7 @@ export function useIssues(
 
   const closedSinceIso = options.closedSince?.toISOString();
   const sortDir = options.sortDir ?? "newest";
+  const monthWork = options.monthWork ?? null;
 
   const query = useQuery<IssuesResponse>({
     queryKey: [
@@ -78,6 +88,7 @@ export function useIssues(
     // current month's updates.
     staleTime: 60_000,
     refetchInterval: options.pollIntervalMs,
+    enabled: options.enabled ?? true,
   });
 
   // Scored over the whole loaded set, before any filtering, so a blocker still
@@ -174,6 +185,9 @@ export function useIssues(
         i.features.some((f) => values.includes(featureKey(f)))
       );
     }
+    if (filters.thisMonth && monthWork) {
+      issues = issues.filter((i) => monthWork.has(issueKey(i)));
+    }
     if (filters.search) {
       const q = filters.search.toLowerCase();
       issues = issues.filter((i) => i.title.toLowerCase().includes(q));
@@ -195,7 +209,7 @@ export function useIssues(
     }
 
     return issues;
-  }, [query.data?.issues, scoredIssues, filters, weekStart, weekEnd, sortDir]);
+  }, [query.data?.issues, scoredIssues, filters, weekStart, weekEnd, sortDir, monthWork]);
 
   return {
     ...query,

@@ -51,7 +51,7 @@ import { PlanTable } from "./plan-table";
 
 const NO_FILTERS: Omit<FilterConfig, "state"> = {
   repos: [], assignees: [], labels: [], priority: [], effort: [], status: [], age: [], ai: [],
-  version: [], hasPr: false, milestone: [], type: [], feature: [], search: "",
+  version: [], hasPr: false, milestone: [], type: [], feature: [], thisMonth: false, search: "",
 };
 const OPEN: FilterConfig = { ...NO_FILTERS, state: "open" };
 const CLOSED: FilterConfig = { ...NO_FILTERS, state: "closed" };

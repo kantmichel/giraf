@@ -200,5 +200,7 @@ export interface FilterConfig {
   type: string[];
   /** Feature keys (`owner/number` of the Project), or UNSET_FILTER_VALUE. */
   feature: string[];
+  /** Only the work in someone's plan for the current month, see `workInMonth`. */
+  thisMonth: boolean;
   search: string;
 }

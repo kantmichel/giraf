@@ -1,9 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import type { MonthPlan, PlanMonth } from "@/lib/month-plan";
+import { monthOf, type MonthPlan, type PlanMonth } from "@/lib/month-plan";
+import { workInMonth } from "@/lib/project-plan";
 import type { FeatureProject } from "@/lib/github/projects";
+import type { FilterConfig } from "@/types/github";
+import { useIssues } from "@/hooks/use-issues";
+import { DEFAULT_FILTERS } from "@/hooks/use-filter-state";
 
 const PLANS_KEY = ["month-plans"];
 
@@ -118,4 +123,56 @@ export function useFeatureProjects() {
     },
     staleTime: 60_000,
   });
+}
+
+const OPEN: FilterConfig = { ...DEFAULT_FILTERS, state: "open" };
+const CLOSED: FilterConfig = { ...DEFAULT_FILTERS, state: "closed" };
+
+export interface MonthWork {
+  /** The current month, `YYYY-MM`. */
+  month: string;
+  /** Someone has a plan for it, so the filter has something to show. */
+  planned: boolean;
+  /** Issue keys in someone's plan for the month; null while loading or off. */
+  keys: Set<string> | null;
+  isLoading: boolean;
+  /** The plans or the issues they need didn't load: the filter can't apply. */
+  failed: boolean;
+}
+
+/**
+ * What the board's "this month" filter keeps: workInMonth over the same data
+ * the Plan page reads (the same queries, so the cache is shared). Closed
+ * issues back to the month's start are needed because agreed work that is
+ * done is still the month's. Loads nothing while the filter is off.
+ */
+export function useMonthWork(enabled: boolean): MonthWork {
+  const month = monthOf(new Date());
+  const plansQuery = useMonthPlans();
+  const closedSince = useMemo(() => {
+    const [y, m] = month.split("-").map(Number);
+    return new Date(y, m - 1, 1);
+  }, [month]);
+  const openQuery = useIssues(OPEN, 0, { enabled });
+  const closedQuery = useIssues(CLOSED, 0, { closedSince, enabled });
+
+  const plans = plansQuery.data?.plans;
+  const months = plansQuery.data?.months;
+  const failed = enabled && (plansQuery.isError || openQuery.isError || closedQuery.isError);
+  const ready = enabled && !!plans && !!months && !!openQuery.data && !!closedQuery.data;
+  const open = openQuery.allIssues;
+  const closed = closedQuery.allIssues;
+
+  const keys = useMemo(
+    () => (ready && plans && months ? workInMonth({ plans, months, currentMonth: month, open, closed }, month) : null),
+    [ready, plans, months, month, open, closed]
+  );
+
+  return {
+    month,
+    planned: !!plans?.some((p) => p.month === month),
+    keys,
+    isLoading: enabled && !failed && keys === null,
+    failed,
+  };
 }
