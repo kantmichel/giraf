@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.43.0](https://github.com/kantmichel/giraf/compare/v1.42.0...v1.43.0) (2026-11-05)
+
+
+### Features
+
+* **filters:** dropdowns offer only what the other filters leave ([2feefef](https://github.com/kantmichel/giraf/commit/2feefef6bd65fcb9ca8c12c972692158a0996abc))
+* **issues:** a "This month" filter, for the work in this month's plan ([de9f1db](https://github.com/kantmichel/giraf/commit/de9f1db9373724375d29e3dc5a1f294ccd7fd39a))
+* **plan:** an ad hoc lane for customer and support work ([8f8a838](https://github.com/kantmichel/giraf/commit/8f8a838d18f5219234569c876ba99cafdff799ed))
+* **plan:** plan Projects across months, shared by everyone in them ([29c8995](https://github.com/kantmichel/giraf/commit/29c89958182b85724ca73d990061d08938984aa0))
+
+
+### Performance Improvements
+
+* **github:** ask GitHub only for what changed, and keep edits in place ([855edcf](https://github.com/kantmichel/giraf/commit/855edcfc9404fdcd1cd8e82cb6d637dcf10cf42f))
+
 ## [1.42.0](https://github.com/kantmichel/giraf/compare/v1.41.1...v1.42.0) (2026-11-04)
 
 
