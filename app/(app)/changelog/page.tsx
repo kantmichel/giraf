@@ -4,11 +4,11 @@ import { Separator } from "@/components/ui/separator"
 import { formatDay } from "@/lib/format-date"
 const entries = [
   {
-    date: "2026-11-04",
+    date: "2026-11-05",
     version: "1.43.0",
-    title: "Projects Across Months, Epics, a Lighter Rate Limit",
+    title: "Projects Across Months, This Month's Work, a Lighter Rate Limit",
     description:
-      "A month's features are now shared by everyone planned in it, so a Project is planned once, and a new Projects drawer follows each one to done: hours left, who has them, the months it lands in, and what doesn't fit and why. A later month lists the Projects started before it with work left, and adds one in a click, ahead of that month's new features. GitHub's issue type \"Epic\" marks a Project's context issue: it counts no hours, and Gira offers one click to move it to in progress or close it as the Project's tickets do. The feature picker shows hours and greys out Projects planned in another month. A new \"Ad hoc\" issue type gives customer and support work its own lane, measured against the month's ad hoc reserve. Gira now asks GitHub only for what changed, which it doesn't count against the hourly limit, so a repeat load costs close to nothing, and an edit no longer reloads every issue. Plan exports from an older Gira no longer import: ask for a new one.",
+      "A month's features are now shared by everyone planned in it, so a Project is planned once, and a new Projects drawer follows each one to done: hours left, who has them, the months it lands in, and what doesn't fit and why. A later month lists the Projects started before it with work left, and adds one in a click, ahead of that month's new features. GitHub's issue type \"Epic\" marks a Project's context issue: it counts no hours, and Gira offers one click to move it to in progress or close it as the Project's tickets do. The feature picker shows hours and greys out Projects planned in another month. A new \"Ad hoc\" issue type gives customer and support work its own lane, measured against the month's ad hoc reserve. On the issues page, \"This month\" shows only the work in this month's plans, and every filter dropdown now lists only what the other filters leave, with a count beside each. Gira now asks GitHub only for what changed, which it doesn't count against the hourly limit, so a repeat load costs close to nothing, and an edit no longer reloads every issue. Plan exports from an older Gira no longer import: ask for a new one.",
   },
   {
     date: "2026-11-04",
